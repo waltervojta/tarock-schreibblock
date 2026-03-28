@@ -46,6 +46,7 @@
       overflow:hidden;
     }
 
+    /* TOPBAR */
     .topbar{
       height: calc(58px + env(safe-area-inset-top));
       padding: calc(8px + env(safe-area-inset-top)) var(--padX) 8px var(--padX);
@@ -76,6 +77,7 @@
       font-size:12px;
     }
 
+    /* CONTENT: NO PAGE SCROLL */
     .content{
       flex:1 1 auto;
       min-height:0;
@@ -84,6 +86,94 @@
       flex-direction:column;
       gap:10px;
       overflow:hidden;
+    }
+
+    /* TOP HALF: seats */
+    .seatPane{
+      flex:0 0 48%;
+      min-height:0;
+      border:1px solid var(--btnBorder);
+      border-radius:var(--btnRadius);
+      background:rgba(255,255,255,.60);
+      padding:10px;
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+
+    .miniLayout{
+      flex:1 1 auto;
+      min-height:0;
+      display:grid;
+      gap:8px;
+      align-content:start;
+      overflow:hidden;
+    }
+
+    .layout4{ grid-template-columns: 1fr 1fr 1fr; grid-template-rows: auto auto auto; }
+    .layout5{ grid-template-columns: 1fr 1fr; grid-template-rows: auto auto auto; }
+    .layout6{ grid-template-columns: 1fr 1fr; grid-template-rows: auto auto auto; }
+
+    .seat{
+      border:1px solid rgba(0,0,0,.35);
+      border-radius:10px;
+      background:rgba(207,233,255,.95);
+      padding:10px 10px;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      cursor:pointer;
+      user-select:none;
+      min-width:0;
+      position:relative;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .seat:active{transform:translateY(1px);}
+
+    .seatLabel{font-size:11px;font-weight:900;color:rgba(0,0,0,.65);}
+    .seatName{font-size:14px;font-weight:900;color:var(--iconDark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .seat.empty .seatName{color:rgba(0,0,0,.35);}
+
+    .seat .clear{
+      position:absolute;
+      top:8px;
+      right:8px;
+      width:20px;
+      height:20px;
+      border-radius:7px;
+      background:rgba(0,0,0,.08);
+      display:grid;
+      place-items:center;
+      font-weight:900;
+      font-size:12px;
+      color:rgba(0,0,0,.65);
+      cursor:pointer;
+    }
+    .seat .clear:active{transform:translateY(1px);}
+
+    .seatFocus{outline:2px solid rgba(59,111,168,.85);outline-offset:2px;}
+
+    /* BOTTOM HALF: search + list */
+    .searchPane{
+      flex:1 1 auto;
+      min-height:0;
+      border:1px solid var(--btnBorder);
+      border-radius:var(--btnRadius);
+      background:rgba(255,255,255,.60);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+    }
+
+    .searchHeader{
+      padding:10px 10px;
+      border-bottom:1px solid rgba(0,0,0,.20);
+      background:rgba(0,0,0,.03);
+      display:flex;
+      flex-direction:column;
+      gap:8px;
     }
 
     .searchRow{
@@ -95,62 +185,27 @@
     .searchBox{
       flex:1 1 auto;
       min-width:0;
-      border:1px solid var(--btnBorder);
-      border-radius:var(--btnRadius);
+      border:1px solid rgba(0,0,0,.30);
+      border-radius:10px;
       background:#fff;
       padding:10px 10px;
       font-size:14px;
-      font-weight:700;
+      font-weight:800;
       outline:none;
     }
 
-    .hint{
-      font-size:11px;
-      font-weight:700;
-      color:rgba(0,0,0,.65);
-      white-space:nowrap;
-    }
+    .hint{font-size:11px;font-weight:800;color:rgba(0,0,0,.65);white-space:nowrap;}
 
-    .mainGrid{
-      flex:1 1 auto;
-      min-height:0;
-      display:grid;
-      grid-template-columns: 1fr 180px;
-      gap:10px;
-      overflow:hidden;
-    }
-
-    @media (max-width: 420px){
-      .mainGrid{ grid-template-columns: 1fr 160px; }
-    }
-
-    @media (max-width: 360px){
-      .mainGrid{ grid-template-columns: 1fr; grid-template-rows: 1fr auto; }
-    }
-
-    .listBox{
-      border:1px solid var(--btnBorder);
-      border-radius:var(--btnRadius);
-      background:rgba(255,255,255,.60);
-      overflow:hidden;
-      min-height:0;
-      display:flex;
-      flex-direction:column;
-    }
-
-    .listHeader{
-      padding:8px 10px;
-      border-bottom:1px solid rgba(0,0,0,.20);
+    .listMeta{
       display:flex;
       align-items:center;
       justify-content:space-between;
       gap:10px;
-      background:rgba(0,0,0,.03);
+      min-width:0;
     }
 
-    .listHeader .left{min-width:0;}
-    .listTitle{font-size:12px;font-weight:900;color:var(--iconDark);}
-    .listSub{font-size:11px;font-weight:700;color:rgba(0,0,0,.65);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .listSub{font-size:11px;font-weight:800;color:rgba(0,0,0,.65);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .selInfo{font-size:11px;font-weight:900;color:rgba(0,0,0,.75);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
     .rows{
       flex:1 1 auto;
@@ -159,8 +214,6 @@
       -webkit-overflow-scrolling: touch;
       background:rgba(255,255,255,.45);
     }
-
-    /* wir verhindern Seiten-Scroll, aber die Liste darf intern scrollen */
 
     .row{
       padding:10px 10px;
@@ -173,95 +226,13 @@
       user-select:none;
       -webkit-tap-highlight-color: transparent;
     }
-
     .row:last-child{border-bottom:none;}
-
-    .row:hover{background:rgba(0,0,0,.03);}
-
     .row.selected{background:rgba(59,111,168,.18);}
 
     .pName{min-width:0;}
     .pMain{font-size:14px;font-weight:900;color:var(--iconDark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
     .pSub{font-size:11px;font-weight:700;color:rgba(0,0,0,.65);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-
-    .pId{
-      flex:0 0 auto;
-      font-size:12px;
-      font-weight:900;
-      color:rgba(0,0,0,.65);
-    }
-
-    /* Seat Mini Layout */
-    .seatBox{
-      border:1px solid var(--btnBorder);
-      border-radius:var(--btnRadius);
-      background:rgba(255,255,255,.60);
-      padding:10px;
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-      min-height:0;
-    }
-
-    .seatTitle{font-size:12px;font-weight:900;color:var(--iconDark);}
-
-    .miniLayout{
-      flex:1 1 auto;
-      min-height:0;
-      display:grid;
-      gap:8px;
-      align-content:start;
-    }
-
-    /* Layout Varianten (4/5/6) */
-    .layout4{ grid-template-columns: 1fr 1fr 1fr; grid-template-rows: auto auto auto; }
-    .layout5{ grid-template-columns: 1fr 1fr; grid-template-rows: auto auto auto; }
-    .layout6{ grid-template-columns: 1fr 1fr; grid-template-rows: auto auto auto; }
-
-    .seat{
-      border:1px solid rgba(0,0,0,.35);
-      border-radius:10px;
-      background:rgba(207,233,255,.95);
-      padding:8px 8px;
-      display:flex;
-      flex-direction:column;
-      gap:4px;
-      cursor:pointer;
-      user-select:none;
-      min-width:0;
-      position:relative;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    .seat:active{transform:translateY(1px);}
-
-    .seatLabel{font-size:11px;font-weight:900;color:rgba(0,0,0,.65);}
-    .seatName{font-size:12px;font-weight:900;color:var(--iconDark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-
-    .seat.empty .seatName{color:rgba(0,0,0,.35);}
-
-    .seat .clear{
-      position:absolute;
-      top:6px;
-      right:6px;
-      width:18px;
-      height:18px;
-      border-radius:6px;
-      background:rgba(0,0,0,.08);
-      display:grid;
-      place-items:center;
-      font-weight:900;
-      font-size:12px;
-      color:rgba(0,0,0,.65);
-      cursor:pointer;
-    }
-
-    .seat .clear:active{transform:translateY(1px);}
-
-    .seatFocus{
-      outline:2px solid rgba(59,111,168,.85);
-      outline-offset:2px;
-    }
+    .pId{flex:0 0 auto;font-size:12px;font-weight:900;color:rgba(0,0,0,.65);}
 
     /* Bottom action bar */
     .bottombar{
@@ -292,17 +263,12 @@
     .actionBtn:disabled{opacity:.45;cursor:default;}
     .actionBtn:active:not(:disabled){transform:translateY(1px);}
 
-    .actionBtn.primary{
-      background:rgba(255,255,255,.26);
-    }
+    .actionBtn.primary{background:rgba(255,255,255,.26);}
 
-    .warn{
-      color:rgba(0,0,0,.75);
-      font-size:11px;
-      font-weight:800;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
+    @media (max-width: 380px){
+      .seatPane{flex-basis: 46%;}
+      .seatName{font-size:13px;}
+      .searchBox{font-size:13px;}
     }
   </style>
 </head>
@@ -312,36 +278,31 @@
 
     <div class="topbar">
       <div class="titleWrap">
-        <div id="title" class="title">Spieler auswählen</div>
+        <div class="title">Spieler auswählen</div>
         <div id="sub" class="subtitle">Tisch: …</div>
       </div>
-      <div class="pill" title="Belegung">
-        <span id="seatCount">0/0</span>
-      </div>
+      <div class="pill" title="Belegung"><span id="seatCount">0/0</span></div>
     </div>
 
     <div class="content">
-      <div class="searchRow">
-        <input id="q" class="searchBox" type="text" inputmode="search" autocomplete="off" placeholder="Suche: ID, Nachname oder Vorname">
-        <div class="hint" id="hint">…</div>
+      <!-- TOP: Sitzlayout -->
+      <div class="seatPane">
+        <div id="layout" class="miniLayout"></div>
       </div>
 
-      <div class="mainGrid">
-        <div class="listBox">
-          <div class="listHeader">
-            <div class="left">
-              <div class="listTitle">Treffer</div>
-              <div id="listSub" class="listSub">—</div>
-            </div>
-            <div id="selInfo" class="warn">kein Spieler gewählt</div>
+      <!-- BOTTOM: Suche + Treffer -->
+      <div class="searchPane">
+        <div class="searchHeader">
+          <div class="searchRow">
+            <input id="q" class="searchBox" type="text" inputmode="search" autocomplete="off" placeholder="Suche: ID, Nachname oder Vorname">
+            <div id="hint" class="hint">…</div>
           </div>
-          <div id="rows" class="rows"></div>
+          <div class="listMeta">
+            <div id="listSub" class="listSub">—</div>
+            <div id="selInfo" class="selInfo">kein Spieler gewählt</div>
+          </div>
         </div>
-
-        <div class="seatBox">
-          <div class="seatTitle">Sitzplätze</div>
-          <div id="layout" class="miniLayout"></div>
-        </div>
+        <div id="rows" class="rows"></div>
       </div>
     </div>
 
@@ -355,6 +316,7 @@
   <script>
     // =========================
     // ETS – Spieler-Auswahl (IndexedDB)
+    // TOP: Sitzlayout, BOTTOM: Suche+Treffer
     // =========================
 
     const DB_NAME = 'ets_db';
@@ -373,7 +335,6 @@
     const layoutEl = document.getElementById('layout');
     const btnBack = document.getElementById('btnBack');
     const btnStart = document.getElementById('btnStart');
-    const titleEl = document.getElementById('title');
     const subEl = document.getElementById('sub');
 
     const MAX_RESULTS = 80;
@@ -383,11 +344,9 @@
     let players = []; // in-memory (aktiv=true)
     let selectedPlayerId = null;
 
-    // seat assignment: seatKey -> playerId
-    const seats = {};
+    const seats = {}; // seatKey -> playerId
     let seatOrder = [];
 
-    // init
     btnBack.addEventListener('click', () => {
       window.location.href = 'index.html';
     });
@@ -406,7 +365,6 @@
       window.location.href = target;
     });
 
-    // debounce search
     let tHandle = null;
     q.addEventListener('input', () => {
       if (tHandle) clearTimeout(tHandle);
@@ -415,9 +373,8 @@
 
     window.addEventListener('load', async () => {
       tableType = parseTableType();
-      configureSeats(tableType);
-      titleEl.textContent = 'Spieler auswählen';
       subEl.textContent = 'Tisch: ' + tableType + ' Spieler';
+      configureSeats(tableType);
 
       hint.textContent = 'lade…';
       await ensurePlayersLoaded();
@@ -510,7 +467,7 @@
       let c = await txCount(db, STORE_PLAYERS);
 
       if (c === 0) {
-        // Notfall: aus JSON importieren (falls user direkt in picker landet)
+        // Notfall: Import aus JSON (falls user direkt in picker landet)
         hint.textContent = 'importiere…';
         await syncFromJson(db);
         c = await txCount(db, STORE_PLAYERS);
@@ -519,7 +476,7 @@
       const all = await txGetAll(db, STORE_PLAYERS);
       players = (all || []).filter(p => p && p.aktiv === true);
 
-      // sort für schönere Treffer: nach Nachname/Vorname
+      // sort: nach Nachname/Vorname
       players.sort((a,b) => {
         const an = a.nachnameLower || '';
         const bn = b.nachnameLower || '';
@@ -532,7 +489,6 @@
 
       const meta = await txGet(db, STORE_META, META_KEY);
       const v = meta && meta.version ? meta.version : 0;
-
       hint.textContent = c + ' Spieler (v' + v + ')';
       db.close();
     }
@@ -594,7 +550,6 @@
     function runSearch(){
       const termRaw = (q.value || '').trim();
       const term = termRaw.toLowerCase();
-
       const isIdSearch = term.length > 0 && /^[0-9]+$/.test(term);
 
       let results;
@@ -635,7 +590,6 @@
       for (const p of list) {
         const r = document.createElement('div');
         r.className = 'row' + (p.spielerId === selectedPlayerId ? ' selected' : '');
-        r.dataset.id = String(p.spielerId);
 
         const main = (p.nachname + ' ' + p.vorname).trim();
         r.innerHTML = `
@@ -648,7 +602,6 @@
 
         r.addEventListener('click', () => {
           selectPlayer(p.spielerId);
-          // visuelles Update (markierung)
           [...rowsEl.querySelectorAll('.row')].forEach(x => x.classList.remove('selected'));
           r.classList.add('selected');
         });
@@ -660,11 +613,7 @@
     function selectPlayer(id){
       selectedPlayerId = Number(id);
       const p = players.find(x => x.spielerId === selectedPlayerId);
-      if (p) {
-        selInfo.textContent = 'gewählt: ' + (p.nachname + ' ' + p.vorname).trim();
-      } else {
-        selInfo.textContent = 'kein Spieler gewählt';
-      }
+      selInfo.textContent = p ? ('gewählt: ' + (p.nachname + ' ' + p.vorname).trim()) : 'kein Spieler gewählt';
     }
 
     // ---------- Seats ----------
@@ -697,7 +646,7 @@
       seats[seatKey] = playerId;
       refreshSeats();
 
-      // UX: nach Setzen markierten Spieler zurücksetzen (schneller Workflow)
+      // schneller Workflow: Auswahl zurücksetzen
       selectedPlayerId = null;
       selInfo.textContent = 'kein Spieler gewählt';
       [...rowsEl.querySelectorAll('.row')].forEach(x => x.classList.remove('selected'));
@@ -709,7 +658,6 @@
     }
 
     function refreshSeats(){
-      // update seat tiles
       seatOrder.forEach(k => {
         const el = document.querySelector('[data-seat="' + k + '"]');
         if (!el) return;
@@ -740,10 +688,8 @@
       `;
 
       el.addEventListener('click', (ev) => {
-        // wenn clear geklickt, nicht setzen
         if (ev.target && ev.target.classList && ev.target.classList.contains('clear')) return;
         if (selectedPlayerId == null) {
-          // kein spieler gewählt -> nur highlight
           flashSeat(el);
           return;
         }
@@ -767,38 +713,32 @@
     function renderLayout4(){
       layoutEl.className = 'miniLayout layout4';
       layoutEl.innerHTML = '';
-
-      // 3x3: TOP Mitte, LEFT Mitte links, RIGHT Mitte rechts, BOTTOM Mitte unten
-      // leere spacer
-      const s = (cls='') => {
+      const spacer = () => {
         const d = document.createElement('div');
         d.style.minHeight = '1px';
-        if (cls) d.className = cls;
         return d;
       };
 
-      layoutEl.appendChild(s());
+      layoutEl.appendChild(spacer());
       layoutEl.appendChild(seatTile('Oben', 'TOP'));
-      layoutEl.appendChild(s());
+      layoutEl.appendChild(spacer());
 
       layoutEl.appendChild(seatTile('Links', 'LEFT'));
-      layoutEl.appendChild(s());
+      layoutEl.appendChild(spacer());
       layoutEl.appendChild(seatTile('Rechts', 'RIGHT'));
 
-      layoutEl.appendChild(s());
+      layoutEl.appendChild(spacer());
       layoutEl.appendChild(seatTile('Unten', 'BOTTOM'));
-      layoutEl.appendChild(s());
+      layoutEl.appendChild(spacer());
     }
 
     function renderLayout5(){
       layoutEl.className = 'miniLayout layout5';
       layoutEl.innerHTML = '';
-      // 2 Spalten x 3 Reihen: links oben/unten, rechts oben/unten, unten über beide
       layoutEl.appendChild(seatTile('L oben', 'LEFT_TOP'));
       layoutEl.appendChild(seatTile('R oben', 'RIGHT_TOP'));
       layoutEl.appendChild(seatTile('L unten', 'LEFT_BOTTOM'));
       layoutEl.appendChild(seatTile('R unten', 'RIGHT_BOTTOM'));
-
       const bottom = seatTile('Unten', 'BOTTOM');
       bottom.style.gridColumn = '1 / span 2';
       layoutEl.appendChild(bottom);
@@ -807,22 +747,17 @@
     function renderLayout6(){
       layoutEl.className = 'miniLayout layout6';
       layoutEl.innerHTML = '';
-      // 2 Spalten x 3 Reihen: oben über beide, links oben/unten, rechts oben/unten, unten über beide
       const top = seatTile('Oben', 'TOP');
       top.style.gridColumn = '1 / span 2';
       layoutEl.appendChild(top);
-
       layoutEl.appendChild(seatTile('L oben', 'LEFT_TOP'));
       layoutEl.appendChild(seatTile('R oben', 'RIGHT_TOP'));
       layoutEl.appendChild(seatTile('L unten', 'LEFT_BOTTOM'));
       layoutEl.appendChild(seatTile('R unten', 'RIGHT_BOTTOM'));
-
       const bottom = seatTile('Unten', 'BOTTOM');
       bottom.style.gridColumn = '1 / span 2';
       layoutEl.appendChild(bottom);
     }
-
-    // ---------- utils ----------
 
     function escapeHtml(s){
       return String(s)

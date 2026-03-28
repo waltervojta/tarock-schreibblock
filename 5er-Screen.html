@@ -24,16 +24,16 @@
       --btnRadius:6px;
       --iconDark:rgba(0,0,0,.92);
     }
+
     *{box-sizing:border-box;}
     html,body{height:100%;}
     html,body{overflow:hidden;}
+
     body{margin:0;background:var(--bg);font-family:var(--font);display:flex;justify-content:center;}
     .phone{width:min(480px,100%);height:100dvh;background:var(--panel);display:flex;flex-direction:column;overflow:hidden;}
 
     .topbar{height: calc(58px + env(safe-area-inset-top));padding: calc(8px + env(safe-area-inset-top)) 12px 8px 12px;background:var(--barBg);border-bottom:var(--lineW) solid var(--line);display:flex;align-items:center;justify-content:center;}
     .statusPill{display:inline-flex;align-items:center;gap:12px;padding:8px 14px;background:var(--btnBg);border:1px solid var(--btnBorder);border-radius:var(--btnRadius);color:var(--iconDark);font-size:17px;line-height:1.15;white-space:nowrap;max-width: calc(100% - 24px);overflow:hidden;text-overflow:ellipsis;}
-    .markLose{ color:var(--red); font-weight:800; }
-    .markNeg { color:var(--red); font-weight:700; }
 
     .iconSvg{width:30px;height:30px;display:block;color:var(--iconDark);flex:0 0 auto;}
     .iconSvg *{fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;vector-effect: non-scaling-stroke;}
@@ -55,10 +55,8 @@
     .sideScoreRow{display:flex;align-items:baseline;gap: var(--gapBigToSmall);white-space:nowrap;}
     .scoreBig{font-size: var(--sideBig);font-weight:700;line-height:1;letter-spacing:-1px;color:var(--black);} 
     .scoreSmall{font-size: calc(var(--sideBig) * var(--sideSmall));line-height:1;color:var(--black);opacity:.95;white-space:nowrap;}
-    .numRed{ color:var(--red); }
-    .numBlack{ color:var(--black); }
 
-    .zone-bottom{flex:0 0 24%;display:flex;justify-content:center;align-items:center;padding:10px 16px;background:var(--panel);} 
+    .zone-bottom{flex:0 0 24%;display:flex;justify-content:center;align-items:center;padding:10px 16px;background:var(--panel);border-bottom: var(--lineW) solid var(--line);} 
     .rowTopBottom{display:inline-flex;align-items:center;min-width:0;}
     .name{font-size:34px;font-weight:700;line-height:1.05;color:var(--black);} 
     .scoreBigBottom{font-size:var(--scoreBigSize);font-weight:700;line-height:1;letter-spacing:-1px;margin-left:var(--gapNameToBig);color:var(--black);} 
@@ -95,90 +93,31 @@
           <path d="M12 12 L15.3 13.8"></path>
           <circle class="fillDot" cx="12" cy="12" r="1"></circle>
         </svg>
-        <span>
-          Anna <span class="markLose">✗</span>
-          Sechser‑Dreier, IIII (<span class="markNeg">-8</span>, 4)
-        </span>
+        <span>ETS Tisch – 5 Spieler</span>
       </div>
     </div>
 
     <div class="content">
       <div class="zone-mid5">
-        <div class="cell left top">
-          <div class="rotBox left">
-            <div class="side">
-              <div class="sideName">Andrea<br>Affenberger</div>
-              <div class="sideScoreRow">
-                <div class="scoreBig numRed">-13</div>
-                <div class="scoreSmall numRed">(-4)</div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="cell top">
-          <div class="rotBox right">
-            <div class="side">
-              <div class="sideName">Anna<br>Sammer</div>
-              <div class="sideScoreRow">
-                <div class="scoreBig numBlack">4</div>
-                <div class="scoreSmall numBlack">(4)</div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="cell left">
-          <div class="rotBox left">
-            <div class="side">
-              <div class="sideName">Brigitte<br>Gollesch</div>
-              <div class="sideScoreRow">
-                <div class="scoreBig numBlack">0</div>
-                <div class="scoreSmall numBlack">(0)</div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="cell">
-          <div class="rotBox right">
-            <div class="side">
-              <div class="sideName">August<br>Thomoll</div>
-              <div class="sideScoreRow">
-                <div class="scoreBig numBlack">21</div>
-                <div class="scoreSmall numRed">(-4)</div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <div class="cell left top"><div class="rotBox left"><div class="side"><div id="name_LEFT_TOP" class="sideName">—</div><div class="sideScoreRow"><div class="scoreBig">0</div><div class="scoreSmall">(0)</div></div></div></div></div>
+        <div class="cell top"><div class="rotBox right"><div class="side"><div id="name_RIGHT_TOP" class="sideName">—</div><div class="sideScoreRow"><div class="scoreBig">0</div><div class="scoreSmall">(0)</div></div></div></div></div>
+        <div class="cell left"><div class="rotBox left"><div class="side"><div id="name_LEFT_BOTTOM" class="sideName">—</div><div class="sideScoreRow"><div class="scoreBig">0</div><div class="scoreSmall">(0)</div></div></div></div></div>
+        <div class="cell"><div class="rotBox right"><div class="side"><div id="name_RIGHT_BOTTOM" class="sideName">—</div><div class="sideScoreRow"><div class="scoreBig">0</div><div class="scoreSmall">(0)</div></div></div></div></div>
       </div>
 
       <div class="zone-bottom">
         <div class="rowTopBottom">
-          <div class="name">Walter<br>Vojta</div>
-          <div class="scoreBigBottom numRed">-12</div>
-          <div class="scoreSmallBottom numBlack">(4)</div>
+          <div id="name_BOTTOM" class="name">—</div>
+          <div class="scoreBigBottom">0</div>
+          <div class="scoreSmallBottom">(0)</div>
         </div>
       </div>
     </div>
 
     <div class="bottombar">
       <div class="bottom-left">
-        <div class="btn" title="Statistik" aria-label="Statistik">
-          <svg class="iconSvg" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M4 19.5H20"></path>
-            <path d="M7 19.5V11"></path>
-            <path d="M12 19.5V6.5"></path>
-            <path d="M17 19.5V14"></path>
-          </svg>
-        </div>
-        <div class="btn" title="Liste" aria-label="Liste">
-          <svg class="iconSvg" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M7 7H20"></path>
-            <path d="M7 12H20"></path>
-            <path d="M7 17H20"></path>
-            <circle class="fillDot" cx="4" cy="7" r="1"></circle>
-            <circle class="fillDot" cx="4" cy="12" r="1"></circle>
-            <circle class="fillDot" cx="4" cy="17" r="1"></circle>
-          </svg>
-        </div>
+        <div class="btn" title="Statistik" aria-label="Statistik"><svg class="iconSvg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5H20"></path><path d="M7 19.5V11"></path><path d="M12 19.5V6.5"></path><path d="M17 19.5V14"></path></svg></div>
+        <div class="btn" title="Liste" aria-label="Liste"><svg class="iconSvg" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7H20"></path><path d="M7 12H20"></path><path d="M7 17H20"></path><circle class="fillDot" cx="4" cy="7" r="1"></circle><circle class="fillDot" cx="4" cy="12" r="1"></circle><circle class="fillDot" cx="4" cy="17" r="1"></circle></svg></div>
       </div>
       <div class="bottom-mid">
         <div class="btn pm" title="Positivspiel (+)" aria-label="Positivspiel">+</div>
@@ -186,12 +125,7 @@
         <div class="btn" title="Farbenspiel" aria-label="Farbenspiel"><div class="rbBall"></div></div>
       </div>
       <div class="bottom-right">
-        <div class="btn" title="Korrigieren" aria-label="Korrigieren">
-          <svg class="iconSvg" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M20 12a8 8 0 1 1-2.3-5.7"></path>
-            <path d="M20 5v4h-4"></path>
-          </svg>
-        </div>
+        <div class="btn" title="Korrigieren" aria-label="Korrigieren"><svg class="iconSvg" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.7"></path><path d="M20 5v4h-4"></path></svg></div>
         <div class="btn close" title="Schließen" aria-label="Schließen">✕</div>
       </div>
     </div>
@@ -206,12 +140,54 @@
         ev.preventDefault();
         ev.stopPropagation();
         if (confirm('Tisch wirklich beenden?')) {
-          // zurück zum Startmenü
           window.location.href = 'index.html';
         }
       }, {passive:false});
     })();
   </script>
 
+<script>
+(function(){
+  try {
+    const raw = sessionStorage.getItem('currentTable');
+    if(!raw){ window.location.href='index.html'; return; }
+    const ct = JSON.parse(raw);
+    if(!ct || Number(ct.tableType)!==5){ window.location.href='index.html'; return; }
+    const seats = ct.seats || {};
+    const DB_NAME='ets_db', DB_VERSION=1, STORE_PLAYERS='players';
+    function openDb(){ return new Promise((res,rej)=>{ const r=indexedDB.open(DB_NAME,DB_VERSION); r.onupgradeneeded=()=>{}; r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
+    function getPlayer(db,id){ return new Promise((res,rej)=>{ const tx=db.transaction(STORE_PLAYERS,'readonly'); const st=tx.objectStore(STORE_PLAYERS); const rq=st.get(Number(id)); rq.onsuccess=()=>res(rq.result); rq.onerror=()=>rej(rq.error); }); }
+    function setText(sel, text){ const el=document.querySelector(sel); if(el) el.textContent=text; }
+    openDb().then(async db=>{
+      const id_LEFT_TOP = seats['LEFT_TOP'];
+      if(id_LEFT_TOP==null){ setText('#name_LEFT_TOP', '—'); } else {
+        const p_LEFT_TOP = await getPlayer(db, id_LEFT_TOP).catch(()=>null);
+        if(p_LEFT_TOP && (p_LEFT_TOP.nachname||p_LEFT_TOP.vorname)){ setText('#name_LEFT_TOP', ((p_LEFT_TOP.nachname||'') + ' ' + (p_LEFT_TOP.vorname||'')).trim()); } else { setText('#name_LEFT_TOP', String(id_LEFT_TOP)); }
+      }
+      const id_LEFT_BOTTOM = seats['LEFT_BOTTOM'];
+      if(id_LEFT_BOTTOM==null){ setText('#name_LEFT_BOTTOM', '—'); } else {
+        const p_LEFT_BOTTOM = await getPlayer(db, id_LEFT_BOTTOM).catch(()=>null);
+        if(p_LEFT_BOTTOM && (p_LEFT_BOTTOM.nachname||p_LEFT_BOTTOM.vorname)){ setText('#name_LEFT_BOTTOM', ((p_LEFT_BOTTOM.nachname||'') + ' ' + (p_LEFT_BOTTOM.vorname||'')).trim()); } else { setText('#name_LEFT_BOTTOM', String(id_LEFT_BOTTOM)); }
+      }
+      const id_RIGHT_TOP = seats['RIGHT_TOP'];
+      if(id_RIGHT_TOP==null){ setText('#name_RIGHT_TOP', '—'); } else {
+        const p_RIGHT_TOP = await getPlayer(db, id_RIGHT_TOP).catch(()=>null);
+        if(p_RIGHT_TOP && (p_RIGHT_TOP.nachname||p_RIGHT_TOP.vorname)){ setText('#name_RIGHT_TOP', ((p_RIGHT_TOP.nachname||'') + ' ' + (p_RIGHT_TOP.vorname||'')).trim()); } else { setText('#name_RIGHT_TOP', String(id_RIGHT_TOP)); }
+      }
+      const id_RIGHT_BOTTOM = seats['RIGHT_BOTTOM'];
+      if(id_RIGHT_BOTTOM==null){ setText('#name_RIGHT_BOTTOM', '—'); } else {
+        const p_RIGHT_BOTTOM = await getPlayer(db, id_RIGHT_BOTTOM).catch(()=>null);
+        if(p_RIGHT_BOTTOM && (p_RIGHT_BOTTOM.nachname||p_RIGHT_BOTTOM.vorname)){ setText('#name_RIGHT_BOTTOM', ((p_RIGHT_BOTTOM.nachname||'') + ' ' + (p_RIGHT_BOTTOM.vorname||'')).trim()); } else { setText('#name_RIGHT_BOTTOM', String(id_RIGHT_BOTTOM)); }
+      }
+      const id_BOTTOM = seats['BOTTOM'];
+      if(id_BOTTOM==null){ setText('#name_BOTTOM', '—'); } else {
+        const p_BOTTOM = await getPlayer(db, id_BOTTOM).catch(()=>null);
+        if(p_BOTTOM && (p_BOTTOM.nachname||p_BOTTOM.vorname)){ setText('#name_BOTTOM', ((p_BOTTOM.nachname||'') + ' ' + (p_BOTTOM.vorname||'')).trim()); } else { setText('#name_BOTTOM', String(id_BOTTOM)); }
+      }
+      db.close();
+    }).catch(()=>{ window.location.href='index.html'; });
+  } catch(e){ window.location.href='index.html'; }
+})();
+</script>
 </body>
 </html>
