@@ -1,0 +1,837 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ETS – Spieler auswählen</title>
+
+  <style>
+    :root{
+      --bg:#cfe9ff;
+      --panel:#cfe9ff;
+      --barBg:#3b6fa8;
+      --line:#000;
+      --lineW:3px;
+      --font: Arial, sans-serif;
+      --black:#000;
+      --red:#c00000;
+
+      --btnBg:var(--panel);
+      --btnBorder:rgba(0,0,0,.70);
+      --btnRadius:10px;
+      --iconDark:rgba(0,0,0,.92);
+
+      --padX:12px;
+    }
+
+    *{box-sizing:border-box;}
+    html,body{height:100%;}
+    html,body{overflow:hidden;}
+
+    body{
+      margin:0;
+      background:var(--bg);
+      font-family:var(--font);
+      display:flex;
+      justify-content:center;
+      color:var(--black);
+    }
+
+    .phone{
+      width:min(480px,100%);
+      height:100dvh;
+      background:var(--panel);
+      display:flex;
+      flex-direction:column;
+      overflow:hidden;
+    }
+
+    .topbar{
+      height: calc(58px + env(safe-area-inset-top));
+      padding: calc(8px + env(safe-area-inset-top)) var(--padX) 8px var(--padX);
+      background:var(--barBg);
+      border-bottom:var(--lineW) solid var(--line);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+
+    .titleWrap{min-width:0;display:flex;flex-direction:column;gap:2px;}
+    .title{font-size:16px;font-weight:800;line-height:1.15;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .subtitle{font-size:11px;font-weight:700;line-height:1.2;color:rgba(255,255,255,.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+    .pill{
+      flex:0 0 auto;
+      height:30px;
+      padding:0 10px;
+      border-radius:10px;
+      background:rgba(255,255,255,.18);
+      border:1px solid rgba(0,0,0,.25);
+      display:flex;
+      align-items:center;
+      gap:8px;
+      color:#fff;
+      font-weight:800;
+      font-size:12px;
+    }
+
+    .content{
+      flex:1 1 auto;
+      min-height:0;
+      padding:12px var(--padX);
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      overflow:hidden;
+    }
+
+    .searchRow{
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+
+    .searchBox{
+      flex:1 1 auto;
+      min-width:0;
+      border:1px solid var(--btnBorder);
+      border-radius:var(--btnRadius);
+      background:#fff;
+      padding:10px 10px;
+      font-size:14px;
+      font-weight:700;
+      outline:none;
+    }
+
+    .hint{
+      font-size:11px;
+      font-weight:700;
+      color:rgba(0,0,0,.65);
+      white-space:nowrap;
+    }
+
+    .mainGrid{
+      flex:1 1 auto;
+      min-height:0;
+      display:grid;
+      grid-template-columns: 1fr 180px;
+      gap:10px;
+      overflow:hidden;
+    }
+
+    @media (max-width: 420px){
+      .mainGrid{ grid-template-columns: 1fr 160px; }
+    }
+
+    @media (max-width: 360px){
+      .mainGrid{ grid-template-columns: 1fr; grid-template-rows: 1fr auto; }
+    }
+
+    .listBox{
+      border:1px solid var(--btnBorder);
+      border-radius:var(--btnRadius);
+      background:rgba(255,255,255,.60);
+      overflow:hidden;
+      min-height:0;
+      display:flex;
+      flex-direction:column;
+    }
+
+    .listHeader{
+      padding:8px 10px;
+      border-bottom:1px solid rgba(0,0,0,.20);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      background:rgba(0,0,0,.03);
+    }
+
+    .listHeader .left{min-width:0;}
+    .listTitle{font-size:12px;font-weight:900;color:var(--iconDark);}
+    .listSub{font-size:11px;font-weight:700;color:rgba(0,0,0,.65);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+    .rows{
+      flex:1 1 auto;
+      min-height:0;
+      overflow:auto;
+      -webkit-overflow-scrolling: touch;
+      background:rgba(255,255,255,.45);
+    }
+
+    /* wir verhindern Seiten-Scroll, aber die Liste darf intern scrollen */
+
+    .row{
+      padding:10px 10px;
+      border-bottom:1px solid rgba(0,0,0,.12);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      cursor:pointer;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .row:last-child{border-bottom:none;}
+
+    .row:hover{background:rgba(0,0,0,.03);}
+
+    .row.selected{background:rgba(59,111,168,.18);}
+
+    .pName{min-width:0;}
+    .pMain{font-size:14px;font-weight:900;color:var(--iconDark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .pSub{font-size:11px;font-weight:700;color:rgba(0,0,0,.65);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+    .pId{
+      flex:0 0 auto;
+      font-size:12px;
+      font-weight:900;
+      color:rgba(0,0,0,.65);
+    }
+
+    /* Seat Mini Layout */
+    .seatBox{
+      border:1px solid var(--btnBorder);
+      border-radius:var(--btnRadius);
+      background:rgba(255,255,255,.60);
+      padding:10px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      min-height:0;
+    }
+
+    .seatTitle{font-size:12px;font-weight:900;color:var(--iconDark);}
+
+    .miniLayout{
+      flex:1 1 auto;
+      min-height:0;
+      display:grid;
+      gap:8px;
+      align-content:start;
+    }
+
+    /* Layout Varianten (4/5/6) */
+    .layout4{ grid-template-columns: 1fr 1fr 1fr; grid-template-rows: auto auto auto; }
+    .layout5{ grid-template-columns: 1fr 1fr; grid-template-rows: auto auto auto; }
+    .layout6{ grid-template-columns: 1fr 1fr; grid-template-rows: auto auto auto; }
+
+    .seat{
+      border:1px solid rgba(0,0,0,.35);
+      border-radius:10px;
+      background:rgba(207,233,255,.95);
+      padding:8px 8px;
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+      cursor:pointer;
+      user-select:none;
+      min-width:0;
+      position:relative;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .seat:active{transform:translateY(1px);}
+
+    .seatLabel{font-size:11px;font-weight:900;color:rgba(0,0,0,.65);}
+    .seatName{font-size:12px;font-weight:900;color:var(--iconDark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+    .seat.empty .seatName{color:rgba(0,0,0,.35);}
+
+    .seat .clear{
+      position:absolute;
+      top:6px;
+      right:6px;
+      width:18px;
+      height:18px;
+      border-radius:6px;
+      background:rgba(0,0,0,.08);
+      display:grid;
+      place-items:center;
+      font-weight:900;
+      font-size:12px;
+      color:rgba(0,0,0,.65);
+      cursor:pointer;
+    }
+
+    .seat .clear:active{transform:translateY(1px);}
+
+    .seatFocus{
+      outline:2px solid rgba(59,111,168,.85);
+      outline-offset:2px;
+    }
+
+    /* Bottom action bar */
+    .bottombar{
+      height: calc(62px + env(safe-area-inset-bottom));
+      background:var(--barBg);
+      border-top:var(--lineW) solid var(--line);
+      padding: 8px var(--padX) calc(8px + env(safe-area-inset-bottom)) var(--padX);
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+    }
+
+    .actionBtn{
+      flex:1 1 auto;
+      height:46px;
+      border-radius:12px;
+      border:1px solid rgba(0,0,0,.25);
+      background:rgba(255,255,255,.20);
+      color:#fff;
+      font-size:14px;
+      font-weight:900;
+      cursor:pointer;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .actionBtn:disabled{opacity:.45;cursor:default;}
+    .actionBtn:active:not(:disabled){transform:translateY(1px);}
+
+    .actionBtn.primary{
+      background:rgba(255,255,255,.26);
+    }
+
+    .warn{
+      color:rgba(0,0,0,.75);
+      font-size:11px;
+      font-weight:800;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="phone">
+
+    <div class="topbar">
+      <div class="titleWrap">
+        <div id="title" class="title">Spieler auswählen</div>
+        <div id="sub" class="subtitle">Tisch: …</div>
+      </div>
+      <div class="pill" title="Belegung">
+        <span id="seatCount">0/0</span>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="searchRow">
+        <input id="q" class="searchBox" type="text" inputmode="search" autocomplete="off" placeholder="Suche: ID, Nachname oder Vorname">
+        <div class="hint" id="hint">…</div>
+      </div>
+
+      <div class="mainGrid">
+        <div class="listBox">
+          <div class="listHeader">
+            <div class="left">
+              <div class="listTitle">Treffer</div>
+              <div id="listSub" class="listSub">—</div>
+            </div>
+            <div id="selInfo" class="warn">kein Spieler gewählt</div>
+          </div>
+          <div id="rows" class="rows"></div>
+        </div>
+
+        <div class="seatBox">
+          <div class="seatTitle">Sitzplätze</div>
+          <div id="layout" class="miniLayout"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bottombar">
+      <button id="btnBack" class="actionBtn" type="button">Zurück</button>
+      <button id="btnStart" class="actionBtn primary" type="button" disabled>Start</button>
+    </div>
+
+  </div>
+
+  <script>
+    // =========================
+    // ETS – Spieler-Auswahl (IndexedDB)
+    // =========================
+
+    const DB_NAME = 'ets_db';
+    const DB_VERSION = 1;
+    const STORE_PLAYERS = 'players';
+    const STORE_META = 'meta';
+    const META_KEY = 'spieler_stammblatt';
+    const URL_JSON = './data/spieler_stammblatt.json';
+
+    const q = document.getElementById('q');
+    const rowsEl = document.getElementById('rows');
+    const hint = document.getElementById('hint');
+    const listSub = document.getElementById('listSub');
+    const selInfo = document.getElementById('selInfo');
+    const seatCountEl = document.getElementById('seatCount');
+    const layoutEl = document.getElementById('layout');
+    const btnBack = document.getElementById('btnBack');
+    const btnStart = document.getElementById('btnStart');
+    const titleEl = document.getElementById('title');
+    const subEl = document.getElementById('sub');
+
+    const MAX_RESULTS = 80;
+    const DEBOUNCE_MS = 200;
+
+    let tableType = 4;
+    let players = []; // in-memory (aktiv=true)
+    let selectedPlayerId = null;
+
+    // seat assignment: seatKey -> playerId
+    const seats = {};
+    let seatOrder = [];
+
+    // init
+    btnBack.addEventListener('click', () => {
+      window.location.href = 'index.html';
+    });
+
+    btnStart.addEventListener('click', () => {
+      if (!isFull()) return;
+      const payload = {
+        tableType,
+        seats: { ...seats },
+        createdUtc: new Date().toISOString()
+      };
+      sessionStorage.setItem('currentTable', JSON.stringify(payload));
+      const target = (tableType === 4) ? '4er-Screen.html'
+                   : (tableType === 5) ? '5er-Screen.html'
+                   : '6er-Screen.html';
+      window.location.href = target;
+    });
+
+    // debounce search
+    let tHandle = null;
+    q.addEventListener('input', () => {
+      if (tHandle) clearTimeout(tHandle);
+      tHandle = setTimeout(runSearch, DEBOUNCE_MS);
+    });
+
+    window.addEventListener('load', async () => {
+      tableType = parseTableType();
+      configureSeats(tableType);
+      titleEl.textContent = 'Spieler auswählen';
+      subEl.textContent = 'Tisch: ' + tableType + ' Spieler';
+
+      hint.textContent = 'lade…';
+      await ensurePlayersLoaded();
+
+      runSearch();
+      q.focus();
+    });
+
+    function parseTableType(){
+      const p = new URLSearchParams(location.search);
+      const t = Number(p.get('table') || 4);
+      if (t === 5 || t === 6) return t;
+      return 4;
+    }
+
+    function configureSeats(t){
+      for (const k in seats) delete seats[k];
+
+      if (t === 4) {
+        seatOrder = ['TOP','LEFT','RIGHT','BOTTOM'];
+        renderLayout4();
+      } else if (t === 5) {
+        seatOrder = ['LEFT_TOP','LEFT_BOTTOM','RIGHT_TOP','RIGHT_BOTTOM','BOTTOM'];
+        renderLayout5();
+      } else {
+        seatOrder = ['TOP','LEFT_TOP','LEFT_BOTTOM','RIGHT_TOP','RIGHT_BOTTOM','BOTTOM'];
+        renderLayout6();
+      }
+
+      for (const k of seatOrder) seats[k] = null;
+      updateSeatCount();
+      updateStartEnabled();
+    }
+
+    // ---------- IndexedDB ----------
+
+    function openDb(){
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(DB_NAME, DB_VERSION);
+        req.onupgradeneeded = () => {
+          const db = req.result;
+          if (!db.objectStoreNames.contains(STORE_PLAYERS)) {
+            const st = db.createObjectStore(STORE_PLAYERS, { keyPath: 'spielerId' });
+            st.createIndex('nachnameLower', 'nachnameLower', { unique:false });
+            st.createIndex('vornameLower', 'vornameLower', { unique:false });
+            st.createIndex('nameLower', 'nameLower', { unique:false });
+            st.createIndex('aktiv', 'aktiv', { unique:false });
+          }
+          if (!db.objectStoreNames.contains(STORE_META)) {
+            db.createObjectStore(STORE_META, { keyPath: 'key' });
+          }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    function txGetAll(db, storeName){
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(storeName, 'readonly');
+        const st = tx.objectStore(storeName);
+        const req = st.getAll();
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    function txCount(db, storeName){
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(storeName, 'readonly');
+        const st = tx.objectStore(storeName);
+        const req = st.count();
+        req.onsuccess = () => resolve(req.result || 0);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    function txGet(db, storeName, key){
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(storeName, 'readonly');
+        const st = tx.objectStore(storeName);
+        const req = st.get(key);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function ensurePlayersLoaded(){
+      const db = await openDb();
+      let c = await txCount(db, STORE_PLAYERS);
+
+      if (c === 0) {
+        // Notfall: aus JSON importieren (falls user direkt in picker landet)
+        hint.textContent = 'importiere…';
+        await syncFromJson(db);
+        c = await txCount(db, STORE_PLAYERS);
+      }
+
+      const all = await txGetAll(db, STORE_PLAYERS);
+      players = (all || []).filter(p => p && p.aktiv === true);
+
+      // sort für schönere Treffer: nach Nachname/Vorname
+      players.sort((a,b) => {
+        const an = a.nachnameLower || '';
+        const bn = b.nachnameLower || '';
+        if (an < bn) return -1;
+        if (an > bn) return 1;
+        const av = a.vornameLower || '';
+        const bv = b.vornameLower || '';
+        return av < bv ? -1 : (av > bv ? 1 : 0);
+      });
+
+      const meta = await txGet(db, STORE_META, META_KEY);
+      const v = meta && meta.version ? meta.version : 0;
+
+      hint.textContent = c + ' Spieler (v' + v + ')';
+      db.close();
+    }
+
+    async function syncFromJson(db){
+      const res = await fetch(URL_JSON + '?t=' + Date.now(), { cache: 'no-store' });
+      if (!res.ok) throw new Error('JSON Download fehlgeschlagen (' + res.status + ')');
+      const remote = await res.json();
+      const remoteVersion = Number(remote.version || 0);
+      const list = Array.isArray(remote.players) ? remote.players : [];
+      const active = list.filter(p => p && p.aktiv === true);
+
+      await importReplace(db, active, {
+        version: remoteVersion,
+        generatedUtc: String(remote.generatedUtc || ''),
+        count: active.length
+      });
+    }
+
+    function importReplace(db, list, meta){
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction([STORE_PLAYERS, STORE_META], 'readwrite');
+        const stPlayers = tx.objectStore(STORE_PLAYERS);
+        const stMeta = tx.objectStore(STORE_META);
+
+        const clr = stPlayers.clear();
+        clr.onerror = () => reject(clr.error);
+        clr.onsuccess = () => {
+          for (const p of list) {
+            const nach = String(p.nachname || '');
+            const vor = String(p.vorname || '');
+            stPlayers.put({
+              spielerId: Number(p.spielerId),
+              nachname: nach,
+              vorname: vor,
+              aktiv: true,
+              nachnameLower: nach.toLowerCase(),
+              vornameLower: vor.toLowerCase(),
+              nameLower: (nach + ' ' + vor).trim().toLowerCase()
+            });
+          }
+          stMeta.put({
+            key: META_KEY,
+            version: Number(meta.version || 0),
+            generatedUtc: String(meta.generatedUtc || ''),
+            count: Number(meta.count || list.length),
+            lastFetchUtc: new Date().toISOString()
+          });
+        };
+
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+        tx.onabort = () => reject(tx.error);
+      });
+    }
+
+    // ---------- Search ----------
+
+    function runSearch(){
+      const termRaw = (q.value || '').trim();
+      const term = termRaw.toLowerCase();
+
+      const isIdSearch = term.length > 0 && /^[0-9]+$/.test(term);
+
+      let results;
+      if (!term) {
+        results = players.slice(0, MAX_RESULTS);
+        listSub.textContent = 'zeige ' + results.length + ' von ' + players.length;
+      } else {
+        const out = [];
+        for (const p of players) {
+          if (out.length >= MAX_RESULTS) break;
+          if (isIdSearch) {
+            const idStr = String(p.spielerId);
+            if (idStr.includes(term)) out.push(p);
+          } else {
+            const nl = p.nachnameLower || '';
+            const vl = p.vornameLower || '';
+            if (nl.includes(term) || vl.includes(term)) out.push(p);
+          }
+        }
+        results = out;
+        listSub.textContent = 'Treffer ' + results.length + ' (max ' + MAX_RESULTS + ')';
+      }
+
+      renderRows(results);
+    }
+
+    function renderRows(list){
+      rowsEl.innerHTML = '';
+      if (!list || list.length === 0) {
+        const d = document.createElement('div');
+        d.className = 'row';
+        d.style.cursor = 'default';
+        d.innerHTML = '<div class="pName"><div class="pMain">Keine Treffer</div><div class="pSub">Suche anpassen</div></div>';
+        rowsEl.appendChild(d);
+        return;
+      }
+
+      for (const p of list) {
+        const r = document.createElement('div');
+        r.className = 'row' + (p.spielerId === selectedPlayerId ? ' selected' : '');
+        r.dataset.id = String(p.spielerId);
+
+        const main = (p.nachname + ' ' + p.vorname).trim();
+        r.innerHTML = `
+          <div class="pName">
+            <div class="pMain">${escapeHtml(main)}</div>
+            <div class="pSub">${escapeHtml(p.nachname)} / ${escapeHtml(p.vorname)}</div>
+          </div>
+          <div class="pId">${p.spielerId}</div>
+        `;
+
+        r.addEventListener('click', () => {
+          selectPlayer(p.spielerId);
+          // visuelles Update (markierung)
+          [...rowsEl.querySelectorAll('.row')].forEach(x => x.classList.remove('selected'));
+          r.classList.add('selected');
+        });
+
+        rowsEl.appendChild(r);
+      }
+    }
+
+    function selectPlayer(id){
+      selectedPlayerId = Number(id);
+      const p = players.find(x => x.spielerId === selectedPlayerId);
+      if (p) {
+        selInfo.textContent = 'gewählt: ' + (p.nachname + ' ' + p.vorname).trim();
+      } else {
+        selInfo.textContent = 'kein Spieler gewählt';
+      }
+    }
+
+    // ---------- Seats ----------
+
+    function isFull(){
+      return seatOrder.every(k => seats[k] != null);
+    }
+
+    function updateStartEnabled(){
+      btnStart.disabled = !isFull();
+    }
+
+    function updateSeatCount(){
+      const filled = seatOrder.filter(k => seats[k] != null).length;
+      seatCountEl.textContent = filled + '/' + seatOrder.length;
+    }
+
+    function setSeat(seatKey, playerId){
+      if (playerId == null) {
+        seats[seatKey] = null;
+        refreshSeats();
+        return;
+      }
+
+      // Duplikate verhindern -> verschieben
+      for (const k of seatOrder) {
+        if (seats[k] === playerId) seats[k] = null;
+      }
+
+      seats[seatKey] = playerId;
+      refreshSeats();
+
+      // UX: nach Setzen markierten Spieler zurücksetzen (schneller Workflow)
+      selectedPlayerId = null;
+      selInfo.textContent = 'kein Spieler gewählt';
+      [...rowsEl.querySelectorAll('.row')].forEach(x => x.classList.remove('selected'));
+    }
+
+    function clearSeat(seatKey){
+      seats[seatKey] = null;
+      refreshSeats();
+    }
+
+    function refreshSeats(){
+      // update seat tiles
+      seatOrder.forEach(k => {
+        const el = document.querySelector('[data-seat="' + k + '"]');
+        if (!el) return;
+        const pid = seats[k];
+        const nameEl = el.querySelector('.seatName');
+        if (pid == null) {
+          el.classList.add('empty');
+          nameEl.textContent = 'leer';
+        } else {
+          el.classList.remove('empty');
+          const p = players.find(x => x.spielerId === pid);
+          nameEl.textContent = p ? ((p.nachname + ' ' + p.vorname).trim()) : String(pid);
+        }
+      });
+
+      updateSeatCount();
+      updateStartEnabled();
+    }
+
+    function seatTile(label, seatKey){
+      const el = document.createElement('div');
+      el.className = 'seat empty';
+      el.dataset.seat = seatKey;
+      el.innerHTML = `
+        <div class="seatLabel">${escapeHtml(label)}</div>
+        <div class="seatName">leer</div>
+        <div class="clear" title="Platz leeren">✕</div>
+      `;
+
+      el.addEventListener('click', (ev) => {
+        // wenn clear geklickt, nicht setzen
+        if (ev.target && ev.target.classList && ev.target.classList.contains('clear')) return;
+        if (selectedPlayerId == null) {
+          // kein spieler gewählt -> nur highlight
+          flashSeat(el);
+          return;
+        }
+        setSeat(seatKey, selectedPlayerId);
+      });
+
+      el.querySelector('.clear').addEventListener('click', (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        clearSeat(seatKey);
+      });
+
+      return el;
+    }
+
+    function flashSeat(el){
+      el.classList.add('seatFocus');
+      setTimeout(() => el.classList.remove('seatFocus'), 250);
+    }
+
+    function renderLayout4(){
+      layoutEl.className = 'miniLayout layout4';
+      layoutEl.innerHTML = '';
+
+      // 3x3: TOP Mitte, LEFT Mitte links, RIGHT Mitte rechts, BOTTOM Mitte unten
+      // leere spacer
+      const s = (cls='') => {
+        const d = document.createElement('div');
+        d.style.minHeight = '1px';
+        if (cls) d.className = cls;
+        return d;
+      };
+
+      layoutEl.appendChild(s());
+      layoutEl.appendChild(seatTile('Oben', 'TOP'));
+      layoutEl.appendChild(s());
+
+      layoutEl.appendChild(seatTile('Links', 'LEFT'));
+      layoutEl.appendChild(s());
+      layoutEl.appendChild(seatTile('Rechts', 'RIGHT'));
+
+      layoutEl.appendChild(s());
+      layoutEl.appendChild(seatTile('Unten', 'BOTTOM'));
+      layoutEl.appendChild(s());
+    }
+
+    function renderLayout5(){
+      layoutEl.className = 'miniLayout layout5';
+      layoutEl.innerHTML = '';
+      // 2 Spalten x 3 Reihen: links oben/unten, rechts oben/unten, unten über beide
+      layoutEl.appendChild(seatTile('L oben', 'LEFT_TOP'));
+      layoutEl.appendChild(seatTile('R oben', 'RIGHT_TOP'));
+      layoutEl.appendChild(seatTile('L unten', 'LEFT_BOTTOM'));
+      layoutEl.appendChild(seatTile('R unten', 'RIGHT_BOTTOM'));
+
+      const bottom = seatTile('Unten', 'BOTTOM');
+      bottom.style.gridColumn = '1 / span 2';
+      layoutEl.appendChild(bottom);
+    }
+
+    function renderLayout6(){
+      layoutEl.className = 'miniLayout layout6';
+      layoutEl.innerHTML = '';
+      // 2 Spalten x 3 Reihen: oben über beide, links oben/unten, rechts oben/unten, unten über beide
+      const top = seatTile('Oben', 'TOP');
+      top.style.gridColumn = '1 / span 2';
+      layoutEl.appendChild(top);
+
+      layoutEl.appendChild(seatTile('L oben', 'LEFT_TOP'));
+      layoutEl.appendChild(seatTile('R oben', 'RIGHT_TOP'));
+      layoutEl.appendChild(seatTile('L unten', 'LEFT_BOTTOM'));
+      layoutEl.appendChild(seatTile('R unten', 'RIGHT_BOTTOM'));
+
+      const bottom = seatTile('Unten', 'BOTTOM');
+      bottom.style.gridColumn = '1 / span 2';
+      layoutEl.appendChild(bottom);
+    }
+
+    // ---------- utils ----------
+
+    function escapeHtml(s){
+      return String(s)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+  </script>
+</body>
+</html>
