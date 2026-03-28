@@ -5,6 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Tarock-Schreibblock-V0001 (Prototype)</title>
 
+  <!-- PWA / App-like (Android + iOS) -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#3b6fa8">
+
+  <!-- iOS: Homescreen Icon + App-Mode Hint (Safari Add to Home Screen) -->
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
   <style>
     :root{
       --bg:#cfe9ff;
@@ -31,9 +40,9 @@
       --btnRadius:6px;
       --iconDark:rgba(0,0,0,.92);       /* Symbole dunkel */
 
+      /* Default-Fallbacks (werden in .bottombar dynamisch überschrieben) */
       --btnW:56px;
       --btnH:52px;
-
       --ballSize:26px;
 
       --ballRed:#c00000;
@@ -48,14 +57,17 @@
       font-family:var(--font);
       display:flex;
       justify-content:center;
+      overflow-x:hidden; /* Airbag gegen horizontalen Scroll */
     }
 
     .phone{
       width:min(480px,100%);
       height:100vh;
+      height:100dvh; /* moderner Mobile-Viewport */
       background:var(--panel);
       display:flex;
       flex-direction:column;
+      overflow:hidden; /* verhindert, dass Kind-Overflow nach außen scrollt */
     }
 
     /* TOP BAR */
@@ -65,33 +77,31 @@
       border-bottom:var(--lineW) solid var(--line);
       display:flex;
       align-items:center;
-      justify-content:center; /* ✅ Kachel zentrieren */
+      justify-content:center;
       padding:8px 12px;
     }
 
-    /* ✅ Status-Kachel: hellblau, nur so breit wie Inhalt */
+    /* Status-Kachel */
     .statusPill{
-      display:inline-flex;              /* shrink-to-fit */
+      display:inline-flex;
       align-items:center;
       gap:12px;
       padding:8px 14px;
-      background:var(--btnBg);          /* hellblau wie Kacheln unten */
+      background:var(--btnBg);
       border:1px solid var(--btnBorder);
       border-radius:var(--btnRadius);
-      color:var(--iconDark);            /* ✅ Statusschrift dunkel */
+      color:var(--iconDark);
       font-size:17px;
       line-height:1.15;
       white-space:nowrap;
-      max-width: calc(100vw - 40px);    /* Sicherheitslimit für sehr lange Texte */
+      max-width: calc(100% - 24px);
       overflow:hidden;
       text-overflow:ellipsis;
     }
 
-    /* Rot bleibt Rot */
     .markLose{ color:var(--red); font-weight:800; }
     .markNeg { color:var(--red); font-weight:700; }
 
-    /* CLOCK ICON in Status-Kachel: dunkel (wie Text) */
     .clockSvg{
       width:30px;
       height:30px;
@@ -116,6 +126,7 @@
       flex:1;
       display:flex;
       flex-direction:column;
+      min-height:0;
     }
 
     .zone-top{
@@ -125,6 +136,7 @@
       justify-content:center;
       align-items:center;
       padding:10px;
+      min-height:0;
     }
 
     .zone-mid{
@@ -132,6 +144,7 @@
       border-bottom:var(--lineW) solid var(--line);
       display:flex;
       position:relative;
+      min-height:0;
     }
 
     .mid-left,.mid-right{
@@ -139,6 +152,7 @@
       display:flex;
       justify-content:center;
       align-items:center;
+      min-width:0;
     }
 
     .centerLine{
@@ -158,6 +172,7 @@
       justify-content:center;
       align-items:center;
       padding:10px 16px;
+      min-height:0;
     }
 
     .panelWrap{
@@ -166,6 +181,7 @@
       justify-content:center;
       align-items:center;
       transform-origin:center;
+      min-width:0;
     }
     .rot-top{transform:rotate(180deg);}
     .rot-left{transform:rotate(90deg);}
@@ -200,6 +216,7 @@
     .rowTopBottom{
       display:inline-flex;
       align-items:center;
+      min-width:0;
     }
 
     .colSide{
@@ -209,6 +226,7 @@
       justify-content:center;
       gap:14px;
       text-align:center;
+      min-width:0;
     }
     .sideName{
       font-size:30px;
@@ -223,23 +241,47 @@
       gap:var(--gapBigToSmall);
     }
 
-    /* BOTTOM BAR */
+    /* =========================
+       BOTTOM BAR (Strategie A)
+       ========================= */
     .bottombar{
       height:62px;
       background:var(--barBg);
       border-top:var(--lineW) solid var(--line);
       display:flex;
       align-items:center;
-      padding:8px 10px;
-      gap:10px;
+
+      /* dynamische Abstände */
+      --barPadX: 10px;
+      --gapX: clamp(6px, 2.2vw, 10px);
+
+      /* 7 Buttons total, 6 horizontale gaps:
+         - innerhalb Gruppen: left(1) + mid(2) + right(1) = 4
+         - zwischen Gruppen (bottombar gap): 2
+         => total 6 gaps */
+      --btnW: clamp(44px, calc((100% - (2 * var(--barPadX)) - (6 * var(--gapX))) / 7), 56px);
+      --btnH: clamp(46px, calc(var(--btnW) * 0.92), 52px);
+
+      padding:8px var(--barPadX);
+      gap:var(--gapX);
+
+      /* Wichtig: verhindert Overflows durch zu starre Flex-Kinder */
+      min-width:0;
     }
 
     .bottom-left,.bottom-mid,.bottom-right{
       display:flex;
-      gap:10px;
+      gap:var(--gapX);
       align-items:center;
+      min-width:0;
     }
-    .bottom-mid{margin:0 auto;}
+
+    /* Mitte darf schrumpfen, bleibt aber zentriert */
+    .bottom-mid{
+      margin:0 auto;
+      justify-content:center;
+      min-width:0;
+    }
 
     .btn{
       width:var(--btnW);
@@ -251,22 +293,23 @@
       place-items:center;
       user-select:none;
       color:var(--iconDark);
+      flex:0 0 auto;
     }
 
     .btn.pm{
-      font-size:26px;
+      font-size:clamp(22px, calc(var(--btnW) * 0.48), 26px);
       font-weight:700;
       line-height:1;
     }
     .btn.close{
-      font-size:22px;
+      font-size:clamp(18px, calc(var(--btnW) * 0.40), 22px);
       font-weight:800;
       line-height:1;
     }
 
     .statsIcon,.listIcon{
-      width:26px;
-      height:20px;
+      width:clamp(22px, calc(var(--btnW) * 0.48), 26px);
+      height:clamp(18px, calc(var(--btnH) * 0.38), 20px);
       position:relative;
     }
 
@@ -290,8 +333,8 @@
     .listIcon span:nth-child(3){top:16px;}
 
     .rbBall{
-      width:var(--ballSize);
-      height:var(--ballSize);
+      width:clamp(22px, calc(var(--btnW) * 0.50), 26px);
+      height:clamp(22px, calc(var(--btnW) * 0.50), 26px);
       border-radius:50%;
       background:
         radial-gradient(circle at 30% 28%, rgba(255,255,255,.55), transparent 35%),
@@ -299,8 +342,8 @@
     }
 
     .reloadSvg{
-      width:30px;
-      height:30px;
+      width:clamp(24px, calc(var(--btnW) * 0.55), 30px);
+      height:clamp(24px, calc(var(--btnW) * 0.55), 30px);
       display:block;
     }
     .reloadSvg path,.reloadSvg polyline{
@@ -314,9 +357,6 @@
     @media (max-width: 380px){
       :root{
         --scoreBigSize:80px;
-        --btnW:52px;
-        --btnH:48px;
-        --ballSize:24px;
       }
       .name{font-size:28px;}
       .sideName{font-size:26px;}
@@ -326,10 +366,8 @@
         padding:7px 12px;
       }
       .clockSvg{width:28px;height:28px;}
-      .btn.pm{font-size:24px;}
-      .btn.close{font-size:20px;}
-      .statsIcon,.listIcon{width:24px;height:18px;}
-      .reloadSvg{width:28px;height:28px;}
+
+      /* feinere Striche bei sehr kleinen Displays */
       .reloadSvg path,.reloadSvg polyline{stroke-width:2.0;}
     }
   </style>
@@ -338,7 +376,7 @@
 <body>
 <div class="phone">
 
-  <!-- STATUS BAR (Kachel, schwarze Schrift, Rot bleibt Rot) -->
+  <!-- STATUS BAR -->
   <div class="topbar">
     <div class="statusPill" title="Status">
       <svg class="clockSvg" viewBox="0 0 24 24" aria-hidden="true">
@@ -441,5 +479,15 @@
   </div>
 
 </div>
+
+<script>
+  // Optional: Service Worker registrieren (für Offline/Cache).
+  // Für "URL weg" ist SW nicht zwingend erforderlich, aber fürs App-Feeling sehr gut.
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    });
+  }
+</script>
 </body>
 </html>
