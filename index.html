@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ETS – Elektronischer Tarock Schreibblock</title>
+
+  <style>
+    :root{
+      --bg:#cfe9ff;
+      --panel:#cfe9ff;
+      --barBg:#3b6fa8;
+      --line:#000;
+      --lineW:3px;
+      --font: Arial, sans-serif;
+
+      --black:#000;
+      --red:#c00000;
+
+      /* Button/Kachel Stil (wie Spiel-Screens) */
+      --btnBg:var(--panel);
+      --btnBorder:rgba(0,0,0,.70);
+      --btnRadius:10px;
+      --iconDark:rgba(0,0,0,.92);
+
+      --padX:12px;
+    }
+
+    *{box-sizing:border-box;}
+    html,body{height:100%;}
+    html,body{overflow:hidden;}
+
+    body{
+      margin:0;
+      background:var(--bg);
+      font-family:var(--font);
+      display:flex;
+      justify-content:center;
+      color:var(--black);
+    }
+
+    /* exakt wie "Handy"-Container in den Screens */
+    .phone{
+      width:min(480px,100%);
+      height:100dvh;
+      background:var(--panel);
+      display:flex;
+      flex-direction:column;
+      overflow:hidden;
+    }
+
+    /* TOPBAR: schmal wie bei den Screens */
+    .topbar{
+      height: calc(58px + env(safe-area-inset-top));
+      padding: calc(8px + env(safe-area-inset-top)) var(--padX) 8px var(--padX);
+      background:var(--barBg);
+      border-bottom:var(--lineW) solid var(--line);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      min-height:0;
+    }
+
+    .brand{
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+    }
+
+    .brandTitle{
+      font-size:16px;
+      font-weight:800;
+      line-height:1.15;
+      color:#fff;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .brandSub{
+      font-size:11px;
+      font-weight:600;
+      line-height:1.2;
+      color:rgba(255,255,255,.85);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .logoWrap{
+      flex:0 0 auto;
+      width:44px;
+      height:44px;
+      border-radius:10px;
+      background:rgba(255,255,255,.18);
+      border:1px solid rgba(0,0,0,.25);
+      overflow:hidden;
+      display:grid;
+      place-items:center;
+    }
+
+    .logoWrap img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+
+    /* CONTENT: darf NICHT scrollen */
+    .content{
+      flex:1 1 auto;
+      min-height:0;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      padding:12px var(--padX);
+      overflow:hidden;
+    }
+
+    .sectionTitle{
+      margin:0;
+      font-size:14px;
+      font-weight:800;
+      color:var(--iconDark);
+    }
+
+    /* Button-Grid: 2 Spalten, damit 7 Buttons ohne Scroll passen */
+    .grid{
+      flex:1 1 auto;
+      min-height:0;
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+      overflow:hidden;
+      align-content:start;
+    }
+
+    /* Auf extrem schmalen Geräten eine Spalte (aber Buttonhöhe wird kleiner) */
+    @media (max-width: 340px){
+      .grid{ grid-template-columns: 1fr; }
+    }
+
+    .menuBtn{
+      text-decoration:none;
+      color:var(--iconDark);
+      background:var(--btnBg);
+      border:1px solid var(--btnBorder);
+      border-radius:var(--btnRadius);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:10px 10px;
+      min-width:0;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .menuBtn:active{ transform:translateY(1px); }
+
+    .btnText{min-width:0;}
+
+    .btnTitle{
+      font-size:clamp(14px, 3.4vw, 16px);
+      font-weight:800;
+      line-height:1.15;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .btnHint{
+      margin-top:2px;
+      font-size:10px;
+      font-weight:600;
+      line-height:1.2;
+      color:rgba(0,0,0,.70);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .chev{
+      flex:0 0 auto;
+      width:24px;
+      height:24px;
+      border-radius:8px;
+      background:rgba(0,0,0,.06);
+      display:grid;
+      place-items:center;
+    }
+
+    .chev svg{
+      width:16px;
+      height:16px;
+      display:block;
+      color:rgba(0,0,0,.72);
+    }
+
+    .chev svg path{
+      fill:none;
+      stroke:currentColor;
+      stroke-width:2.4;
+      stroke-linecap:round;
+      stroke-linejoin:round;
+    }
+
+    /* BOTTOMBAR: schmal wie in den Screens, aber ohne Icons (nur Deko) */
+    .bottombar{
+      height: calc(40px + env(safe-area-inset-bottom));
+      padding: 8px var(--padX) calc(8px + env(safe-area-inset-bottom)) var(--padX);
+      background:var(--barBg);
+      border-top:var(--lineW) solid var(--line);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      color:rgba(255,255,255,.88);
+      font-size:11px;
+      font-weight:700;
+      min-height:0;
+    }
+
+    .ver{ font-weight:700; opacity:.9; }
+  </style>
+</head>
+
+<body>
+  <div class="phone">
+
+    <div class="topbar">
+      <div class="brand">
+        <div class="brandTitle">ETS – Elektronischer Tarock Schreibblock</div>
+        <div class="brandSub">Startmenü (Prototype)</div>
+      </div>
+
+      <div class="logoWrap" title="Logo (Platzhalter)">
+        <img src="icons/icon-192.png" alt="XXI" onerror="this.style.display='none'">
+      </div>
+    </div>
+
+    <div class="content">
+      <h2 class="sectionTitle">Neues Spiel</h2>
+
+      <div class="grid">
+        <a class="menuBtn" href="4er-Screen.html">
+          <div class="btnText">
+            <div class="btnTitle">Neuer 4er Tisch</div>
+            <div class="btnHint">4 Spieler</div>
+          </div>
+          <div class="chev" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
+          </div>
+        </a>
+
+        <a class="menuBtn" href="5er-Screen.html">
+          <div class="btnText">
+            <div class="btnTitle">Neuer 5er Tisch</div>
+            <div class="btnHint">5 Spieler</div>
+          </div>
+          <div class="chev" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
+          </div>
+        </a>
+
+        <a class="menuBtn" href="6er-Screen.html">
+          <div class="btnText">
+            <div class="btnTitle">Neuer 6er Tisch</div>
+            <div class="btnHint">6 Spieler</div>
+          </div>
+          <div class="chev" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
+          </div>
+        </a>
+
+        <a class="menuBtn" href="#" onclick="return false;">
+          <div class="btnText">
+            <div class="btnTitle">Platzhalter 1</div>
+            <div class="btnHint">(kommt später)</div>
+          </div>
+          <div class="chev" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
+          </div>
+        </a>
+
+        <a class="menuBtn" href="#" onclick="return false;">
+          <div class="btnText">
+            <div class="btnTitle">Platzhalter 2</div>
+            <div class="btnHint">(kommt später)</div>
+          </div>
+          <div class="chev" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
+          </div>
+        </a>
+
+        <a class="menuBtn" href="#" onclick="return false;">
+          <div class="btnText">
+            <div class="btnTitle">Platzhalter 3</div>
+            <div class="btnHint">(kommt später)</div>
+          </div>
+          <div class="chev" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
+          </div>
+        </a>
+
+        <a class="menuBtn" href="#" onclick="return false;">
+          <div class="btnText">
+            <div class="btnTitle">Platzhalter 4</div>
+            <div class="btnHint">(kommt später)</div>
+          </div>
+          <div class="chev" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
+          </div>
+        </a>
+      </div>
+    </div>
+
+    <div class="bottombar">
+      <div>ETS</div>
+      <div class="ver">v0.0</div>
+    </div>
+
+  </div>
+</body>
+</html>

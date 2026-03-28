@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tarock-Schreibblock-V0001 (Prototype)</title>
+
+  <!-- PWA / App-like (Android + iOS) -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#3b6fa8">
+
+  <!-- iOS: Homescreen Icon + App-Mode Hint (Safari Add to Home Screen) -->
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+  <style>
+    :root{
+      --bg:#cfe9ff;
+      --panel:#cfe9ff;
+      --barBg:#3b6fa8;
+
+      --line:#000;
+      --lineW:3px;
+
+      --font: Arial, sans-serif;
+
+      --scoreBigSize:92px;
+      --scoreSmallScale:0.5;
+
+      --gapNameToBig:1ch;
+      --gapBigToSmall:1ch;
+
+      --black:#000;
+      --red:#c00000; /* euer Rot */
+
+      /* Buttons / Kacheln unten */
+      --btnBg:var(--panel);             /* hellblau wie Hintergrund */
+      --btnBorder:rgba(0,0,0,.70);      /* klarer Rand */
+      --btnRadius:6px;
+      --iconDark:rgba(0,0,0,.92);       /* Symbole dunkel */
+
+      /* Default-Fallbacks (werden in .bottombar dynamisch überschrieben) */
+      --btnW:56px;
+      --btnH:52px;
+      --ballSize:26px;
+
+      --ballRed:#c00000;
+      --ballBlack:#111111;
+    }
+
+    *{box-sizing:border-box;}
+    html,body{height:100%;}
+    body{
+      margin:0;
+      background:var(--bg);
+      font-family:var(--font);
+      display:flex;
+      justify-content:center;
+      overflow-x:hidden; /* Airbag gegen horizontalen Scroll */
+    }
+
+    .phone{
+      width:min(480px,100%);
+      height:100vh;
+      height:100dvh; /* moderner Mobile-Viewport */
+      background:var(--panel);
+      display:flex;
+      flex-direction:column;
+      overflow:hidden; /* verhindert, dass Kind-Overflow nach außen scrollt */
+    }
+
+    /* TOP BAR */
+    .topbar{
+      height:58px;
+      background:var(--barBg);
+      border-bottom:var(--lineW) solid var(--line);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:8px 12px;
+    }
+
+    /* Status-Kachel */
+    .statusPill{
+      display:inline-flex;
+      align-items:center;
+      gap:12px;
+      padding:8px 14px;
+      background:var(--btnBg);
+      border:1px solid var(--btnBorder);
+      border-radius:var(--btnRadius);
+      color:var(--iconDark);
+      font-size:17px;
+      line-height:1.15;
+      white-space:nowrap;
+      max-width: calc(100% - 24px);
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .markLose{ color:var(--red); font-weight:800; }
+    .markNeg { color:var(--red); font-weight:700; }
+
+    .clockSvg{
+      width:30px;
+      height:30px;
+      color:var(--iconDark);
+      flex:0 0 auto;
+      display:block;
+    }
+    .clockSvg circle,
+    .clockSvg path{
+      fill:none;
+      stroke:currentColor;
+      stroke-width:2.2;
+      stroke-linecap:round;
+      stroke-linejoin:round;
+    }
+    .clockSvg .dot{
+      fill:currentColor;
+      stroke:none;
+    }
+
+    .content{
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      min-height:0;
+    }
+
+    .zone-top{
+      flex:0 0 30%;
+      border-bottom:var(--lineW) solid var(--line);
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      padding:10px;
+      min-height:0;
+    }
+
+    .zone-mid{
+      flex:1;
+      border-bottom:var(--lineW) solid var(--line);
+      display:flex;
+      position:relative;
+      min-height:0;
+    }
+
+    .mid-left,.mid-right{
+      flex:1;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      min-width:0;
+    }
+
+    .centerLine{
+      position:absolute;
+      left:50%;
+      top:0;
+      bottom:0;
+      width:var(--lineW);
+      background:var(--line);
+      transform:translateX(-50%);
+    }
+
+    .zone-bottom{
+      flex:0 0 24%;
+      border-bottom:var(--lineW) solid var(--line);
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      padding:10px 16px;
+      min-height:0;
+    }
+
+    .panelWrap{
+      width:100%;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      transform-origin:center;
+      min-width:0;
+    }
+    .rot-top{transform:rotate(180deg);}
+    .rot-left{transform:rotate(90deg);}
+    .rot-right{transform:rotate(-90deg);}
+
+    .name{
+      font-size:34px;
+      font-weight:700;
+      line-height:1.05;
+      color:var(--black);
+    }
+
+    .scoreBig{
+      font-size:var(--scoreBigSize);
+      font-weight:700;
+      line-height:1;
+      letter-spacing:-1px;
+      margin-left:var(--gapNameToBig);
+      color:var(--black);
+    }
+    .scoreSmall{
+      font-size:calc(var(--scoreBigSize)*var(--scoreSmallScale));
+      line-height:1;
+      margin-left:var(--gapBigToSmall);
+      color:var(--black);
+      opacity:.95;
+      white-space:nowrap;
+    }
+    .numRed{color:var(--red);}
+    .numBlack{color:var(--black);}
+
+    .rowTopBottom{
+      display:inline-flex;
+      align-items:center;
+      min-width:0;
+    }
+
+    .colSide{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:14px;
+      text-align:center;
+      min-width:0;
+    }
+    .sideName{
+      font-size:30px;
+      font-weight:700;
+      line-height:1.05;
+      white-space:nowrap;
+      color:var(--black);
+    }
+    .sideScoreRow{
+      display:flex;
+      align-items:center;
+      gap:var(--gapBigToSmall);
+    }
+
+    /* =========================
+       BOTTOM BAR (Strategie A)
+       ========================= */
+    .bottombar{
+      height:62px;
+      background:var(--barBg);
+      border-top:var(--lineW) solid var(--line);
+      display:flex;
+      align-items:center;
+
+      /* dynamische Abstände */
+      --barPadX: 10px;
+      --gapX: clamp(6px, 2.2vw, 10px);
+
+      /* 7 Buttons total, 6 horizontale gaps:
+         - innerhalb Gruppen: left(1) + mid(2) + right(1) = 4
+         - zwischen Gruppen (bottombar gap): 2
+         => total 6 gaps */
+      --btnW: clamp(44px, calc((100% - (2 * var(--barPadX)) - (6 * var(--gapX))) / 7), 56px);
+      --btnH: clamp(46px, calc(var(--btnW) * 0.92), 52px);
+
+      padding:8px var(--barPadX);
+      gap:var(--gapX);
+
+      /* Wichtig: verhindert Overflows durch zu starre Flex-Kinder */
+      min-width:0;
+    }
+
+    .bottom-left,.bottom-mid,.bottom-right{
+      display:flex;
+      gap:var(--gapX);
+      align-items:center;
+      min-width:0;
+    }
+
+    /* Mitte darf schrumpfen, bleibt aber zentriert */
+    .bottom-mid{
+      margin:0 auto;
+      justify-content:center;
+      min-width:0;
+    }
+
+    .btn{
+      width:var(--btnW);
+      height:var(--btnH);
+      background:var(--btnBg);
+      border:1px solid var(--btnBorder);
+      border-radius:var(--btnRadius);
+      display:grid;
+      place-items:center;
+      user-select:none;
+      color:var(--iconDark);
+      flex:0 0 auto;
+    }
+
+    .btn.pm{
+      font-size:clamp(22px, calc(var(--btnW) * 0.48), 26px);
+      font-weight:700;
+      line-height:1;
+    }
+    .btn.close{
+      font-size:clamp(18px, calc(var(--btnW) * 0.40), 22px);
+      font-weight:800;
+      line-height:1;
+    }
+
+    .statsIcon,.listIcon{
+      width:clamp(22px, calc(var(--btnW) * 0.48), 26px);
+      height:clamp(18px, calc(var(--btnH) * 0.38), 20px);
+      position:relative;
+    }
+
+    .statsIcon::before{
+      content:"";
+      position:absolute;
+      left:0;bottom:0;
+      width:100%;height:100%;
+      border-left:3px solid var(--iconDark);
+      border-bottom:3px solid var(--iconDark);
+    }
+
+    .listIcon span{
+      position:absolute;
+      left:0;right:0;
+      height:3px;
+      background:var(--iconDark);
+    }
+    .listIcon span:nth-child(1){top:0;}
+    .listIcon span:nth-child(2){top:8px;}
+    .listIcon span:nth-child(3){top:16px;}
+
+    .rbBall{
+      width:clamp(22px, calc(var(--btnW) * 0.50), 26px);
+      height:clamp(22px, calc(var(--btnW) * 0.50), 26px);
+      border-radius:50%;
+      background:
+        radial-gradient(circle at 30% 28%, rgba(255,255,255,.55), transparent 35%),
+        linear-gradient(135deg, var(--ballRed) 0 50%, var(--ballBlack) 50% 100%);
+    }
+
+    .reloadSvg{
+      width:clamp(24px, calc(var(--btnW) * 0.55), 30px);
+      height:clamp(24px, calc(var(--btnW) * 0.55), 30px);
+      display:block;
+    }
+    .reloadSvg path,.reloadSvg polyline{
+      stroke:var(--iconDark);
+      stroke-width:2.2;
+      fill:none;
+      stroke-linecap:round;
+      stroke-linejoin:round;
+    }
+
+    @media (max-width: 380px){
+      :root{
+        --scoreBigSize:80px;
+      }
+      .name{font-size:28px;}
+      .sideName{font-size:26px;}
+      .statusPill{
+        font-size:15px;
+        gap:10px;
+        padding:7px 12px;
+      }
+      .clockSvg{width:28px;height:28px;}
+
+      /* feinere Striche bei sehr kleinen Displays */
+      .reloadSvg path,.reloadSvg polyline{stroke-width:2.0;}
+    }
+  </style>
+</head>
+
+<body>
+<div class="phone">
+
+  <!-- STATUS BAR -->
+  <div class="topbar">
+    <div class="statusPill" title="Status">
+      <svg class="clockSvg" viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="8.5"></circle>
+        <path d="M12 12 L12 7.5"></path>
+        <path d="M12 12 L15.3 13.8"></path>
+        <circle class="dot" cx="12" cy="12" r="1"></circle>
+      </svg>
+
+      <span>
+        Anna <span class="markLose">✗</span>
+        Sechser‑Dreier, IIII (<span class="markNeg">-8</span>, 4)
+      </span>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <div class="zone-top">
+      <div class="panelWrap rot-top">
+        <div class="rowTopBottom">
+          <div class="name">August<br>Thomoll</div>
+          <div class="scoreBig numBlack">21</div>
+          <div class="scoreSmall numRed">(-4)</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="zone-mid">
+      <div class="mid-left">
+        <div class="panelWrap rot-left">
+          <div class="colSide">
+            <div class="sideName">Andrea<br>Affenberger</div>
+            <div class="sideScoreRow">
+              <div class="scoreBig numRed" style="margin-left:0;">-13</div>
+              <div class="scoreSmall numRed" style="margin-left:0;">(-4)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="centerLine"></div>
+
+      <div class="mid-right">
+        <div class="panelWrap rot-right">
+          <div class="colSide">
+            <div class="sideName">Anna<br>Sammer</div>
+            <div class="sideScoreRow">
+              <div class="scoreBig numBlack" style="margin-left:0;">4</div>
+              <div class="scoreSmall numBlack" style="margin-left:0;">(4)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="zone-bottom">
+      <div class="panelWrap rot-bot">
+        <div class="rowTopBottom">
+          <div class="name">Walter<br>Vojta</div>
+          <div class="scoreBig numRed">-12</div>
+          <div class="scoreSmall numBlack">(4)</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- BOTTOM BAR -->
+  <div class="bottombar">
+    <div class="bottom-left">
+      <div class="btn" title="Statistik" aria-label="Statistik">
+        <div class="statsIcon"></div>
+      </div>
+      <div class="btn" title="Liste" aria-label="Liste">
+        <div class="listIcon">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="bottom-mid">
+      <div class="btn pm" title="Positivspiel (+)" aria-label="Positivspiel">+</div>
+      <div class="btn pm" title="Negativspiel (−)" aria-label="Negativspiel">−</div>
+      <div class="btn" title="Farbenspiel" aria-label="Farbenspiel">
+        <div class="rbBall"></div>
+      </div>
+    </div>
+
+    <div class="bottom-right">
+      <div class="btn" title="Korrigieren" aria-label="Korrigieren">
+        <svg class="reloadSvg" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M20 12a8 8 0 1 1-2.3-5.7"></path>
+          <polyline points="20 5 20 9 16 9"></polyline>
+        </svg>
+      </div>
+      <div class="btn close" title="Schließen" aria-label="Schließen">✕</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Optional: Service Worker registrieren (für Offline/Cache).
+  // Für "URL weg" ist SW nicht zwingend erforderlich, aber fürs App-Feeling sehr gut.
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    });
+  }
+</script>
+</body>
+</html>
