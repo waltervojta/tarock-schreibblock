@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tarock-Schreibblock – 4er Tisch</title>
+
+  <!-- PWA / App-like (Android + iOS) -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#3b6fa8">
+
+  <!-- iOS: Homescreen Icon + App-Mode Hint (Safari Add to Home Screen) -->
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+  <style>
+    :root{
+      --bg:#cfe9ff;
+      --panel:#cfe9ff;
+      --barBg:#3b6fa8;
+
+      --line:#000;
+      --lineW:3px;
+
+      --font: Arial, sans-serif;
+
+      --scoreBigSize:92px;
+      --scoreSmallScale:0.5;
+
+      --gapNameToBig:1ch;
+      --gapBigToSmall:1ch;
+
+      --black:#000;
+      --red:#c00000;
+
+      /* Buttons / Kacheln unten */
+      --btnBg:var(--panel);
+      --btnBorder:rgba(0,0,0,.70);
+      --btnRadius:6px;
+      --iconDark:rgba(0,0,0,.92);
+    }
+
+    *{box-sizing:border-box;}
+    html,body{height:100%;}
+    html,body{overflow:hidden;}
+
+    body{
+      margin:0;
+      background:var(--bg);
+      font-family:var(--font);
+      display:flex;
+      justify-content:center;
+      overflow-x:hidden;
+    }
+
+    .phone{
+      width:min(480px,100%);
+      height:100dvh;
+      background:var(--panel);
+      display:flex;
+      flex-direction:column;
+      overflow:hidden;
+    }
+
+    /* TOP BAR */
+    .topbar{
+      height: calc(58px + env(safe-area-inset-top));
+      padding: calc(8px + env(safe-area-inset-top)) 12px 8px 12px;
+      background:var(--barBg);
+      border-bottom:var(--lineW) solid var(--line);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .statusPill{
+      display:inline-flex;
+      align-items:center;
+      gap:12px;
+      padding:8px 14px;
+      background:var(--btnBg);
+      border:1px solid var(--btnBorder);
+      border-radius:var(--btnRadius);
+      color:var(--iconDark);
+      font-size:17px;
+      line-height:1.15;
+      white-space:nowrap;
+      max-width: calc(100% - 24px);
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .markLose{ color:var(--red); font-weight:800; }
+    .markNeg { color:var(--red); font-weight:700; }
+
+    .clockSvg{
+      width:30px;
+      height:30px;
+      color:var(--iconDark);
+      flex:0 0 auto;
+      display:block;
+    }
+
+    .clockSvg circle,
+    .clockSvg path{
+      fill:none;
+      stroke:currentColor;
+      stroke-width:2.2;
+      stroke-linecap:round;
+      stroke-linejoin:round;
+    }
+
+    .clockSvg .dot{
+      fill:currentColor;
+      stroke:none;
+    }
+
+    /* CONTENT */
+    .content{
+      flex:1 1 auto;
+      min-height:0;
+      display:flex;
+      flex-direction:column;
+      overflow:hidden;
+    }
+
+    .zone-top{
+      flex:0 0 30%;
+      border-bottom:var(--lineW) solid var(--line);
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      padding:10px;
+      min-height:0;
+    }
+
+    .zone-mid{
+      flex:1 1 auto;
+      border-bottom:var(--lineW) solid var(--line);
+      display:flex;
+      position:relative;
+      min-height:0;
+    }
+
+    .mid-left,.mid-right{
+      flex:1;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      min-width:0;
+    }
+
+    .centerLine{
+      position:absolute;
+      left:50%;
+      top:0;
+      bottom:0;
+      width:var(--lineW);
+      background:var(--line);
+      transform:translateX(-50%);
+    }
+
+    .zone-bottom{
+      flex:0 0 24%;
+      border-bottom:var(--lineW) solid var(--line);
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      padding:10px 16px;
+      min-height:0;
+    }
+
+    .panelWrap{
+      width:100%;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      transform-origin:center;
+      min-width:0;
+    }
+
+    .rot-top{transform:rotate(180deg);} 
+    .rot-left{transform:rotate(90deg);} 
+    .rot-right{transform:rotate(-90deg);} 
+
+    .rowTopBottom{
+      display:inline-flex;
+      align-items:center;
+      min-width:0;
+    }
+
+    .name{
+      font-size:34px;
+      font-weight:700;
+      line-height:1.05;
+      color:var(--black);
+    }
+
+    .scoreBig{
+      font-size:var(--scoreBigSize);
+      font-weight:700;
+      line-height:1;
+      letter-spacing:-1px;
+      margin-left:var(--gapNameToBig);
+      color:var(--black);
+    }
+
+    .scoreSmall{
+      font-size:calc(var(--scoreBigSize)*var(--scoreSmallScale));
+      line-height:1;
+      margin-left:var(--gapBigToSmall);
+      color:var(--black);
+      opacity:.95;
+      white-space:nowrap;
+    }
+
+    .numRed{color:var(--red);} 
+    .numBlack{color:var(--black);} 
+
+    .colSide{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:14px;
+      text-align:center;
+      min-width:0;
+    }
+
+    .sideName{
+      font-size:30px;
+      font-weight:700;
+      line-height:1.05;
+      white-space:nowrap;
+      color:var(--black);
+    }
+
+    .sideScoreRow{
+      display:flex;
+      align-items:baseline;
+      gap:var(--gapBigToSmall);
+      white-space:nowrap;
+    }
+
+    /* =========================
+       BOTTOM BAR – wie 5er/6er (Grid, 7 Slots)
+       ========================= */
+    .bottombar{
+      height: calc(62px + env(safe-area-inset-bottom));
+      background:var(--barBg);
+      border-top:var(--lineW) solid var(--line);
+
+      --padX: clamp(6px, 2vw, 10px);
+      --gapX: clamp(3px, 1.4vw, 10px);
+      --padY: 6px;
+
+      --btnW: clamp(38px, calc((100% - (2 * var(--padX)) - (6 * var(--gapX))) / 7), 56px);
+      --btnH: clamp(40px, calc(var(--btnW) * 0.92), 50px);
+
+      padding:
+        var(--padY)
+        var(--padX)
+        calc(var(--padY) + env(safe-area-inset-bottom))
+        var(--padX);
+
+      display:grid;
+      grid-template-columns: repeat(7, 1fr);
+      column-gap: var(--gapX);
+      align-items:center;
+      justify-items:center;
+
+      min-width:0;
+    }
+
+    .bottom-left, .bottom-mid, .bottom-right{ display:contents; }
+
+    .btn{
+      width: var(--btnW);
+      height: var(--btnH);
+      background: var(--btnBg);
+      border: 1px solid var(--btnBorder);
+      border-radius: var(--btnRadius);
+      display:grid;
+      place-items:center;
+      user-select:none;
+      color: var(--iconDark);
+      overflow:hidden;
+      -webkit-tap-highlight-color: transparent;
+      cursor:pointer;
+    }
+
+    .btn.pm{
+      font-size:clamp(20px, calc(var(--btnW) * 0.48), 26px);
+      font-weight:700;
+      line-height:1;
+    }
+
+    .btn.close{
+      font-size:clamp(18px, calc(var(--btnW) * 0.40), 22px);
+      font-weight:800;
+      line-height:1;
+    }
+
+    .rbBall{
+      width: clamp(20px, calc(var(--btnW) * 0.50), 26px);
+      height: clamp(20px, calc(var(--btnW) * 0.50), 26px);
+      border-radius:50%;
+      background:
+        radial-gradient(circle at 30% 28%, rgba(255,255,255,.55), transparent 35%),
+        linear-gradient(135deg, #c00000 0 50%, #111111 50% 100%);
+    }
+
+    .iconSvg{
+      width:30px;
+      height:30px;
+      display:block;
+      color:var(--iconDark);
+    }
+    .iconSvg *{
+      fill:none;
+      stroke:currentColor;
+      stroke-width:2.2;
+      stroke-linecap:round;
+      stroke-linejoin:round;
+      vector-effect: non-scaling-stroke;
+    }
+    .iconSvg .fillDot{ fill:currentColor; stroke:none; }
+
+    .btn .iconSvg{
+      width: clamp(22px, calc(var(--btnW) * 0.55), 30px);
+      height: clamp(22px, calc(var(--btnW) * 0.55), 30px);
+    }
+
+    @media (max-width: 380px){
+      :root{ --scoreBigSize:80px; }
+      .name{font-size:28px;}
+      .sideName{font-size:26px;}
+      .statusPill{ font-size:15px; gap:10px; padding:7px 12px; }
+      .clockSvg{width:28px;height:28px;}
+    }
+  </style>
+</head>
+
+<body>
+  <div class="phone">
+
+    <!-- STATUS BAR -->
+    <div class="topbar">
+      <div class="statusPill" title="Status">
+        <svg class="clockSvg" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="8.5"></circle>
+          <path d="M12 12 L12 7.5"></path>
+          <path d="M12 12 L15.3 13.8"></path>
+          <circle class="dot" cx="12" cy="12" r="1"></circle>
+        </svg>
+
+        <span>
+          Anna <span class="markLose">✗</span>
+          Sechser‑Dreier, IIII (<span class="markNeg">-8</span>, 4)
+        </span>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+      <div class="zone-top">
+        <div class="panelWrap rot-top">
+          <div class="rowTopBottom">
+            <div class="name">August<br>Thomoll</div>
+            <div class="scoreBig numBlack">21</div>
+            <div class="scoreSmall numRed">(-4)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="zone-mid">
+        <div class="mid-left">
+          <div class="panelWrap rot-left">
+            <div class="colSide">
+              <div class="sideName">Andrea<br>Affenberger</div>
+              <div class="sideScoreRow">
+                <div class="scoreBig numRed" style="margin-left:0;">-13</div>
+                <div class="scoreSmall numRed" style="margin-left:0;">(-4)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="centerLine"></div>
+
+        <div class="mid-right">
+          <div class="panelWrap rot-right">
+            <div class="colSide">
+              <div class="sideName">Anna<br>Sammer</div>
+              <div class="sideScoreRow">
+                <div class="scoreBig numBlack" style="margin-left:0;">4</div>
+                <div class="scoreSmall numBlack" style="margin-left:0;">(4)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="zone-bottom">
+        <div class="panelWrap rot-bot">
+          <div class="rowTopBottom">
+            <div class="name">Walter<br>Vojta</div>
+            <div class="scoreBig numRed">-12</div>
+            <div class="scoreSmall numBlack">(4)</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- BOTTOM BAR -->
+    <div class="bottombar">
+
+      <div class="bottom-left">
+        <div class="btn" title="Statistik" aria-label="Statistik">
+          <svg class="iconSvg" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 19.5H20"></path>
+            <path d="M7 19.5V11"></path>
+            <path d="M12 19.5V6.5"></path>
+            <path d="M17 19.5V14"></path>
+          </svg>
+        </div>
+
+        <div class="btn" title="Liste" aria-label="Liste">
+          <svg class="iconSvg" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M7 7H20"></path>
+            <path d="M7 12H20"></path>
+            <path d="M7 17H20"></path>
+            <circle class="fillDot" cx="4" cy="7" r="1"></circle>
+            <circle class="fillDot" cx="4" cy="12" r="1"></circle>
+            <circle class="fillDot" cx="4" cy="17" r="1"></circle>
+          </svg>
+        </div>
+      </div>
+
+      <div class="bottom-mid">
+        <div class="btn pm" title="Positivspiel (+)" aria-label="Positivspiel">+</div>
+        <div class="btn pm" title="Negativspiel (−)" aria-label="Negativspiel">−</div>
+        <div class="btn" title="Farbenspiel" aria-label="Farbenspiel">
+          <div class="rbBall"></div>
+        </div>
+      </div>
+
+      <div class="bottom-right">
+        <div class="btn" title="Korrigieren" aria-label="Korrigieren">
+          <svg class="iconSvg" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M20 12a8 8 0 1 1-2.3-5.7"></path>
+            <path d="M20 5v4h-4"></path>
+          </svg>
+        </div>
+        <div class="btn close" title="Schließen" aria-label="Schließen">✕</div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    (function(){
+      const btn = document.querySelector('.btn.close');
+      if(!btn) return;
+      btn.addEventListener('click', function(ev){
+        ev.preventDefault();
+        ev.stopPropagation();
+        if (confirm('Tisch wirklich beenden?')) {
+          // zurück zum Startmenü
+          window.location.href = 'index.html';
+        }
+      }, {passive:false});
+    })();
+  </script>
+
+</body>
+</html>
