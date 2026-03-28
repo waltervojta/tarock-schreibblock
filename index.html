@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Tarock-Schreibblock-V0001 (Prototype)</title>
 
-  <!-- PWA / App-like (Android + iOS) -->
-  <link rel="manifest" href="manifest.webmanifest">
+  <!-- PWA -->
+  <link rel="manifest" href="./manifest.webmanifest">
   <meta name="theme-color" content="#3b6fa8">
 
-  <!-- iOS: Homescreen Icon + App-Mode Hint (Safari Add to Home Screen) -->
-  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <!-- iOS Home Screen -->
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
@@ -32,21 +32,13 @@
       --gapBigToSmall:1ch;
 
       --black:#000;
-      --red:#c00000; /* euer Rot */
+      --red:#c00000;
 
       /* Buttons / Kacheln unten */
-      --btnBg:var(--panel);             /* hellblau wie Hintergrund */
-      --btnBorder:rgba(0,0,0,.70);      /* klarer Rand */
+      --btnBg:var(--panel);
+      --btnBorder:rgba(0,0,0,.70);
       --btnRadius:6px;
-      --iconDark:rgba(0,0,0,.92);       /* Symbole dunkel */
-
-      /* Default-Fallbacks (werden in .bottombar dynamisch überschrieben) */
-      --btnW:56px;
-      --btnH:52px;
-      --ballSize:26px;
-
-      --ballRed:#c00000;
-      --ballBlack:#111111;
+      --iconDark:rgba(0,0,0,.92);
     }
 
     *{box-sizing:border-box;}
@@ -57,17 +49,17 @@
       font-family:var(--font);
       display:flex;
       justify-content:center;
-      overflow-x:hidden; /* Airbag gegen horizontalen Scroll */
+      overflow-x:hidden; /* Airbag */
     }
 
     .phone{
       width:min(480px,100%);
       height:100vh;
-      height:100dvh; /* moderner Mobile-Viewport */
+      height:100dvh;
       background:var(--panel);
       display:flex;
       flex-direction:column;
-      overflow:hidden; /* verhindert, dass Kind-Overflow nach außen scrollt */
+      overflow:hidden; /* verhindert seitliches Scrollen durch Kinder */
     }
 
     /* TOP BAR */
@@ -81,7 +73,6 @@
       padding:8px 12px;
     }
 
-    /* Status-Kachel */
     .statusPill{
       display:inline-flex;
       align-items:center;
@@ -102,22 +93,22 @@
     .markLose{ color:var(--red); font-weight:800; }
     .markNeg { color:var(--red); font-weight:700; }
 
-    .clockSvg{
+    /* ICON SVG BASE */
+    .iconSvg{
       width:30px;
       height:30px;
-      color:var(--iconDark);
-      flex:0 0 auto;
       display:block;
+      color:var(--iconDark);
     }
-    .clockSvg circle,
-    .clockSvg path{
+    .iconSvg *{
       fill:none;
       stroke:currentColor;
       stroke-width:2.2;
       stroke-linecap:round;
       stroke-linejoin:round;
+      vector-effect: non-scaling-stroke;
     }
-    .clockSvg .dot{
+    .iconSvg .fillDot{
       fill:currentColor;
       stroke:none;
     }
@@ -242,122 +233,85 @@
     }
 
     /* =========================
-       BOTTOM BAR (Strategie A)
+       BOTTOM BAR (Grid, 7 Slots)
        ========================= */
     .bottombar{
       height:62px;
       background:var(--barBg);
       border-top:var(--lineW) solid var(--line);
-      display:flex;
+
+      /* Dynamik: so passt es auf sehr schmale Devices einzeilig */
+      --padX: clamp(6px, 2vw, 10px);
+      --gapX: clamp(3px, 1.4vw, 10px);
+
+      /* verfügbare Höhe (62 - 2*6 = 50) */
+      --padY: 6px;
+
+      /* Breite pro Button: (100% - 2*padX - 6*gaps) / 7
+         Min = 38px damit sogar ~320px Geräte ohne Horizontal-Scroll bleiben */
+      --btnW: clamp(38px, calc((100% - (2 * var(--padX)) - (6 * var(--gapX))) / 7), 56px);
+      --btnH: clamp(40px, calc(var(--btnW) * 0.92), 50px);
+
+      padding: var(--padY) var(--padX);
+
+      display:grid;
+      grid-template-columns: repeat(7, 1fr);
+      column-gap: var(--gapX);
       align-items:center;
+      justify-items:center;
 
-      /* dynamische Abstände */
-      --barPadX: 10px;
-      --gapX: clamp(6px, 2.2vw, 10px);
-
-      /* 7 Buttons total, 6 horizontale gaps:
-         - innerhalb Gruppen: left(1) + mid(2) + right(1) = 4
-         - zwischen Gruppen (bottombar gap): 2
-         => total 6 gaps */
-      --btnW: clamp(44px, calc((100% - (2 * var(--barPadX)) - (6 * var(--gapX))) / 7), 56px);
-      --btnH: clamp(46px, calc(var(--btnW) * 0.92), 52px);
-
-      padding:8px var(--barPadX);
-      gap:var(--gapX);
-
-      /* Wichtig: verhindert Overflows durch zu starre Flex-Kinder */
       min-width:0;
     }
 
-    .bottom-left,.bottom-mid,.bottom-right{
-      display:flex;
-      gap:var(--gapX);
-      align-items:center;
-      min-width:0;
-    }
-
-    /* Mitte darf schrumpfen, bleibt aber zentriert */
-    .bottom-mid{
-      margin:0 auto;
-      justify-content:center;
-      min-width:0;
+    /* Gruppen bleiben im HTML, aber Layout wird deterministisch:
+       ihre Kinder werden direkt Grid-Items */
+    .bottom-left, .bottom-mid, .bottom-right{
+      display:contents;
     }
 
     .btn{
-      width:var(--btnW);
-      height:var(--btnH);
-      background:var(--btnBg);
-      border:1px solid var(--btnBorder);
-      border-radius:var(--btnRadius);
+      width: var(--btnW);
+      height: var(--btnH);
+      background: var(--btnBg);
+      border: 1px solid var(--btnBorder);
+      border-radius: var(--btnRadius);
       display:grid;
       place-items:center;
       user-select:none;
-      color:var(--iconDark);
-      flex:0 0 auto;
+      color: var(--iconDark);
+      overflow:hidden;
     }
 
     .btn.pm{
-      font-size:clamp(22px, calc(var(--btnW) * 0.48), 26px);
+      font-size:clamp(20px, calc(var(--btnW) * 0.48), 26px);
       font-weight:700;
       line-height:1;
     }
+
     .btn.close{
       font-size:clamp(18px, calc(var(--btnW) * 0.40), 22px);
       font-weight:800;
       line-height:1;
     }
 
-    .statsIcon,.listIcon{
-      width:clamp(22px, calc(var(--btnW) * 0.48), 26px);
-      height:clamp(18px, calc(var(--btnH) * 0.38), 20px);
-      position:relative;
-    }
-
-    .statsIcon::before{
-      content:"";
-      position:absolute;
-      left:0;bottom:0;
-      width:100%;height:100%;
-      border-left:3px solid var(--iconDark);
-      border-bottom:3px solid var(--iconDark);
-    }
-
-    .listIcon span{
-      position:absolute;
-      left:0;right:0;
-      height:3px;
-      background:var(--iconDark);
-    }
-    .listIcon span:nth-child(1){top:0;}
-    .listIcon span:nth-child(2){top:8px;}
-    .listIcon span:nth-child(3){top:16px;}
-
     .rbBall{
-      width:clamp(22px, calc(var(--btnW) * 0.50), 26px);
-      height:clamp(22px, calc(var(--btnW) * 0.50), 26px);
+      width: clamp(20px, calc(var(--btnW) * 0.50), 26px);
+      height: clamp(20px, calc(var(--btnW) * 0.50), 26px);
       border-radius:50%;
       background:
         radial-gradient(circle at 30% 28%, rgba(255,255,255,.55), transparent 35%),
-        linear-gradient(135deg, var(--ballRed) 0 50%, var(--ballBlack) 50% 100%);
+        linear-gradient(135deg, #c00000 0 50%, #111111 50% 100%);
     }
 
-    .reloadSvg{
-      width:clamp(24px, calc(var(--btnW) * 0.55), 30px);
-      height:clamp(24px, calc(var(--btnW) * 0.55), 30px);
-      display:block;
-    }
-    .reloadSvg path,.reloadSvg polyline{
-      stroke:var(--iconDark);
-      stroke-width:2.2;
-      fill:none;
-      stroke-linecap:round;
-      stroke-linejoin:round;
+    /* Icon size inside buttons follows button width */
+    .btn .iconSvg{
+      width: clamp(22px, calc(var(--btnW) * 0.55), 30px);
+      height: clamp(22px, calc(var(--btnW) * 0.55), 30px);
     }
 
+    /* Small screens: adjust typography */
     @media (max-width: 380px){
-      :root{
-        --scoreBigSize:80px;
-      }
+      :root{ --scoreBigSize:80px; }
       .name{font-size:28px;}
       .sideName{font-size:26px;}
       .statusPill{
@@ -365,129 +319,151 @@
         gap:10px;
         padding:7px 12px;
       }
-      .clockSvg{width:28px;height:28px;}
-
-      /* feinere Striche bei sehr kleinen Displays */
-      .reloadSvg path,.reloadSvg polyline{stroke-width:2.0;}
+      .topbar{ padding:8px 10px; }
+      .btn.pm{ font-size:clamp(18px, calc(var(--btnW) * 0.50), 24px); }
     }
   </style>
 </head>
 
 <body>
-<div class="phone">
+  <div class="phone">
 
-  <!-- STATUS BAR -->
-  <div class="topbar">
-    <div class="statusPill" title="Status">
-      <svg class="clockSvg" viewBox="0 0 24 24" aria-hidden="true">
-        <circle cx="12" cy="12" r="8.5"></circle>
-        <path d="M12 12 L12 7.5"></path>
-        <path d="M12 12 L15.3 13.8"></path>
-        <circle class="dot" cx="12" cy="12" r="1"></circle>
-      </svg>
+    <!-- STATUS BAR -->
+    <div class="topbar">
+      <div class="statusPill" title="Status">
 
-      <span>
-        Anna <span class="markLose">✗</span>
-        Sechser‑Dreier, IIII (<span class="markNeg">-8</span>, 4)
-      </span>
-    </div>
-  </div>
-
-  <!-- CONTENT -->
-  <div class="content">
-
-    <div class="zone-top">
-      <div class="panelWrap rot-top">
-        <div class="rowTopBottom">
-          <div class="name">August<br>Thomoll</div>
-          <div class="scoreBig numBlack">21</div>
-          <div class="scoreSmall numRed">(-4)</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="zone-mid">
-      <div class="mid-left">
-        <div class="panelWrap rot-left">
-          <div class="colSide">
-            <div class="sideName">Andrea<br>Affenberger</div>
-            <div class="sideScoreRow">
-              <div class="scoreBig numRed" style="margin-left:0;">-13</div>
-              <div class="scoreSmall numRed" style="margin-left:0;">(-4)</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="centerLine"></div>
-
-      <div class="mid-right">
-        <div class="panelWrap rot-right">
-          <div class="colSide">
-            <div class="sideName">Anna<br>Sammer</div>
-            <div class="sideScoreRow">
-              <div class="scoreBig numBlack" style="margin-left:0;">4</div>
-              <div class="scoreSmall numBlack" style="margin-left:0;">(4)</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="zone-bottom">
-      <div class="panelWrap rot-bot">
-        <div class="rowTopBottom">
-          <div class="name">Walter<br>Vojta</div>
-          <div class="scoreBig numRed">-12</div>
-          <div class="scoreSmall numBlack">(4)</div>
-        </div>
-      </div>
-    </div>
-
-  </div>
-
-  <!-- BOTTOM BAR -->
-  <div class="bottombar">
-    <div class="bottom-left">
-      <div class="btn" title="Statistik" aria-label="Statistik">
-        <div class="statsIcon"></div>
-      </div>
-      <div class="btn" title="Liste" aria-label="Liste">
-        <div class="listIcon">
-          <span></span><span></span><span></span>
-        </div>
-      </div>
-    </div>
-
-    <div class="bottom-mid">
-      <div class="btn pm" title="Positivspiel (+)" aria-label="Positivspiel">+</div>
-      <div class="btn pm" title="Negativspiel (−)" aria-label="Negativspiel">−</div>
-      <div class="btn" title="Farbenspiel" aria-label="Farbenspiel">
-        <div class="rbBall"></div>
-      </div>
-    </div>
-
-    <div class="bottom-right">
-      <div class="btn" title="Korrigieren" aria-label="Korrigieren">
-        <svg class="reloadSvg" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M20 12a8 8 0 1 1-2.3-5.7"></path>
-          <polyline points="20 5 20 9 16 9"></polyline>
+        <!-- Clock -->
+        <svg class="iconSvg" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="8.5"></circle>
+          <path d="M12 12 L12 7.5"></path>
+          <path d="M12 12 L15.3 13.8"></path>
+          <circle class="fillDot" cx="12" cy="12" r="1"></circle>
         </svg>
+
+        <span>
+          Anna <span class="markLose">✗</span>
+          Sechser‑Dreier, IIII (<span class="markNeg">-8</span>, 4)
+        </span>
       </div>
-      <div class="btn close" title="Schließen" aria-label="Schließen">✕</div>
     </div>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+      <div class="zone-top">
+        <div class="panelWrap rot-top">
+          <div class="rowTopBottom">
+            <div class="name">August<br>Thomoll</div>
+            <div class="scoreBig numBlack">21</div>
+            <div class="scoreSmall numRed">(-4)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="zone-mid">
+        <div class="mid-left">
+          <div class="panelWrap rot-left">
+            <div class="colSide">
+              <div class="sideName">Andrea<br>Affenberger</div>
+              <div class="sideScoreRow">
+                <div class="scoreBig numRed" style="margin-left:0;">-13</div>
+                <div class="scoreSmall numRed" style="margin-left:0;">(-4)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="centerLine"></div>
+
+        <div class="mid-right">
+          <div class="panelWrap rot-right">
+            <div class="colSide">
+              <div class="sideName">Anna<br>Sammer</div>
+              <div class="sideScoreRow">
+                <div class="scoreBig numBlack" style="margin-left:0;">4</div>
+                <div class="scoreSmall numBlack" style="margin-left:0;">(4)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="zone-bottom">
+        <div class="panelWrap rot-bot">
+          <div class="rowTopBottom">
+            <div class="name">Walter<br>Vojta</div>
+            <div class="scoreBig numRed">-12</div>
+            <div class="scoreSmall numBlack">(4)</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- BOTTOM BAR -->
+    <div class="bottombar">
+
+      <div class="bottom-left">
+        <!-- Slot 1: Statistik -->
+        <div class="btn" title="Statistik" aria-label="Statistik">
+          <svg class="iconSvg" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 19.5H20"></path>
+            <path d="M7 19.5V11"></path>
+            <path d="M12 19.5V6.5"></path>
+            <path d="M17 19.5V14"></path>
+          </svg>
+        </div>
+
+        <!-- Slot 2: Liste -->
+        <div class="btn" title="Liste" aria-label="Liste">
+          <svg class="iconSvg" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M7 7H20"></path>
+            <path d="M7 12H20"></path>
+            <path d="M7 17H20"></path>
+            <circle class="fillDot" cx="4" cy="7" r="1"></circle>
+            <circle class="fillDot" cx="4" cy="12" r="1"></circle>
+            <circle class="fillDot" cx="4" cy="17" r="1"></circle>
+          </svg>
+        </div>
+      </div>
+
+      <div class="bottom-mid">
+        <!-- Slot 3: + -->
+        <div class="btn pm" title="Positivspiel (+)" aria-label="Positivspiel">+</div>
+
+        <!-- Slot 4: − -->
+        <div class="btn pm" title="Negativspiel (−)" aria-label="Negativspiel">−</div>
+
+        <!-- Slot 5: Farbkugel -->
+        <div class="btn" title="Farbenspiel" aria-label="Farbenspiel">
+          <div class="rbBall"></div>
+        </div>
+      </div>
+
+      <div class="bottom-right">
+        <!-- Slot 6: Reload -->
+        <div class="btn" title="Korrigieren" aria-label="Korrigieren">
+          <svg class="iconSvg" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M20 12a8 8 0 1 1-2.3-5.7"></path>
+            <path d="M20 5v4h-4"></path>
+          </svg>
+        </div>
+
+        <!-- Slot 7: Close -->
+        <div class="btn close" title="Schließen" aria-label="Schließen">✕</div>
+      </div>
+
+    </div>
+
   </div>
 
-</div>
-
-<script>
-  // Optional: Service Worker registrieren (für Offline/Cache).
-  // Für "URL weg" ist SW nicht zwingend erforderlich, aber fürs App-Feeling sehr gut.
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js').catch(() => {});
-    });
-  }
-</script>
+  <script>
+    // Optional: Service Worker für Offline/Cache (App-Feeling)
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      });
+    }
+  </script>
 </body>
 </html>
