@@ -77,7 +77,6 @@
       font-size:12px;
     }
 
-    /* CONTENT: NO PAGE SCROLL */
     .content{
       flex:1 1 auto;
       min-height:0;
@@ -88,7 +87,6 @@
       overflow:hidden;
     }
 
-    /* TOP HALF: seats */
     .seatPane{
       flex:0 0 48%;
       min-height:0;
@@ -111,9 +109,10 @@
       overflow:hidden;
     }
 
-    .layout4{ grid-template-columns: 1fr 1fr 1fr; grid-template-rows: auto auto auto; }
-    .layout5{ grid-template-columns: 1fr 1fr; grid-template-rows: auto auto auto; }
-    .layout6{ grid-template-columns: 1fr 1fr; grid-template-rows: auto auto auto; }
+    /* 4 columns -> half width = span 2, centered = columns 2-3 */
+    .layout4{ grid-template-columns: repeat(4, 1fr); grid-template-rows: auto auto auto; }
+    .layout5{ grid-template-columns: repeat(4, 1fr); grid-template-rows: auto auto auto; }
+    .layout6{ grid-template-columns: repeat(4, 1fr); grid-template-rows: auto auto auto auto; }
 
     .seat{
       border:1px solid rgba(0,0,0,.35);
@@ -155,7 +154,6 @@
 
     .seatFocus{outline:2px solid rgba(59,111,168,.85);outline-offset:2px;}
 
-    /* BOTTOM HALF: search + list */
     .searchPane{
       flex:1 1 auto;
       min-height:0;
@@ -176,11 +174,7 @@
       gap:8px;
     }
 
-    .searchRow{
-      display:flex;
-      align-items:center;
-      gap:10px;
-    }
+    .searchRow{display:flex;align-items:center;gap:10px;}
 
     .searchBox{
       flex:1 1 auto;
@@ -196,36 +190,13 @@
 
     .hint{font-size:11px;font-weight:800;color:rgba(0,0,0,.65);white-space:nowrap;}
 
-    .listMeta{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      min-width:0;
-    }
-
+    .listMeta{display:flex;align-items:center;justify-content:space-between;gap:10px;min-width:0;}
     .listSub{font-size:11px;font-weight:800;color:rgba(0,0,0,.65);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
     .selInfo{font-size:11px;font-weight:900;color:rgba(0,0,0,.75);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
-    .rows{
-      flex:1 1 auto;
-      min-height:0;
-      overflow:auto;
-      -webkit-overflow-scrolling: touch;
-      background:rgba(255,255,255,.45);
-    }
+    .rows{flex:1 1 auto;min-height:0;overflow:auto;-webkit-overflow-scrolling: touch;background:rgba(255,255,255,.45);}
 
-    .row{
-      padding:10px 10px;
-      border-bottom:1px solid rgba(0,0,0,.12);
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      cursor:pointer;
-      user-select:none;
-      -webkit-tap-highlight-color: transparent;
-    }
+    .row{padding:10px 10px;border-bottom:1px solid rgba(0,0,0,.12);display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;user-select:none;-webkit-tap-highlight-color: transparent;}
     .row:last-child{border-bottom:none;}
     .row.selected{background:rgba(59,111,168,.18);}
 
@@ -234,7 +205,6 @@
     .pSub{font-size:11px;font-weight:700;color:rgba(0,0,0,.65);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
     .pId{flex:0 0 auto;font-size:12px;font-weight:900;color:rgba(0,0,0,.65);}
 
-    /* Bottom action bar */
     .bottombar{
       height: calc(62px + env(safe-area-inset-bottom));
       background:var(--barBg);
@@ -262,7 +232,6 @@
 
     .actionBtn:disabled{opacity:.45;cursor:default;}
     .actionBtn:active:not(:disabled){transform:translateY(1px);}
-
     .actionBtn.primary{background:rgba(255,255,255,.26);}
 
     @media (max-width: 380px){
@@ -285,12 +254,10 @@
     </div>
 
     <div class="content">
-      <!-- TOP: Sitzlayout -->
       <div class="seatPane">
         <div id="layout" class="miniLayout"></div>
       </div>
 
-      <!-- BOTTOM: Suche + Treffer -->
       <div class="searchPane">
         <div class="searchHeader">
           <div class="searchRow">
@@ -314,11 +281,6 @@
   </div>
 
   <script>
-    // =========================
-    // ETS – Spieler-Auswahl (IndexedDB)
-    // TOP: Sitzlayout, BOTTOM: Suche+Treffer
-    // =========================
-
     const DB_NAME = 'ets_db';
     const DB_VERSION = 1;
     const STORE_PLAYERS = 'players';
@@ -341,27 +303,19 @@
     const DEBOUNCE_MS = 200;
 
     let tableType = 4;
-    let players = []; // in-memory (aktiv=true)
+    let players = [];
     let selectedPlayerId = null;
 
-    const seats = {}; // seatKey -> playerId
+    const seats = {};
     let seatOrder = [];
 
-    btnBack.addEventListener('click', () => {
-      window.location.href = 'index.html';
-    });
+    btnBack.addEventListener('click', () => window.location.href = 'index.html');
 
     btnStart.addEventListener('click', () => {
       if (!isFull()) return;
-      const payload = {
-        tableType,
-        seats: { ...seats },
-        createdUtc: new Date().toISOString()
-      };
+      const payload = { tableType, seats: { ...seats }, createdUtc: new Date().toISOString() };
       sessionStorage.setItem('currentTable', JSON.stringify(payload));
-      const target = (tableType === 4) ? '4er-Screen.html'
-                   : (tableType === 5) ? '5er-Screen.html'
-                   : '6er-Screen.html';
+      const target = (tableType === 4) ? '4er-Screen.html' : (tableType === 5) ? '5er-Screen.html' : '6er-Screen.html';
       window.location.href = target;
     });
 
@@ -375,10 +329,8 @@
       tableType = parseTableType();
       subEl.textContent = 'Tisch: ' + tableType + ' Spieler';
       configureSeats(tableType);
-
       hint.textContent = 'lade…';
       await ensurePlayersLoaded();
-
       runSearch();
       q.focus();
     });
@@ -386,8 +338,7 @@
     function parseTableType(){
       const p = new URLSearchParams(location.search);
       const t = Number(p.get('table') || 4);
-      if (t === 5 || t === 6) return t;
-      return 4;
+      return (t === 5 || t === 6) ? t : 4;
     }
 
     function configureSeats(t){
@@ -408,8 +359,6 @@
       updateSeatCount();
       updateStartEnabled();
     }
-
-    // ---------- IndexedDB ----------
 
     function openDb(){
       return new Promise((resolve, reject) => {
@@ -467,7 +416,6 @@
       let c = await txCount(db, STORE_PLAYERS);
 
       if (c === 0) {
-        // Notfall: Import aus JSON (falls user direkt in picker landet)
         hint.textContent = 'importiere…';
         await syncFromJson(db);
         c = await txCount(db, STORE_PLAYERS);
@@ -476,7 +424,6 @@
       const all = await txGetAll(db, STORE_PLAYERS);
       players = (all || []).filter(p => p && p.aktiv === true);
 
-      // sort: nach Nachname/Vorname
       players.sort((a,b) => {
         const an = a.nachnameLower || '';
         const bn = b.nachnameLower || '';
@@ -500,12 +447,7 @@
       const remoteVersion = Number(remote.version || 0);
       const list = Array.isArray(remote.players) ? remote.players : [];
       const active = list.filter(p => p && p.aktiv === true);
-
-      await importReplace(db, active, {
-        version: remoteVersion,
-        generatedUtc: String(remote.generatedUtc || ''),
-        count: active.length
-      });
+      await importReplace(db, active, { version: remoteVersion, generatedUtc: String(remote.generatedUtc || ''), count: active.length });
     }
 
     function importReplace(db, list, meta){
@@ -530,22 +472,13 @@
               nameLower: (nach + ' ' + vor).trim().toLowerCase()
             });
           }
-          stMeta.put({
-            key: META_KEY,
-            version: Number(meta.version || 0),
-            generatedUtc: String(meta.generatedUtc || ''),
-            count: Number(meta.count || list.length),
-            lastFetchUtc: new Date().toISOString()
-          });
+          stMeta.put({ key: META_KEY, version: Number(meta.version || 0), generatedUtc: String(meta.generatedUtc || ''), count: Number(meta.count || list.length), lastFetchUtc: new Date().toISOString() });
         };
-
         tx.oncomplete = () => resolve();
         tx.onerror = () => reject(tx.error);
         tx.onabort = () => reject(tx.error);
       });
     }
-
-    // ---------- Search ----------
 
     function runSearch(){
       const termRaw = (q.value || '').trim();
@@ -572,7 +505,6 @@
         results = out;
         listSub.textContent = 'Treffer ' + results.length + ' (max ' + MAX_RESULTS + ')';
       }
-
       renderRows(results);
     }
 
@@ -586,11 +518,9 @@
         rowsEl.appendChild(d);
         return;
       }
-
       for (const p of list) {
         const r = document.createElement('div');
         r.className = 'row' + (p.spielerId === selectedPlayerId ? ' selected' : '');
-
         const main = (p.nachname + ' ' + p.vorname).trim();
         r.innerHTML = `
           <div class="pName">
@@ -599,13 +529,11 @@
           </div>
           <div class="pId">${p.spielerId}</div>
         `;
-
         r.addEventListener('click', () => {
           selectPlayer(p.spielerId);
           [...rowsEl.querySelectorAll('.row')].forEach(x => x.classList.remove('selected'));
           r.classList.add('selected');
         });
-
         rowsEl.appendChild(r);
       }
     }
@@ -616,15 +544,8 @@
       selInfo.textContent = p ? ('gewählt: ' + (p.nachname + ' ' + p.vorname).trim()) : 'kein Spieler gewählt';
     }
 
-    // ---------- Seats ----------
-
-    function isFull(){
-      return seatOrder.every(k => seats[k] != null);
-    }
-
-    function updateStartEnabled(){
-      btnStart.disabled = !isFull();
-    }
+    function isFull(){ return seatOrder.every(k => seats[k] != null); }
+    function updateStartEnabled(){ btnStart.disabled = !isFull(); }
 
     function updateSeatCount(){
       const filled = seatOrder.filter(k => seats[k] != null).length;
@@ -632,30 +553,16 @@
     }
 
     function setSeat(seatKey, playerId){
-      if (playerId == null) {
-        seats[seatKey] = null;
-        refreshSeats();
-        return;
-      }
-
-      // Duplikate verhindern -> verschieben
-      for (const k of seatOrder) {
-        if (seats[k] === playerId) seats[k] = null;
-      }
-
+      if (playerId == null) { seats[seatKey] = null; refreshSeats(); return; }
+      for (const k of seatOrder) { if (seats[k] === playerId) seats[k] = null; }
       seats[seatKey] = playerId;
       refreshSeats();
-
-      // schneller Workflow: Auswahl zurücksetzen
       selectedPlayerId = null;
       selInfo.textContent = 'kein Spieler gewählt';
       [...rowsEl.querySelectorAll('.row')].forEach(x => x.classList.remove('selected'));
     }
 
-    function clearSeat(seatKey){
-      seats[seatKey] = null;
-      refreshSeats();
-    }
+    function clearSeat(seatKey){ seats[seatKey] = null; refreshSeats(); }
 
     function refreshSeats(){
       seatOrder.forEach(k => {
@@ -672,7 +579,6 @@
           nameEl.textContent = p ? ((p.nachname + ' ' + p.vorname).trim()) : String(pid);
         }
       });
-
       updateSeatCount();
       updateStartEnabled();
     }
@@ -686,77 +592,50 @@
         <div class="seatName">leer</div>
         <div class="clear" title="Platz leeren">✕</div>
       `;
-
       el.addEventListener('click', (ev) => {
         if (ev.target && ev.target.classList && ev.target.classList.contains('clear')) return;
-        if (selectedPlayerId == null) {
-          flashSeat(el);
-          return;
-        }
+        if (selectedPlayerId == null) { flashSeat(el); return; }
         setSeat(seatKey, selectedPlayerId);
       });
-
       el.querySelector('.clear').addEventListener('click', (ev) => {
         ev.preventDefault();
         ev.stopPropagation();
         clearSeat(seatKey);
       });
-
       return el;
     }
 
-    function flashSeat(el){
-      el.classList.add('seatFocus');
-      setTimeout(() => el.classList.remove('seatFocus'), 250);
-    }
+    function flashSeat(el){ el.classList.add('seatFocus'); setTimeout(() => el.classList.remove('seatFocus'), 250); }
 
+    // Layouts (span 2 = 50%, centered = columns 2-3)
     function renderLayout4(){
       layoutEl.className = 'miniLayout layout4';
       layoutEl.innerHTML = '';
-      const spacer = () => {
-        const d = document.createElement('div');
-        d.style.minHeight = '1px';
-        return d;
-      };
-
-      layoutEl.appendChild(spacer());
-      layoutEl.appendChild(seatTile('Oben', 'TOP'));
-      layoutEl.appendChild(spacer());
-
-      layoutEl.appendChild(seatTile('Links', 'LEFT'));
-      layoutEl.appendChild(spacer());
-      layoutEl.appendChild(seatTile('Rechts', 'RIGHT'));
-
-      layoutEl.appendChild(spacer());
-      layoutEl.appendChild(seatTile('Unten', 'BOTTOM'));
-      layoutEl.appendChild(spacer());
+      const top = seatTile('Oben', 'TOP'); top.style.gridColumn = '2 / span 2'; layoutEl.appendChild(top);
+      const left = seatTile('Links', 'LEFT'); left.style.gridColumn = '1 / span 2'; layoutEl.appendChild(left);
+      const right = seatTile('Rechts', 'RIGHT'); right.style.gridColumn = '3 / span 2'; layoutEl.appendChild(right);
+      const bottom = seatTile('Unten', 'BOTTOM'); bottom.style.gridColumn = '2 / span 2'; layoutEl.appendChild(bottom);
     }
 
     function renderLayout5(){
       layoutEl.className = 'miniLayout layout5';
       layoutEl.innerHTML = '';
-      layoutEl.appendChild(seatTile('L oben', 'LEFT_TOP'));
-      layoutEl.appendChild(seatTile('R oben', 'RIGHT_TOP'));
-      layoutEl.appendChild(seatTile('L unten', 'LEFT_BOTTOM'));
-      layoutEl.appendChild(seatTile('R unten', 'RIGHT_BOTTOM'));
-      const bottom = seatTile('Unten', 'BOTTOM');
-      bottom.style.gridColumn = '1 / span 2';
-      layoutEl.appendChild(bottom);
+      const lt = seatTile('L oben', 'LEFT_TOP'); lt.style.gridColumn = '1 / span 2'; layoutEl.appendChild(lt);
+      const rt = seatTile('R oben', 'RIGHT_TOP'); rt.style.gridColumn = '3 / span 2'; layoutEl.appendChild(rt);
+      const lb = seatTile('L unten', 'LEFT_BOTTOM'); lb.style.gridColumn = '1 / span 2'; layoutEl.appendChild(lb);
+      const rb = seatTile('R unten', 'RIGHT_BOTTOM'); rb.style.gridColumn = '3 / span 2'; layoutEl.appendChild(rb);
+      const bottom = seatTile('Unten', 'BOTTOM'); bottom.style.gridColumn = '2 / span 2'; layoutEl.appendChild(bottom);
     }
 
     function renderLayout6(){
       layoutEl.className = 'miniLayout layout6';
       layoutEl.innerHTML = '';
-      const top = seatTile('Oben', 'TOP');
-      top.style.gridColumn = '1 / span 2';
-      layoutEl.appendChild(top);
-      layoutEl.appendChild(seatTile('L oben', 'LEFT_TOP'));
-      layoutEl.appendChild(seatTile('R oben', 'RIGHT_TOP'));
-      layoutEl.appendChild(seatTile('L unten', 'LEFT_BOTTOM'));
-      layoutEl.appendChild(seatTile('R unten', 'RIGHT_BOTTOM'));
-      const bottom = seatTile('Unten', 'BOTTOM');
-      bottom.style.gridColumn = '1 / span 2';
-      layoutEl.appendChild(bottom);
+      const top = seatTile('Oben', 'TOP'); top.style.gridColumn = '2 / span 2'; layoutEl.appendChild(top);
+      const lt = seatTile('L oben', 'LEFT_TOP'); lt.style.gridColumn = '1 / span 2'; layoutEl.appendChild(lt);
+      const rt = seatTile('R oben', 'RIGHT_TOP'); rt.style.gridColumn = '3 / span 2'; layoutEl.appendChild(rt);
+      const lb = seatTile('L unten', 'LEFT_BOTTOM'); lb.style.gridColumn = '1 / span 2'; layoutEl.appendChild(lb);
+      const rb = seatTile('R unten', 'RIGHT_BOTTOM'); rb.style.gridColumn = '3 / span 2'; layoutEl.appendChild(rb);
+      const bottom = seatTile('Unten', 'BOTTOM'); bottom.style.gridColumn = '2 / span 2'; layoutEl.appendChild(bottom);
     }
 
     function escapeHtml(s){
