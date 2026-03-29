@@ -6,268 +6,64 @@
   <title>ETS – Spieler auswählen</title>
 
   <style>
-    :root{
-      --bg:#cfe9ff;
-      --panel:#cfe9ff;
-      --barBg:#3b6fa8;
-      --line:#000;
-      --lineW:3px;
-      --font: Arial, sans-serif;
-      --black:#000;
-      --red:#c00000;
+    :root{--bg:#cfe9ff;--panel:#cfe9ff;--barBg:#3b6fa8;--line:#000;--lineW:3px;--font:Arial,sans-serif;--black:#000;--btnBorder:rgba(0,0,0,.70);--btnRadius:10px;--iconDark:rgba(0,0,0,.92);--padX:12px;}
+    *{box-sizing:border-box;} html,body{height:100%;overflow:hidden;}
+    body{margin:0;background:var(--bg);font-family:var(--font);display:flex;justify-content:center;color:var(--black);} 
+    .phone{width:min(480px,100%);height:100dvh;background:var(--panel);display:flex;flex-direction:column;overflow:hidden;}
 
-      --btnBg:var(--panel);
-      --btnBorder:rgba(0,0,0,.70);
-      --btnRadius:10px;
-      --iconDark:rgba(0,0,0,.92);
+    .topbar{height:calc(58px + env(safe-area-inset-top));padding:calc(8px + env(safe-area-inset-top)) var(--padX) 8px var(--padX);background:var(--barBg);border-bottom:var(--lineW) solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px;}
+    .titleWrap{min-width:0;display:flex;flex-direction:column;gap:2px;} .title{font-size:16px;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;} .subtitle{font-size:11px;font-weight:700;color:rgba(255,255,255,.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .pill{flex:0 0 auto;height:30px;padding:0 10px;border-radius:10px;background:rgba(255,255,255,.18);border:1px solid rgba(0,0,0,.25);display:flex;align-items:center;color:#fff;font-weight:800;font-size:12px;}
 
-      --padX:12px;
-    }
+    .content{flex:1 1 auto;min-height:0;padding:12px var(--padX);display:flex;flex-direction:column;gap:10px;overflow:hidden;}
 
-    *{box-sizing:border-box;}
-    html,body{height:100%;}
-    html,body{overflow:hidden;}
+    .seatPane{flex:0 0 48%;min-height:0;border:1px solid var(--btnBorder);border-radius:var(--btnRadius);background:rgba(255,255,255,.60);padding:10px;overflow:hidden;}
+    .miniLayout{height:100%;display:grid;gap:8px;align-content:start;overflow:hidden;}
+    .layout4{grid-template-columns:repeat(4,1fr);grid-template-rows:auto auto auto;}
+    .layout5{grid-template-columns:repeat(4,1fr);grid-template-rows:auto auto auto;}
+    .layout6{grid-template-columns:repeat(4,1fr);grid-template-rows:auto auto auto auto;}
 
-    body{
-      margin:0;
-      background:var(--bg);
-      font-family:var(--font);
-      display:flex;
-      justify-content:center;
-      color:var(--black);
-    }
-
-    .phone{
-      width:min(480px,100%);
-      height:100dvh;
-      background:var(--panel);
-      display:flex;
-      flex-direction:column;
-      overflow:hidden;
-    }
-
-    /* TOPBAR */
-    .topbar{
-      height: calc(58px + env(safe-area-inset-top));
-      padding: calc(8px + env(safe-area-inset-top)) var(--padX) 8px var(--padX);
-      background:var(--barBg);
-      border-bottom:var(--lineW) solid var(--line);
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-    }
-
-    .titleWrap{min-width:0;display:flex;flex-direction:column;gap:2px;}
-    .title{font-size:16px;font-weight:800;line-height:1.15;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-    .subtitle{font-size:11px;font-weight:700;line-height:1.2;color:rgba(255,255,255,.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-
-    .pill{
-      flex:0 0 auto;
-      height:30px;
-      padding:0 10px;
-      border-radius:10px;
-      background:rgba(255,255,255,.18);
-      border:1px solid rgba(0,0,0,.25);
-      display:flex;
-      align-items:center;
-      gap:8px;
-      color:#fff;
-      font-weight:800;
-      font-size:12px;
-    }
-
-    .content{
-      flex:1 1 auto;
-      min-height:0;
-      padding:12px var(--padX);
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-      overflow:hidden;
-    }
-
-    .seatPane{
-      flex:0 0 48%;
-      min-height:0;
-      border:1px solid var(--btnBorder);
-      border-radius:var(--btnRadius);
-      background:rgba(255,255,255,.60);
-      padding:10px;
-      overflow:hidden;
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-    }
-
-    .miniLayout{
-      flex:1 1 auto;
-      min-height:0;
-      display:grid;
-      gap:8px;
-      align-content:start;
-      overflow:hidden;
-    }
-
-    /* 4 columns -> half width = span 2, centered = columns 2-3 */
-    .layout4{ grid-template-columns: repeat(4, 1fr); grid-template-rows: auto auto auto; }
-    .layout5{ grid-template-columns: repeat(4, 1fr); grid-template-rows: auto auto auto; }
-    .layout6{ grid-template-columns: repeat(4, 1fr); grid-template-rows: auto auto auto auto; }
-
-    .seat{
-      border:1px solid rgba(0,0,0,.35);
-      border-radius:10px;
-      background:rgba(207,233,255,.95);
-      padding:10px 10px;
-      display:flex;
-      flex-direction:column;
-      gap:6px;
-      cursor:pointer;
-      user-select:none;
-      min-width:0;
-      position:relative;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    .seat:active{transform:translateY(1px);}
-
-    .seatLabel{font-size:11px;font-weight:900;color:rgba(0,0,0,.65);}
-    .seatName{font-size:14px;font-weight:900;color:var(--iconDark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-    .seat.empty .seatName{color:rgba(0,0,0,.35);}
-
-    .seat .clear{
-      position:absolute;
-      top:8px;
-      right:8px;
-      width:20px;
-      height:20px;
-      border-radius:7px;
-      background:rgba(0,0,0,.08);
-      display:grid;
-      place-items:center;
-      font-weight:900;
-      font-size:12px;
-      color:rgba(0,0,0,.65);
-      cursor:pointer;
-    }
-    .seat .clear:active{transform:translateY(1px);}
-
+    .seat{border:1px solid rgba(0,0,0,.35);border-radius:10px;background:rgba(207,233,255,.95);padding:10px 10px;display:flex;flex-direction:column;gap:6px;cursor:pointer;user-select:none;min-width:0;position:relative;-webkit-tap-highlight-color:transparent;}
+    .seat:active{transform:translateY(1px);} .seatLabel{font-size:11px;font-weight:900;color:rgba(0,0,0,.65);} .seatName{font-size:14px;font-weight:900;color:var(--iconDark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .seat.empty .seatName{color:rgba(0,0,0,.35);} 
+    .seat .clear{position:absolute;top:8px;right:8px;width:20px;height:20px;border-radius:7px;background:rgba(0,0,0,.08);display:grid;place-items:center;font-weight:900;font-size:12px;color:rgba(0,0,0,.65);cursor:pointer;}
     .seatFocus{outline:2px solid rgba(59,111,168,.85);outline-offset:2px;}
 
-    .searchPane{
-      flex:1 1 auto;
-      min-height:0;
-      border:1px solid var(--btnBorder);
-      border-radius:var(--btnRadius);
-      background:rgba(255,255,255,.60);
-      overflow:hidden;
-      display:flex;
-      flex-direction:column;
-    }
-
-    .searchHeader{
-      padding:10px 10px;
-      border-bottom:1px solid rgba(0,0,0,.20);
-      background:rgba(0,0,0,.03);
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-    }
-
+    .searchPane{flex:1 1 auto;min-height:0;border:1px solid var(--btnBorder);border-radius:var(--btnRadius);background:rgba(255,255,255,.60);overflow:hidden;display:flex;flex-direction:column;}
+    .searchHeader{padding:10px 10px;border-bottom:1px solid rgba(0,0,0,.20);background:rgba(0,0,0,.03);display:flex;flex-direction:column;gap:8px;}
     .searchRow{display:flex;align-items:center;gap:10px;}
-
-    .searchBox{
-      flex:1 1 auto;
-      min-width:0;
-      border:1px solid rgba(0,0,0,.30);
-      border-radius:10px;
-      background:#fff;
-      padding:10px 10px;
-      font-size:14px;
-      font-weight:800;
-      outline:none;
-    }
-
+    .searchBox{flex:1 1 auto;min-width:0;border:1px solid rgba(0,0,0,.30);border-radius:10px;background:#fff;padding:10px 10px;font-size:14px;font-weight:800;outline:none;}
     .hint{font-size:11px;font-weight:800;color:rgba(0,0,0,.65);white-space:nowrap;}
-
     .listMeta{display:flex;align-items:center;justify-content:space-between;gap:10px;min-width:0;}
     .listSub{font-size:11px;font-weight:800;color:rgba(0,0,0,.65);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
     .selInfo{font-size:11px;font-weight:900;color:rgba(0,0,0,.75);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
-    .rows{flex:1 1 auto;min-height:0;overflow:auto;-webkit-overflow-scrolling: touch;background:rgba(255,255,255,.45);}
+    .rows{flex:1 1 auto;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;background:rgba(255,255,255,.45);} 
+    .row{padding:10px 10px;border-bottom:1px solid rgba(0,0,0,.12);display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;}
+    .row:last-child{border-bottom:none;} .row.selected{background:rgba(59,111,168,.18);} 
+    .pMain{font-size:14px;font-weight:900;color:var(--iconDark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;} .pSub{font-size:11px;font-weight:700;color:rgba(0,0,0,.65);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;} .pId{font-size:12px;font-weight:900;color:rgba(0,0,0,.65);} 
 
-    .row{padding:10px 10px;border-bottom:1px solid rgba(0,0,0,.12);display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;user-select:none;-webkit-tap-highlight-color: transparent;}
-    .row:last-child{border-bottom:none;}
-    .row.selected{background:rgba(59,111,168,.18);}
-
-    .pName{min-width:0;}
-    .pMain{font-size:14px;font-weight:900;color:var(--iconDark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-    .pSub{font-size:11px;font-weight:700;color:rgba(0,0,0,.65);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-    .pId{flex:0 0 auto;font-size:12px;font-weight:900;color:rgba(0,0,0,.65);}
-
-    .bottombar{
-      height: calc(62px + env(safe-area-inset-bottom));
-      background:var(--barBg);
-      border-top:var(--lineW) solid var(--line);
-      padding: 8px var(--padX) calc(8px + env(safe-area-inset-bottom)) var(--padX);
-      display:flex;
-      gap:10px;
-      align-items:center;
-      justify-content:space-between;
-    }
-
-    .actionBtn{
-      flex:1 1 auto;
-      height:46px;
-      border-radius:12px;
-      border:1px solid rgba(0,0,0,.25);
-      background:rgba(255,255,255,.20);
-      color:#fff;
-      font-size:14px;
-      font-weight:900;
-      cursor:pointer;
-      user-select:none;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    .actionBtn:disabled{opacity:.45;cursor:default;}
-    .actionBtn:active:not(:disabled){transform:translateY(1px);}
-    .actionBtn.primary{background:rgba(255,255,255,.26);}
-
-    @media (max-width: 380px){
-      .seatPane{flex-basis: 46%;}
-      .seatName{font-size:13px;}
-      .searchBox{font-size:13px;}
-    }
+    .bottombar{height:calc(62px + env(safe-area-inset-bottom));background:var(--barBg);border-top:var(--lineW) solid var(--line);padding:8px var(--padX) calc(8px + env(safe-area-inset-bottom)) var(--padX);display:flex;gap:10px;align-items:center;justify-content:space-between;}
+    .actionBtn{flex:1 1 auto;height:46px;border-radius:12px;border:1px solid rgba(0,0,0,.25);background:rgba(255,255,255,.20);color:#fff;font-size:14px;font-weight:900;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;}
+    .actionBtn:disabled{opacity:.45;cursor:default;} .actionBtn:active:not(:disabled){transform:translateY(1px);} .actionBtn.primary{background:rgba(255,255,255,.26);} 
   </style>
 </head>
-
 <body>
   <div class="phone">
-
     <div class="topbar">
-      <div class="titleWrap">
-        <div class="title">Spieler auswählen</div>
-        <div id="sub" class="subtitle">Tisch: …</div>
-      </div>
-      <div class="pill" title="Belegung"><span id="seatCount">0/0</span></div>
+      <div class="titleWrap"><div class="title">Spieler auswählen</div><div id="sub" class="subtitle">Tisch: …</div></div>
+      <div class="pill"><span id="seatCount">0/0</span></div>
     </div>
 
     <div class="content">
-      <div class="seatPane">
-        <div id="layout" class="miniLayout"></div>
-      </div>
-
+      <div class="seatPane"><div id="layout" class="miniLayout"></div></div>
       <div class="searchPane">
         <div class="searchHeader">
           <div class="searchRow">
             <input id="q" class="searchBox" type="text" inputmode="search" autocomplete="off" placeholder="Suche: ID, Nachname oder Vorname">
             <div id="hint" class="hint">…</div>
           </div>
-          <div class="listMeta">
-            <div id="listSub" class="listSub">—</div>
-            <div id="selInfo" class="selInfo">kein Spieler gewählt</div>
-          </div>
+          <div class="listMeta"><div id="listSub" class="listSub">—</div><div id="selInfo" class="selInfo">kein Spieler gewählt</div></div>
         </div>
         <div id="rows" class="rows"></div>
       </div>
@@ -277,375 +73,298 @@
       <button id="btnBack" class="actionBtn" type="button">Zurück</button>
       <button id="btnStart" class="actionBtn primary" type="button" disabled>Start</button>
     </div>
-
   </div>
 
   <script>
-    const DB_NAME = 'ets_db';
-    const DB_VERSION = 1;
-    const STORE_PLAYERS = 'players';
-    const STORE_META = 'meta';
-    const META_KEY = 'spieler_stammblatt';
-    const URL_JSON = './data/spieler_stammblatt.json';
+    const DB_NAME='ets_db';
+    const DB_VERSION=2;
+    const STORE_PLAYERS='players', STORE_META='meta', STORE_CURR_SESSION='current_session', STORE_CURR_STATE='current_state', STORE_GABEN='gaben';
+    const META_KEY='spieler_stammblatt', CURR_KEY='current';
+    const URL_JSON='./data/spieler_stammblatt.json';
 
-    const q = document.getElementById('q');
-    const rowsEl = document.getElementById('rows');
-    const hint = document.getElementById('hint');
-    const listSub = document.getElementById('listSub');
-    const selInfo = document.getElementById('selInfo');
-    const seatCountEl = document.getElementById('seatCount');
-    const layoutEl = document.getElementById('layout');
-    const btnBack = document.getElementById('btnBack');
-    const btnStart = document.getElementById('btnStart');
-    const subEl = document.getElementById('sub');
+    const q=document.getElementById('q');
+    const rowsEl=document.getElementById('rows');
+    const hint=document.getElementById('hint');
+    const listSub=document.getElementById('listSub');
+    const selInfo=document.getElementById('selInfo');
+    const seatCountEl=document.getElementById('seatCount');
+    const layoutEl=document.getElementById('layout');
+    const btnBack=document.getElementById('btnBack');
+    const btnStart=document.getElementById('btnStart');
+    const subEl=document.getElementById('sub');
 
-    const MAX_RESULTS = 80;
-    const DEBOUNCE_MS = 200;
+    const MAX_RESULTS=80, DEBOUNCE_MS=200;
 
-    let tableType = 4;
-    let players = [];
-    let selectedPlayerId = null;
+    let tableType=4;
+    let players=[];
+    let selectedPlayerId=null;
+    const seats={};
+    let seatOrder=[];
 
-    const seats = {};
-    let seatOrder = [];
+    btnBack.addEventListener('click',()=>window.location.href='index.html');
 
-    btnBack.addEventListener('click', () => window.location.href = 'index.html');
+    btnStart.addEventListener('click', async ()=>{
+      if(!isFull()) return;
+      const now=new Date().toISOString();
 
-    btnStart.addEventListener('click', () => {
-      if (!isFull()) return;
-      const payload = { tableType, seats: { ...seats }, createdUtc: new Date().toISOString() };
-      sessionStorage.setItem('currentTable', JSON.stringify(payload));
-      const target = (tableType === 4) ? '4er-Screen.html' : (tableType === 5) ? '5er-Screen.html' : '6er-Screen.html';
-      window.location.href = target;
+      const sess={ key:CURR_KEY, createdUtc:now, ruleSet:'STC', tableType, seats:{...seats}, ccwOrder:buildCcwOrder(tableType) };
+      const totals={}, lastDelta={};
+      Object.values(seats).forEach(id=>{ if(id!=null){ totals[String(id)]=0; lastDelta[String(id)]=0; } });
+      const state={ key:CURR_KEY, totalByPlayerId:totals, lastDeltaByPlayerId:lastDelta, lastGabeNr:0, updatedUtc:now };
+
+      const db=await openDb();
+      await writeNewSession(db, sess, state);
+      db.close();
+
+      const target=(tableType===4)?'4er-Screen.html':(tableType===5)?'5er-Screen.html':'6er-Screen.html';
+      window.location.href=target;
     });
 
-    let tHandle = null;
-    q.addEventListener('input', () => {
-      if (tHandle) clearTimeout(tHandle);
-      tHandle = setTimeout(runSearch, DEBOUNCE_MS);
-    });
+    let tHandle=null;
+    q.addEventListener('input',()=>{ if(tHandle) clearTimeout(tHandle); tHandle=setTimeout(runSearch, DEBOUNCE_MS); });
 
-    window.addEventListener('load', async () => {
-      tableType = parseTableType();
-      subEl.textContent = 'Tisch: ' + tableType + ' Spieler';
+    window.addEventListener('load', async ()=>{
+      tableType=parseTableType();
+      subEl.textContent='Tisch: '+tableType+' Spieler';
       configureSeats(tableType);
-      hint.textContent = 'lade…';
+      hint.textContent='lade…';
       await ensurePlayersLoaded();
       runSearch();
       q.focus();
     });
 
-    function parseTableType(){
-      const p = new URLSearchParams(location.search);
-      const t = Number(p.get('table') || 4);
-      return (t === 5 || t === 6) ? t : 4;
-    }
+    function parseTableType(){ const p=new URLSearchParams(location.search); const t=Number(p.get('table')||4); return (t===5||t===6)?t:4; }
 
-    function configureSeats(t){
-      for (const k in seats) delete seats[k];
-
-      if (t === 4) {
-        seatOrder = ['TOP','LEFT','RIGHT','BOTTOM'];
-        renderLayout4();
-      } else if (t === 5) {
-        seatOrder = ['LEFT_TOP','LEFT_BOTTOM','RIGHT_TOP','RIGHT_BOTTOM','BOTTOM'];
-        renderLayout5();
-      } else {
-        seatOrder = ['TOP','LEFT_TOP','LEFT_BOTTOM','RIGHT_TOP','RIGHT_BOTTOM','BOTTOM'];
-        renderLayout6();
-      }
-
-      for (const k of seatOrder) seats[k] = null;
-      updateSeatCount();
-      updateStartEnabled();
+    function buildCcwOrder(t){
+      if(t===5) return ['BOTTOM','RIGHT_BOTTOM','RIGHT_TOP','LEFT_TOP','LEFT_BOTTOM'];
+      if(t===6) return ['BOTTOM','RIGHT_BOTTOM','RIGHT_TOP','TOP','LEFT_TOP','LEFT_BOTTOM'];
+      return ['BOTTOM','RIGHT','TOP','LEFT'];
     }
 
     function openDb(){
-      return new Promise((resolve, reject) => {
-        const req = indexedDB.open(DB_NAME, DB_VERSION);
-        req.onupgradeneeded = () => {
-          const db = req.result;
-          if (!db.objectStoreNames.contains(STORE_PLAYERS)) {
-            const st = db.createObjectStore(STORE_PLAYERS, { keyPath: 'spielerId' });
-            st.createIndex('nachnameLower', 'nachnameLower', { unique:false });
-            st.createIndex('vornameLower', 'vornameLower', { unique:false });
-            st.createIndex('nameLower', 'nameLower', { unique:false });
-            st.createIndex('aktiv', 'aktiv', { unique:false });
+      return new Promise((resolve,reject)=>{
+        const req=indexedDB.open(DB_NAME, DB_VERSION);
+        req.onupgradeneeded=()=>{
+          const db=req.result;
+          if(!db.objectStoreNames.contains(STORE_PLAYERS)){
+            const st=db.createObjectStore(STORE_PLAYERS,{keyPath:'spielerId'});
+            st.createIndex('nachnameLower','nachnameLower',{unique:false});
+            st.createIndex('vornameLower','vornameLower',{unique:false});
+            st.createIndex('nameLower','nameLower',{unique:false});
+            st.createIndex('aktiv','aktiv',{unique:false});
           }
-          if (!db.objectStoreNames.contains(STORE_META)) {
-            db.createObjectStore(STORE_META, { keyPath: 'key' });
-          }
+          if(!db.objectStoreNames.contains(STORE_META)) db.createObjectStore(STORE_META,{keyPath:'key'});
+          if(!db.objectStoreNames.contains(STORE_CURR_SESSION)) db.createObjectStore(STORE_CURR_SESSION,{keyPath:'key'});
+          if(!db.objectStoreNames.contains(STORE_CURR_STATE)) db.createObjectStore(STORE_CURR_STATE,{keyPath:'key'});
+          if(!db.objectStoreNames.contains(STORE_GABEN)) db.createObjectStore(STORE_GABEN,{keyPath:'gabeNr'});
         };
-        req.onsuccess = () => resolve(req.result);
-        req.onerror = () => reject(req.error);
+        req.onsuccess=()=>resolve(req.result);
+        req.onerror=()=>reject(req.error);
       });
     }
 
-    function txGetAll(db, storeName){
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction(storeName, 'readonly');
-        const st = tx.objectStore(storeName);
-        const req = st.getAll();
-        req.onsuccess = () => resolve(req.result || []);
-        req.onerror = () => reject(req.error);
-      });
+    function txCount(db, store){
+      return new Promise((resolve,reject)=>{ const tx=db.transaction(store,'readonly'); const st=tx.objectStore(store); const rq=st.count(); rq.onsuccess=()=>resolve(rq.result||0); rq.onerror=()=>reject(rq.error); });
     }
 
-    function txCount(db, storeName){
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction(storeName, 'readonly');
-        const st = tx.objectStore(storeName);
-        const req = st.count();
-        req.onsuccess = () => resolve(req.result || 0);
-        req.onerror = () => reject(req.error);
-      });
+    function txGetAll(db, store){
+      return new Promise((resolve,reject)=>{ const tx=db.transaction(store,'readonly'); const st=tx.objectStore(store); const rq=st.getAll(); rq.onsuccess=()=>resolve(rq.result||[]); rq.onerror=()=>reject(rq.error); });
     }
 
-    function txGet(db, storeName, key){
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction(storeName, 'readonly');
-        const st = tx.objectStore(storeName);
-        const req = st.get(key);
-        req.onsuccess = () => resolve(req.result);
-        req.onerror = () => reject(req.error);
-      });
+    function txGet(db, store, key){
+      return new Promise((resolve,reject)=>{ const tx=db.transaction(store,'readonly'); const st=tx.objectStore(store); const rq=st.get(key); rq.onsuccess=()=>resolve(rq.result); rq.onerror=()=>reject(rq.error); });
     }
 
     async function ensurePlayersLoaded(){
-      const db = await openDb();
-      let c = await txCount(db, STORE_PLAYERS);
-
-      if (c === 0) {
-        hint.textContent = 'importiere…';
+      const db=await openDb();
+      let c=await txCount(db, STORE_PLAYERS);
+      if(c===0){
         await syncFromJson(db);
-        c = await txCount(db, STORE_PLAYERS);
+        c=await txCount(db, STORE_PLAYERS);
       }
-
-      const all = await txGetAll(db, STORE_PLAYERS);
-      players = (all || []).filter(p => p && p.aktiv === true);
-
-      players.sort((a,b) => {
-        const an = a.nachnameLower || '';
-        const bn = b.nachnameLower || '';
-        if (an < bn) return -1;
-        if (an > bn) return 1;
-        const av = a.vornameLower || '';
-        const bv = b.vornameLower || '';
-        return av < bv ? -1 : (av > bv ? 1 : 0);
-      });
-
-      const meta = await txGet(db, STORE_META, META_KEY);
-      const v = meta && meta.version ? meta.version : 0;
-      hint.textContent = c + ' Spieler (v' + v + ')';
+      const all=await txGetAll(db, STORE_PLAYERS);
+      players=(all||[]).filter(p=>p && p.aktiv===true);
+      players.sort((a,b)=>{ const an=a.nachnameLower||''; const bn=b.nachnameLower||''; if(an<bn) return -1; if(an>bn) return 1; const av=a.vornameLower||''; const bv=b.vornameLower||''; return av<bv?-1:(av>bv?1:0); });
+      const meta=await txGet(db, STORE_META, META_KEY);
+      hint.textContent=c+' Spieler (v'+(meta&&meta.version?meta.version:0)+')';
       db.close();
     }
 
     async function syncFromJson(db){
-      const res = await fetch(URL_JSON + '?t=' + Date.now(), { cache: 'no-store' });
-      if (!res.ok) throw new Error('JSON Download fehlgeschlagen (' + res.status + ')');
-      const remote = await res.json();
-      const remoteVersion = Number(remote.version || 0);
-      const list = Array.isArray(remote.players) ? remote.players : [];
-      const active = list.filter(p => p && p.aktiv === true);
-      await importReplace(db, active, { version: remoteVersion, generatedUtc: String(remote.generatedUtc || ''), count: active.length });
+      const res=await fetch(URL_JSON+'?t='+Date.now(),{cache:'no-store'});
+      if(!res.ok) throw new Error('JSON Download fehlgeschlagen ('+res.status+')');
+      const remote=await res.json();
+      const list=Array.isArray(remote.players)?remote.players:[];
+      const active=list.filter(p=>p && p.aktiv===true);
+      await importReplacePlayers(db, active, {version:Number(remote.version||0),generatedUtc:String(remote.generatedUtc||''),count:active.length});
     }
 
-    function importReplace(db, list, meta){
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction([STORE_PLAYERS, STORE_META], 'readwrite');
-        const stPlayers = tx.objectStore(STORE_PLAYERS);
-        const stMeta = tx.objectStore(STORE_META);
-
-        const clr = stPlayers.clear();
-        clr.onerror = () => reject(clr.error);
-        clr.onsuccess = () => {
-          for (const p of list) {
-            const nach = String(p.nachname || '');
-            const vor = String(p.vorname || '');
-            stPlayers.put({
-              spielerId: Number(p.spielerId),
-              nachname: nach,
-              vorname: vor,
-              aktiv: true,
-              nachnameLower: nach.toLowerCase(),
-              vornameLower: vor.toLowerCase(),
-              nameLower: (nach + ' ' + vor).trim().toLowerCase()
-            });
+    function importReplacePlayers(db, list, meta){
+      return new Promise((resolve,reject)=>{
+        const tx=db.transaction([STORE_PLAYERS, STORE_META],'readwrite');
+        const stPlayers=tx.objectStore(STORE_PLAYERS);
+        const stMeta=tx.objectStore(STORE_META);
+        const clr=stPlayers.clear();
+        clr.onerror=()=>reject(clr.error);
+        clr.onsuccess=()=>{
+          for(const p of list){
+            const nach=String(p.nachname||'');
+            const vor=String(p.vorname||'');
+            stPlayers.put({spielerId:Number(p.spielerId),nachname:nach,vorname:vor,aktiv:true,nachnameLower:nach.toLowerCase(),vornameLower:vor.toLowerCase(),nameLower:(nach+' '+vor).trim().toLowerCase()});
           }
-          stMeta.put({ key: META_KEY, version: Number(meta.version || 0), generatedUtc: String(meta.generatedUtc || ''), count: Number(meta.count || list.length), lastFetchUtc: new Date().toISOString() });
+          stMeta.put({key:META_KEY,version:Number(meta.version||0),generatedUtc:String(meta.generatedUtc||''),count:Number(meta.count||list.length),lastFetchUtc:new Date().toISOString()});
         };
-        tx.oncomplete = () => resolve();
-        tx.onerror = () => reject(tx.error);
-        tx.onabort = () => reject(tx.error);
+        tx.oncomplete=()=>resolve();
+        tx.onerror=()=>reject(tx.error);
+        tx.onabort=()=>reject(tx.error);
+      });
+    }
+
+    function writeNewSession(db, sess, state){
+      return new Promise((resolve,reject)=>{
+        const tx=db.transaction([STORE_CURR_SESSION, STORE_CURR_STATE, STORE_GABEN],'readwrite');
+        tx.objectStore(STORE_CURR_SESSION).put(sess);
+        const gabenStore=tx.objectStore(STORE_GABEN);
+        const clr=gabenStore.clear();
+        clr.onerror=()=>reject(clr.error);
+        clr.onsuccess=()=>{ tx.objectStore(STORE_CURR_STATE).put(state); };
+        tx.oncomplete=()=>resolve();
+        tx.onerror=()=>reject(tx.error);
+        tx.onabort=()=>reject(tx.error);
       });
     }
 
     function runSearch(){
-      const termRaw = (q.value || '').trim();
-      const term = termRaw.toLowerCase();
-      const isIdSearch = term.length > 0 && /^[0-9]+$/.test(term);
-
+      const termRaw=(q.value||'').trim();
+      const term=termRaw.toLowerCase();
+      const isId=term.length>0 && /^[0-9]+$/.test(term);
       let results;
-      if (!term) {
-        results = players.slice(0, MAX_RESULTS);
-        listSub.textContent = 'zeige ' + results.length + ' von ' + players.length;
+      if(!term){
+        results=players.slice(0,MAX_RESULTS);
+        listSub.textContent='zeige '+results.length+' von '+players.length;
       } else {
-        const out = [];
-        for (const p of players) {
-          if (out.length >= MAX_RESULTS) break;
-          if (isIdSearch) {
-            const idStr = String(p.spielerId);
-            if (idStr.includes(term)) out.push(p);
+        const out=[];
+        for(const p of players){
+          if(out.length>=MAX_RESULTS) break;
+          if(isId){
+            if(String(p.spielerId).includes(term)) out.push(p);
           } else {
-            const nl = p.nachnameLower || '';
-            const vl = p.vornameLower || '';
-            if (nl.includes(term) || vl.includes(term)) out.push(p);
+            const nl=p.nachnameLower||''; const vl=p.vornameLower||'';
+            if(nl.includes(term) || vl.includes(term)) out.push(p);
           }
         }
-        results = out;
-        listSub.textContent = 'Treffer ' + results.length + ' (max ' + MAX_RESULTS + ')';
+        results=out;
+        listSub.textContent='Treffer '+results.length+' (max '+MAX_RESULTS+')';
       }
       renderRows(results);
     }
 
     function renderRows(list){
-      rowsEl.innerHTML = '';
-      if (!list || list.length === 0) {
-        const d = document.createElement('div');
-        d.className = 'row';
-        d.style.cursor = 'default';
-        d.innerHTML = '<div class="pName"><div class="pMain">Keine Treffer</div><div class="pSub">Suche anpassen</div></div>';
+      rowsEl.innerHTML='';
+      if(!list || list.length===0){
+        const d=document.createElement('div');
+        d.className='row';
+        d.style.cursor='default';
+        d.innerHTML='<div style="min-width:0;"><div class="pMain">Keine Treffer</div><div class="pSub">Suche anpassen</div></div>';
         rowsEl.appendChild(d);
         return;
       }
-      for (const p of list) {
-        const r = document.createElement('div');
-        r.className = 'row' + (p.spielerId === selectedPlayerId ? ' selected' : '');
-        const main = (p.nachname + ' ' + p.vorname).trim();
-        r.innerHTML = `
-          <div class="pName">
-            <div class="pMain">${escapeHtml(main)}</div>
-            <div class="pSub">${escapeHtml(p.nachname)} / ${escapeHtml(p.vorname)}</div>
-          </div>
-          <div class="pId">${p.spielerId}</div>
-        `;
-        r.addEventListener('click', () => {
-          selectPlayer(p.spielerId);
-          [...rowsEl.querySelectorAll('.row')].forEach(x => x.classList.remove('selected'));
+      for(const p of list){
+        const r=document.createElement('div');
+        r.className='row'+(p.spielerId===selectedPlayerId?' selected':'');
+        const main=(p.nachname+' '+p.vorname).trim();
+        r.innerHTML=`<div style="min-width:0;"><div class="pMain">${escapeHtml(main)}</div><div class="pSub">${escapeHtml(p.nachname)} / ${escapeHtml(p.vorname)}</div></div><div class="pId">${p.spielerId}</div>`;
+        r.addEventListener('click',()=>{
+          selectedPlayerId=Number(p.spielerId);
+          selInfo.textContent='gewählt: '+main;
+          [...rowsEl.querySelectorAll('.row')].forEach(x=>x.classList.remove('selected'));
           r.classList.add('selected');
         });
         rowsEl.appendChild(r);
       }
     }
 
-    function selectPlayer(id){
-      selectedPlayerId = Number(id);
-      const p = players.find(x => x.spielerId === selectedPlayerId);
-      selInfo.textContent = p ? ('gewählt: ' + (p.nachname + ' ' + p.vorname).trim()) : 'kein Spieler gewählt';
-    }
-
-    function isFull(){ return seatOrder.every(k => seats[k] != null); }
-    function updateStartEnabled(){ btnStart.disabled = !isFull(); }
-
-    function updateSeatCount(){
-      const filled = seatOrder.filter(k => seats[k] != null).length;
-      seatCountEl.textContent = filled + '/' + seatOrder.length;
-    }
+    function isFull(){ return seatOrder.every(k=>seats[k]!=null); }
+    function updateStartEnabled(){ btnStart.disabled=!isFull(); }
+    function updateSeatCount(){ const filled=seatOrder.filter(k=>seats[k]!=null).length; seatCountEl.textContent=filled+'/'+seatOrder.length; }
 
     function setSeat(seatKey, playerId){
-      if (playerId == null) { seats[seatKey] = null; refreshSeats(); return; }
-      for (const k of seatOrder) { if (seats[k] === playerId) seats[k] = null; }
-      seats[seatKey] = playerId;
+      if(playerId==null){ seats[seatKey]=null; refreshSeats(); return; }
+      for(const k of seatOrder){ if(seats[k]===playerId) seats[k]=null; }
+      seats[seatKey]=playerId;
       refreshSeats();
-      selectedPlayerId = null;
-      selInfo.textContent = 'kein Spieler gewählt';
-      [...rowsEl.querySelectorAll('.row')].forEach(x => x.classList.remove('selected'));
+      selectedPlayerId=null;
+      selInfo.textContent='kein Spieler gewählt';
+      [...rowsEl.querySelectorAll('.row')].forEach(x=>x.classList.remove('selected'));
     }
 
-    function clearSeat(seatKey){ seats[seatKey] = null; refreshSeats(); }
+    function clearSeat(seatKey){ seats[seatKey]=null; refreshSeats(); }
 
     function refreshSeats(){
-      seatOrder.forEach(k => {
-        const el = document.querySelector('[data-seat="' + k + '"]');
-        if (!el) return;
-        const pid = seats[k];
-        const nameEl = el.querySelector('.seatName');
-        if (pid == null) {
-          el.classList.add('empty');
-          nameEl.textContent = 'leer';
-        } else {
-          el.classList.remove('empty');
-          const p = players.find(x => x.spielerId === pid);
-          nameEl.textContent = p ? ((p.nachname + ' ' + p.vorname).trim()) : String(pid);
-        }
-      });
+      for(const k of seatOrder){
+        const el=document.querySelector(`[data-seat="${k}"]`);
+        if(!el) continue;
+        const pid=seats[k];
+        const nameEl=el.querySelector('.seatName');
+        if(pid==null){ el.classList.add('empty'); nameEl.textContent='leer'; }
+        else { el.classList.remove('empty'); const p=players.find(x=>x.spielerId===pid); nameEl.textContent=p?((p.nachname+' '+p.vorname).trim()):String(pid); }
+      }
       updateSeatCount();
       updateStartEnabled();
     }
 
     function seatTile(label, seatKey){
-      const el = document.createElement('div');
-      el.className = 'seat empty';
-      el.dataset.seat = seatKey;
-      el.innerHTML = `
-        <div class="seatLabel">${escapeHtml(label)}</div>
-        <div class="seatName">leer</div>
-        <div class="clear" title="Platz leeren">✕</div>
-      `;
-      el.addEventListener('click', (ev) => {
-        if (ev.target && ev.target.classList && ev.target.classList.contains('clear')) return;
-        if (selectedPlayerId == null) { flashSeat(el); return; }
+      const el=document.createElement('div');
+      el.className='seat empty';
+      el.dataset.seat=seatKey;
+      el.innerHTML=`<div class="seatLabel">${escapeHtml(label)}</div><div class="seatName">leer</div><div class="clear" title="Platz leeren">✕</div>`;
+      el.addEventListener('click',(ev)=>{
+        if(ev.target && ev.target.classList && ev.target.classList.contains('clear')) return;
+        if(selectedPlayerId==null){ el.classList.add('seatFocus'); setTimeout(()=>el.classList.remove('seatFocus'),250); return; }
         setSeat(seatKey, selectedPlayerId);
       });
-      el.querySelector('.clear').addEventListener('click', (ev) => {
-        ev.preventDefault();
-        ev.stopPropagation();
-        clearSeat(seatKey);
-      });
+      el.querySelector('.clear').addEventListener('click',(ev)=>{ ev.preventDefault(); ev.stopPropagation(); clearSeat(seatKey); });
       return el;
     }
 
-    function flashSeat(el){ el.classList.add('seatFocus'); setTimeout(() => el.classList.remove('seatFocus'), 250); }
+    function configureSeats(t){
+      for(const k in seats) delete seats[k];
+      if(t===4){ seatOrder=['TOP','LEFT','RIGHT','BOTTOM']; renderLayout4(); }
+      else if(t===5){ seatOrder=['LEFT_TOP','LEFT_BOTTOM','RIGHT_TOP','RIGHT_BOTTOM','BOTTOM']; renderLayout5(); }
+      else { seatOrder=['TOP','LEFT_TOP','LEFT_BOTTOM','RIGHT_TOP','RIGHT_BOTTOM','BOTTOM']; renderLayout6(); }
+      seatOrder.forEach(k=>seats[k]=null);
+      updateSeatCount();
+      updateStartEnabled();
+    }
 
-    // Layouts (span 2 = 50%, centered = columns 2-3)
     function renderLayout4(){
-      layoutEl.className = 'miniLayout layout4';
-      layoutEl.innerHTML = '';
-      const top = seatTile('Oben', 'TOP'); top.style.gridColumn = '2 / span 2'; layoutEl.appendChild(top);
-      const left = seatTile('Links', 'LEFT'); left.style.gridColumn = '1 / span 2'; layoutEl.appendChild(left);
-      const right = seatTile('Rechts', 'RIGHT'); right.style.gridColumn = '3 / span 2'; layoutEl.appendChild(right);
-      const bottom = seatTile('Unten', 'BOTTOM'); bottom.style.gridColumn = '2 / span 2'; layoutEl.appendChild(bottom);
+      layoutEl.className='miniLayout layout4'; layoutEl.innerHTML='';
+      const top=seatTile('Oben','TOP'); top.style.gridColumn='2 / span 2'; layoutEl.appendChild(top);
+      const left=seatTile('Links','LEFT'); left.style.gridColumn='1 / span 2'; layoutEl.appendChild(left);
+      const right=seatTile('Rechts','RIGHT'); right.style.gridColumn='3 / span 2'; layoutEl.appendChild(right);
+      const bottom=seatTile('Unten','BOTTOM'); bottom.style.gridColumn='2 / span 2'; layoutEl.appendChild(bottom);
     }
 
     function renderLayout5(){
-      layoutEl.className = 'miniLayout layout5';
-      layoutEl.innerHTML = '';
-      const lt = seatTile('L oben', 'LEFT_TOP'); lt.style.gridColumn = '1 / span 2'; layoutEl.appendChild(lt);
-      const rt = seatTile('R oben', 'RIGHT_TOP'); rt.style.gridColumn = '3 / span 2'; layoutEl.appendChild(rt);
-      const lb = seatTile('L unten', 'LEFT_BOTTOM'); lb.style.gridColumn = '1 / span 2'; layoutEl.appendChild(lb);
-      const rb = seatTile('R unten', 'RIGHT_BOTTOM'); rb.style.gridColumn = '3 / span 2'; layoutEl.appendChild(rb);
-      const bottom = seatTile('Unten', 'BOTTOM'); bottom.style.gridColumn = '2 / span 2'; layoutEl.appendChild(bottom);
+      layoutEl.className='miniLayout layout5'; layoutEl.innerHTML='';
+      const lt=seatTile('L oben','LEFT_TOP'); lt.style.gridColumn='1 / span 2'; layoutEl.appendChild(lt);
+      const rt=seatTile('R oben','RIGHT_TOP'); rt.style.gridColumn='3 / span 2'; layoutEl.appendChild(rt);
+      const lb=seatTile('L unten','LEFT_BOTTOM'); lb.style.gridColumn='1 / span 2'; layoutEl.appendChild(lb);
+      const rb=seatTile('R unten','RIGHT_BOTTOM'); rb.style.gridColumn='3 / span 2'; layoutEl.appendChild(rb);
+      const bottom=seatTile('Unten','BOTTOM'); bottom.style.gridColumn='2 / span 2'; layoutEl.appendChild(bottom);
     }
 
     function renderLayout6(){
-      layoutEl.className = 'miniLayout layout6';
-      layoutEl.innerHTML = '';
-      const top = seatTile('Oben', 'TOP'); top.style.gridColumn = '2 / span 2'; layoutEl.appendChild(top);
-      const lt = seatTile('L oben', 'LEFT_TOP'); lt.style.gridColumn = '1 / span 2'; layoutEl.appendChild(lt);
-      const rt = seatTile('R oben', 'RIGHT_TOP'); rt.style.gridColumn = '3 / span 2'; layoutEl.appendChild(rt);
-      const lb = seatTile('L unten', 'LEFT_BOTTOM'); lb.style.gridColumn = '1 / span 2'; layoutEl.appendChild(lb);
-      const rb = seatTile('R unten', 'RIGHT_BOTTOM'); rb.style.gridColumn = '3 / span 2'; layoutEl.appendChild(rb);
-      const bottom = seatTile('Unten', 'BOTTOM'); bottom.style.gridColumn = '2 / span 2'; layoutEl.appendChild(bottom);
+      layoutEl.className='miniLayout layout6'; layoutEl.innerHTML='';
+      const top=seatTile('Oben','TOP'); top.style.gridColumn='2 / span 2'; layoutEl.appendChild(top);
+      const lt=seatTile('L oben','LEFT_TOP'); lt.style.gridColumn='1 / span 2'; layoutEl.appendChild(lt);
+      const rt=seatTile('R oben','RIGHT_TOP'); rt.style.gridColumn='3 / span 2'; layoutEl.appendChild(rt);
+      const lb=seatTile('L unten','LEFT_BOTTOM'); lb.style.gridColumn='1 / span 2'; layoutEl.appendChild(lb);
+      const rb=seatTile('R unten','RIGHT_BOTTOM'); rb.style.gridColumn='3 / span 2'; layoutEl.appendChild(rb);
+      const bottom=seatTile('Unten','BOTTOM'); bottom.style.gridColumn='2 / span 2'; layoutEl.appendChild(bottom);
     }
 
-    function escapeHtml(s){
-      return String(s)
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#39;');
-    }
+    function escapeHtml(s){ return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;'); }
   </script>
 </body>
 </html>

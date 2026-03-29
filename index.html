@@ -4,415 +4,200 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ETS – Elektronischer Tarock Schreibblock</title>
-
   <style>
-    :root{
-      --bg:#cfe9ff;
-      --panel:#cfe9ff;
-      --barBg:#3b6fa8;
-      --line:#000;
-      --lineW:3px;
-      --font: Arial, sans-serif;
-      --black:#000;
-      --red:#c00000;
-
-      --btnBg:var(--panel);
-      --btnBorder:rgba(0,0,0,.70);
-      --btnRadius:10px;
-      --iconDark:rgba(0,0,0,.92);
-
-      --padX:12px;
-    }
-
-    *{box-sizing:border-box;}
-    html,body{height:100%;}
-    html,body{overflow:hidden;}
-
-    body{
-      margin:0;
-      background:var(--bg);
-      font-family:var(--font);
-      display:flex;
-      justify-content:center;
-      color:var(--black);
-    }
-
-    .phone{
-      width:min(480px,100%);
-      height:100dvh;
-      background:var(--panel);
-      display:flex;
-      flex-direction:column;
-      overflow:hidden;
-    }
-
-    .topbar{
-      height: calc(58px + env(safe-area-inset-top));
-      padding: calc(8px + env(safe-area-inset-top)) var(--padX) 8px var(--padX);
-      background:var(--barBg);
-      border-bottom:var(--lineW) solid var(--line);
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      min-height:0;
-    }
-
-    .brand{min-width:0;display:flex;flex-direction:column;gap:2px;}
-    .brandTitle{font-size:16px;font-weight:800;line-height:1.15;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-    .brandSub{font-size:11px;font-weight:600;line-height:1.2;color:rgba(255,255,255,.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-
-    .logoWrap{flex:0 0 auto;width:44px;height:44px;border-radius:10px;background:rgba(255,255,255,.18);border:1px solid rgba(0,0,0,.25);overflow:hidden;display:grid;place-items:center;}
-    .logoWrap img{width:100%;height:100%;object-fit:cover;display:block;}
-
-    .content{
-      flex:1 1 auto;
-      min-height:0;
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-      padding:12px var(--padX);
-      overflow:hidden;
-    }
-
-    .sectionTitle{margin:0;font-size:14px;font-weight:800;color:var(--iconDark);}
-
-    .statusBox{
-      border:1px solid var(--btnBorder);
-      border-radius:var(--btnRadius);
-      background:var(--btnBg);
-      padding:8px 10px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:8px;
-      min-width:0;
-    }
-
-    .statusLeft{min-width:0;}
-    .statusMain{font-size:12px;font-weight:800;line-height:1.2;color:var(--iconDark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-    .statusSub{font-size:11px;font-weight:600;line-height:1.2;color:rgba(0,0,0,.70);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-
-    .statusRight{flex:0 0 auto;display:flex;align-items:center;gap:8px;}
-    .miniBtn{
-      height:28px;
-      padding:0 10px;
-      border-radius:8px;
-      border:1px solid var(--btnBorder);
-      background:rgba(0,0,0,.04);
-      font-size:11px;
-      font-weight:800;
-      color:var(--iconDark);
-      cursor:pointer;
-      user-select:none;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .miniBtn:active{transform:translateY(1px);}
-
-    .grid{
-      flex:1 1 auto;
-      min-height:0;
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap:10px;
-      overflow:hidden;
-      align-content:start;
-    }
-
-    @media (max-width: 340px){
-      .grid{ grid-template-columns: 1fr; }
-    }
-
-    .menuBtn{
-      text-decoration:none;
-      color:var(--iconDark);
-      background:var(--btnBg);
-      border:1px solid var(--btnBorder);
-      border-radius:var(--btnRadius);
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      padding:10px 10px;
-      min-width:0;
-      user-select:none;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .menuBtn:active{ transform:translateY(1px); }
-
-    .btnText{min-width:0;}
-    .btnTitle{font-size:clamp(14px, 3.4vw, 16px);font-weight:800;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-    .btnHint{margin-top:2px;font-size:10px;font-weight:600;line-height:1.2;color:rgba(0,0,0,.70);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-
-    .chev{flex:0 0 auto;width:24px;height:24px;border-radius:8px;background:rgba(0,0,0,.06);display:grid;place-items:center;}
-    .chev svg{width:16px;height:16px;display:block;color:rgba(0,0,0,.72);} 
-    .chev svg path{fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;}
-
-    .bottombar{
-      height: calc(40px + env(safe-area-inset-bottom));
-      padding: 8px var(--padX) calc(8px + env(safe-area-inset-bottom)) var(--padX);
-      background:var(--barBg);
-      border-top:var(--lineW) solid var(--line);
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      color:rgba(255,255,255,.88);
-      font-size:11px;
-      font-weight:700;
-      min-height:0;
-    }
-    .ver{ font-weight:700; opacity:.9; }
+    :root{--bg:#cfe9ff;--panel:#cfe9ff;--barBg:#3b6fa8;--line:#000;--lineW:3px;--font:Arial,sans-serif;--black:#000;--btnBg:var(--panel);--btnBorder:rgba(0,0,0,.70);--btnRadius:10px;--iconDark:rgba(0,0,0,.92);--padX:12px;}
+    *{box-sizing:border-box;} html,body{height:100%;overflow:hidden;}
+    body{margin:0;background:var(--bg);font-family:var(--font);display:flex;justify-content:center;color:var(--black);} 
+    .phone{width:min(480px,100%);height:100dvh;background:var(--panel);display:flex;flex-direction:column;overflow:hidden;}
+    .topbar{height:calc(58px + env(safe-area-inset-top));padding:calc(8px + env(safe-area-inset-top)) var(--padX) 8px var(--padX);background:var(--barBg);border-bottom:var(--lineW) solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px;}
+    .brand{min-width:0;display:flex;flex-direction:column;gap:2px;} .brandTitle{font-size:16px;font-weight:800;line-height:1.15;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;} .brandSub{font-size:11px;font-weight:600;color:rgba(255,255,255,.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .logoWrap{flex:0 0 auto;width:44px;height:44px;border-radius:10px;background:rgba(255,255,255,.18);border:1px solid rgba(0,0,0,.25);overflow:hidden;display:grid;place-items:center;} .logoWrap img{width:100%;height:100%;object-fit:cover;display:block;}
+    .content{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:10px;padding:12px var(--padX);overflow:hidden;}
+    .sectionTitle{margin:0;font-size:14px;font-weight:800;color:var(--iconDark);} 
+    .statusBox{border:1px solid var(--btnBorder);border-radius:var(--btnRadius);background:var(--btnBg);padding:8px 10px;display:flex;flex-direction:column;gap:8px;}
+    .statusRow{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+    .statusMain{font-size:12px;font-weight:800;color:var(--iconDark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;} .statusSub{font-size:11px;font-weight:600;color:rgba(0,0,0,.70);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .miniBtn{height:28px;padding:0 10px;border-radius:8px;border:1px solid var(--btnBorder);background:rgba(0,0,0,.04);font-size:11px;font-weight:800;color:var(--iconDark);cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;} .miniBtn:active{transform:translateY(1px);} .miniBtn:disabled{opacity:.45;cursor:default;}
+    .resumeBtn{width:100%;height:34px;border-radius:10px;border:1px solid var(--btnBorder);background:rgba(59,111,168,.10);color:var(--iconDark);font-size:12px;font-weight:900;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;display:none;} .resumeBtn:active{transform:translateY(1px);} 
+    .grid{flex:1 1 auto;min-height:0;display:grid;grid-template-columns:1fr 1fr;gap:10px;overflow:hidden;align-content:start;} @media(max-width:340px){.grid{grid-template-columns:1fr;}}
+    .menuBtn{text-decoration:none;color:var(--iconDark);background:var(--btnBg);border:1px solid var(--btnBorder);border-radius:var(--btnRadius);display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 10px;user-select:none;-webkit-tap-highlight-color:transparent;} .menuBtn:active{transform:translateY(1px);} 
+    .btnTitle{font-size:clamp(14px,3.4vw,16px);font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;} .btnHint{margin-top:2px;font-size:10px;font-weight:600;color:rgba(0,0,0,.70);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .chev{width:24px;height:24px;border-radius:8px;background:rgba(0,0,0,.06);display:grid;place-items:center;} .chev svg{width:16px;height:16px;display:block;color:rgba(0,0,0,.72);} .chev svg path{fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;}
+    .bottombar{height:calc(40px + env(safe-area-inset-bottom));padding:8px var(--padX) calc(8px + env(safe-area-inset-bottom)) var(--padX);background:var(--barBg);border-top:var(--lineW) solid var(--line);display:flex;align-items:center;justify-content:space-between;color:rgba(255,255,255,.88);font-size:11px;font-weight:700;}
   </style>
 </head>
-
 <body>
   <div class="phone">
-
     <div class="topbar">
-      <div class="brand">
-        <div class="brandTitle">ETS – Elektronischer Tarock Schreibblock</div>
-        <div class="brandSub">Startmenü (Prototype)</div>
-      </div>
-
-      <div class="logoWrap" title="Logo (Platzhalter)">
-        <img src="icons/icon-192.png" alt="XXI" onerror="this.style.display='none'">
-      </div>
+      <div class="brand"><div class="brandTitle">ETS – Elektronischer Tarock Schreibblock</div><div class="brandSub">Startmenü</div></div>
+      <div class="logoWrap" title="Logo (Platzhalter)"><img src="icons/icon-192.png" alt="XXI" onerror="this.style.display='none'"></div>
     </div>
 
     <div class="content">
       <h2 class="sectionTitle">Neues Spiel</h2>
 
       <div class="statusBox" aria-live="polite">
-        <div class="statusLeft">
-          <div id="statusMain" class="statusMain">Spielerliste: wird geprüft…</div>
-          <div id="statusSub" class="statusSub">Bitte kurz warten</div>
-        </div>
-        <div class="statusRight">
+        <div class="statusRow">
+          <div style="min-width:0;">
+            <div id="statusMain" class="statusMain">Spielerliste: wird geprüft…</div>
+            <div id="statusSub" class="statusSub">Bitte kurz warten</div>
+          </div>
           <button id="btnRefresh" class="miniBtn" type="button">Update</button>
         </div>
+        <button id="btnResume" class="resumeBtn" type="button">Aktuellen Tisch fortsetzen</button>
       </div>
 
       <div class="grid">
-        <a class="menuBtn" href="spieler-auswahl.html?table=4">
-          <div class="btnText">
-            <div class="btnTitle">Neuer 4er Tisch</div>
-            <div class="btnHint">Spieler wählen (4 Plätze)</div>
-          </div>
-          <div class="chev" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></div>
-        </a>
-
-        <a class="menuBtn" href="spieler-auswahl.html?table=5">
-          <div class="btnText">
-            <div class="btnTitle">Neuer 5er Tisch</div>
-            <div class="btnHint">Spieler wählen (5 Plätze)</div>
-          </div>
-          <div class="chev" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></div>
-        </a>
-
-        <a class="menuBtn" href="spieler-auswahl.html?table=6">
-          <div class="btnText">
-            <div class="btnTitle">Neuer 6er Tisch</div>
-            <div class="btnHint">Spieler wählen (6 Plätze)</div>
-          </div>
-          <div class="chev" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></div>
-        </a>
-
-        <a class="menuBtn" href="#" onclick="return false;">
-          <div class="btnText">
-            <div class="btnTitle">Platzhalter 1</div>
-            <div class="btnHint">(kommt später)</div>
-          </div>
-          <div class="chev" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></div>
-        </a>
-
-        <a class="menuBtn" href="#" onclick="return false;">
-          <div class="btnText">
-            <div class="btnTitle">Platzhalter 2</div>
-            <div class="btnHint">(kommt später)</div>
-          </div>
-          <div class="chev" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></div>
-        </a>
-
-        <a class="menuBtn" href="#" onclick="return false;">
-          <div class="btnText">
-            <div class="btnTitle">Platzhalter 3</div>
-            <div class="btnHint">(kommt später)</div>
-          </div>
-          <div class="chev" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></div>
-        </a>
-
-        <a class="menuBtn" href="#" onclick="return false;">
-          <div class="btnText">
-            <div class="btnTitle">Platzhalter 4</div>
-            <div class="btnHint">(kommt später)</div>
-          </div>
-          <div class="chev" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></div>
-        </a>
+        <a class="menuBtn" href="spieler-auswahl.html?table=4&new=1"><div><div class="btnTitle">Neuer 4er Tisch</div><div class="btnHint">Spieler wählen (4 Plätze)</div></div><div class="chev"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></div></a>
+        <a class="menuBtn" href="spieler-auswahl.html?table=5&new=1"><div><div class="btnTitle">Neuer 5er Tisch</div><div class="btnHint">Spieler wählen (5 Plätze)</div></div><div class="chev"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></div></a>
+        <a class="menuBtn" href="spieler-auswahl.html?table=6&new=1"><div><div class="btnTitle">Neuer 6er Tisch</div><div class="btnHint">Spieler wählen (6 Plätze)</div></div><div class="chev"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></div></a>
+        <a class="menuBtn" href="#" onclick="return false;"><div><div class="btnTitle">Platzhalter</div><div class="btnHint">(kommt später)</div></div><div class="chev"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></div></a>
       </div>
     </div>
 
-    <div class="bottombar">
-      <div>ETS</div>
-      <div class="ver">v0.0</div>
-    </div>
-
+    <div class="bottombar"><div>ETS</div><div>v0.1</div></div>
   </div>
 
   <script>
-    // =========================
-    // ETS – Spieler_stammblatt Sync (JSON -> IndexedDB)
-    // =========================
-
     const DB_NAME = 'ets_db';
-    const DB_VERSION = 1;
-    const STORE_PLAYERS = 'players';
-    const STORE_META = 'meta';
-    const META_KEY = 'spieler_stammblatt';
-    const URL_JSON = './data/spieler_stammblatt.json';
+    const DB_VERSION = 2;
 
-    const statusMain = document.getElementById('statusMain');
-    const statusSub = document.getElementById('statusSub');
-    const btnRefresh = document.getElementById('btnRefresh');
+    const STORE_PLAYERS='players', STORE_META='meta', STORE_CURR_SESSION='current_session', STORE_CURR_STATE='current_state', STORE_GABEN='gaben';
+    const META_KEY='spieler_stammblatt', CURR_KEY='current';
+    const URL_JSON='./data/spieler_stammblatt.json';
 
-    btnRefresh.addEventListener('click', () => {
-      syncPlayers({force:true});
+    const statusMain=document.getElementById('statusMain');
+    const statusSub=document.getElementById('statusSub');
+    const btnRefresh=document.getElementById('btnRefresh');
+    const btnResume=document.getElementById('btnResume');
+
+    btnRefresh.addEventListener('click', ()=>syncPlayers(true));
+    btnResume.addEventListener('click', async ()=>{
+      const db = await openDb();
+      const sess = await idbGet(db, STORE_CURR_SESSION, CURR_KEY);
+      db.close();
+      if(!sess) return;
+      const t = Number(sess.tableType);
+      const target = (t===4)?'4er-Screen.html':(t===5)?'5er-Screen.html':'6er-Screen.html';
+      window.location.href = target;
     });
 
-    window.addEventListener('load', () => {
-      syncPlayers({force:false});
+    window.addEventListener('load', async ()=>{
+      await syncPlayers(false);
+      await refreshResume();
     });
 
-    function setStatus(main, sub){
-      statusMain.textContent = main;
-      statusSub.textContent = sub;
-    }
+    function setStatus(a,b){ statusMain.textContent=a; statusSub.textContent=b; }
 
     function openDb(){
-      return new Promise((resolve, reject) => {
+      return new Promise((resolve,reject)=>{
         const req = indexedDB.open(DB_NAME, DB_VERSION);
-        req.onupgradeneeded = (ev) => {
+        req.onupgradeneeded = () => {
           const db = req.result;
-          if (!db.objectStoreNames.contains(STORE_PLAYERS)) {
-            const st = db.createObjectStore(STORE_PLAYERS, { keyPath: 'spielerId' });
-            st.createIndex('nachnameLower', 'nachnameLower', { unique:false });
-            st.createIndex('vornameLower', 'vornameLower', { unique:false });
-            st.createIndex('nameLower', 'nameLower', { unique:false });
-            st.createIndex('aktiv', 'aktiv', { unique:false });
+          if(!db.objectStoreNames.contains(STORE_PLAYERS)){
+            const st=db.createObjectStore(STORE_PLAYERS,{keyPath:'spielerId'});
+            st.createIndex('nachnameLower','nachnameLower',{unique:false});
+            st.createIndex('vornameLower','vornameLower',{unique:false});
+            st.createIndex('nameLower','nameLower',{unique:false});
+            st.createIndex('aktiv','aktiv',{unique:false});
           }
-          if (!db.objectStoreNames.contains(STORE_META)) {
-            db.createObjectStore(STORE_META, { keyPath: 'key' });
-          }
+          if(!db.objectStoreNames.contains(STORE_META)) db.createObjectStore(STORE_META,{keyPath:'key'});
+          if(!db.objectStoreNames.contains(STORE_CURR_SESSION)) db.createObjectStore(STORE_CURR_SESSION,{keyPath:'key'});
+          if(!db.objectStoreNames.contains(STORE_CURR_STATE)) db.createObjectStore(STORE_CURR_STATE,{keyPath:'key'});
+          if(!db.objectStoreNames.contains(STORE_GABEN)) db.createObjectStore(STORE_GABEN,{keyPath:'gabeNr'});
         };
-        req.onsuccess = () => resolve(req.result);
-        req.onerror = () => reject(req.error);
+        req.onsuccess=()=>resolve(req.result);
+        req.onerror=()=>reject(req.error);
       });
     }
 
     function idbGet(db, storeName, key){
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction(storeName, 'readonly');
-        const st = tx.objectStore(storeName);
-        const req = st.get(key);
-        req.onsuccess = () => resolve(req.result);
-        req.onerror = () => reject(req.error);
+      return new Promise((resolve,reject)=>{
+        const tx=db.transaction(storeName,'readonly');
+        const st=tx.objectStore(storeName);
+        const rq=st.get(key);
+        rq.onsuccess=()=>resolve(rq.result);
+        rq.onerror=()=>reject(rq.error);
       });
     }
 
     function idbCount(db, storeName){
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction(storeName, 'readonly');
-        const st = tx.objectStore(storeName);
-        const req = st.count();
-        req.onsuccess = () => resolve(req.result);
-        req.onerror = () => reject(req.error);
+      return new Promise((resolve,reject)=>{
+        const tx=db.transaction(storeName,'readonly');
+        const st=tx.objectStore(storeName);
+        const rq=st.count();
+        rq.onsuccess=()=>resolve(rq.result||0);
+        rq.onerror=()=>reject(rq.error);
       });
     }
 
-    async function syncPlayers({force}){
+    async function refreshResume(){
       try{
-        setStatus('Spielerliste: wird geprüft…', 'Bitte kurz warten');
-        btnRefresh.disabled = true;
-
-        const db = await openDb();
-        const meta = await idbGet(db, STORE_META, META_KEY);
-        const localVersion = meta ? (meta.version || 0) : 0;
-
-        // fetch remote
-        const bust = force ? ('?t=' + Date.now()) : '';
-        const res = await fetch(URL_JSON + bust, { cache: force ? 'no-store' : 'default' });
-        if (!res.ok) throw new Error('Download fehlgeschlagen (' + res.status + ')');
-        const remote = await res.json();
-
-        const remoteVersion = Number(remote.version || 0);
-        const remoteCount = Number(remote.count || (remote.players ? remote.players.length : 0));
-        const generatedUtc = String(remote.generatedUtc || '');
-
-        if (!remote.players || !Array.isArray(remote.players)) {
-          throw new Error('Ungültiges JSON: players fehlt');
+        const db=await openDb();
+        const sess=await idbGet(db, STORE_CURR_SESSION, CURR_KEY);
+        if(sess && sess.tableType){
+          btnResume.style.display='block';
+          btnResume.textContent='Aktuellen Tisch fortsetzen ('+Number(sess.tableType)+'er)';
+        } else {
+          btnResume.style.display='none';
         }
+        db.close();
+      } catch { btnResume.style.display='none'; }
+    }
 
-        // nur aktiv=true
-        const players = remote.players.filter(p => p && p.aktiv === true);
+    async function syncPlayers(force){
+      try{
+        setStatus('Spielerliste: wird geprüft…','Bitte kurz warten');
+        btnRefresh.disabled=true;
 
-        if (force || remoteVersion > localVersion) {
-          setStatus('Spielerliste: Update läuft…', 'Lade v' + remoteVersion + ' (' + players.length + ' Spieler)');
+        const db=await openDb();
+        const meta=await idbGet(db, STORE_META, META_KEY);
+        const localVersion=meta?(meta.version||0):0;
 
-          await importReplace(db, players, {
-            version: remoteVersion,
-            generatedUtc: generatedUtc,
-            count: players.length
-          });
+        const bust = force?('?t='+Date.now()):'';
+        const res = await fetch(URL_JSON + bust, { cache: force?'no-store':'default' });
+        if(!res.ok) throw new Error('Download fehlgeschlagen ('+res.status+')');
+        const remote = await res.json();
+        const remoteVersion = Number(remote.version||0);
+        if(!remote.players || !Array.isArray(remote.players)) throw new Error('Ungültiges JSON: players fehlt');
+        const players = remote.players.filter(p=>p && p.aktiv===true);
 
-          setStatus('Spielerliste: geladen', players.length + ' Spieler (v' + remoteVersion + ')');
+        if(force || remoteVersion>localVersion){
+          setStatus('Spielerliste: Update läuft…','Lade v'+remoteVersion+' ('+players.length+' Spieler)');
+          await importReplacePlayers(db, players, { version: remoteVersion, generatedUtc: String(remote.generatedUtc||''), count: players.length });
+          setStatus('Spielerliste: geladen', players.length+' Spieler (v'+remoteVersion+')');
         } else {
           const c = await idbCount(db, STORE_PLAYERS);
-          setStatus('Spielerliste: lokal aktuell', c + ' Spieler (v' + localVersion + ')');
+          setStatus('Spielerliste: lokal aktuell', c+' Spieler (v'+localVersion+')');
         }
 
         db.close();
       } catch(err){
-        setStatus('Spielerliste: FEHLER', String(err && err.message ? err.message : err));
+        setStatus('Spielerliste: FEHLER', String(err && err.message?err.message:err));
       } finally {
-        btnRefresh.disabled = false;
+        btnRefresh.disabled=false;
       }
     }
 
-    function importReplace(db, players, meta){
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction([STORE_PLAYERS, STORE_META], 'readwrite');
-        const stPlayers = tx.objectStore(STORE_PLAYERS);
-        const stMeta = tx.objectStore(STORE_META);
+    function importReplacePlayers(db, players, meta){
+      return new Promise((resolve,reject)=>{
+        const tx=db.transaction([STORE_PLAYERS, STORE_META],'readwrite');
+        const stPlayers=tx.objectStore(STORE_PLAYERS);
+        const stMeta=tx.objectStore(STORE_META);
 
-        const clearReq = stPlayers.clear();
-        clearReq.onerror = () => reject(clearReq.error);
-        clearReq.onsuccess = () => {
-          for (const p of players) {
-            const nach = String(p.nachname || '');
-            const vor = String(p.vorname || '');
-            const obj = {
-              spielerId: Number(p.spielerId),
-              nachname: nach,
-              vorname: vor,
-              aktiv: true,
-              nachnameLower: nach.toLowerCase(),
-              vornameLower: vor.toLowerCase(),
-              nameLower: (nach + ' ' + vor).trim().toLowerCase()
-            };
-            stPlayers.put(obj);
+        const clr=stPlayers.clear();
+        clr.onerror=()=>reject(clr.error);
+        clr.onsuccess=()=>{
+          for(const p of players){
+            const nach=String(p.nachname||'');
+            const vor=String(p.vorname||'');
+            stPlayers.put({spielerId:Number(p.spielerId),nachname:nach,vorname:vor,aktiv:true,nachnameLower:nach.toLowerCase(),vornameLower:vor.toLowerCase(),nameLower:(nach+' '+vor).trim().toLowerCase()});
           }
-
-          stMeta.put({
-            key: META_KEY,
-            version: Number(meta.version || 0),
-            generatedUtc: String(meta.generatedUtc || ''),
-            count: Number(meta.count || players.length),
-            lastFetchUtc: new Date().toISOString()
-          });
+          stMeta.put({key:META_KEY,version:Number(meta.version||0),generatedUtc:String(meta.generatedUtc||''),count:Number(meta.count||players.length),lastFetchUtc:new Date().toISOString()});
         };
-
-        tx.oncomplete = () => resolve();
-        tx.onerror = () => reject(tx.error);
-        tx.onabort = () => reject(tx.error);
+        tx.oncomplete=()=>resolve();
+        tx.onerror=()=>reject(tx.error);
+        tx.onabort=()=>reject(tx.error);
       });
     }
   </script>
