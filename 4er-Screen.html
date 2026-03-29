@@ -4,63 +4,324 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Tarock-Schreibblock – 4er Tisch</title>
+
   <style>
-    :root{--bg:#cfe9ff;--panel:#cfe9ff;--barBg:#3b6fa8;--line:#000;--lineW:3px;--font:Arial,sans-serif;--black:#000;--red:#c00000;--btnBg:var(--panel);--btnBorder:rgba(0,0,0,.70);--btnRadius:6px;--iconDark:rgba(0,0,0,.92);--scoreBigSize:92px;--scoreSmallScale:.5;--gapNameToBig:1ch;--gapBigToSmall:1ch;--markVorhand:#ffe65a;--markPausedOpacity:.35;}
-    *{box-sizing:border-box;} html,body{height:100%;overflow:hidden;}
-    body{margin:0;background:var(--bg);font-family:var(--font);display:flex;justify-content:center;}
-    .phone{width:min(480px,100%);height:100dvh;background:var(--panel);display:flex;flex-direction:column;overflow:hidden;}
-    .topbar{height:calc(58px + env(safe-area-inset-top));padding:calc(8px + env(safe-area-inset-top)) 12px 8px 12px;background:var(--barBg);border-bottom:var(--lineW) solid var(--line);display:flex;align-items:center;justify-content:center;}
-    .statusPill{display:inline-flex;align-items:center;gap:12px;padding:8px 14px;background:var(--btnBg);border:1px solid var(--btnBorder);border-radius:var(--btnRadius);color:var(--iconDark);font-size:17px;font-weight:800;}
-    .content{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;overflow:hidden;}
-    .zone-top{flex:0 0 30%;border-bottom:var(--lineW) solid var(--line);display:flex;justify-content:center;align-items:center;padding:10px;}
-    .zone-mid{flex:1 1 auto;border-bottom:var(--lineW) solid var(--line);display:flex;position:relative;}
-    .mid-left,.mid-right{flex:1;display:flex;justify-content:center;align-items:center;}
-    .centerLine{position:absolute;left:50%;top:0;bottom:0;width:var(--lineW);background:var(--line);transform:translateX(-50%);}
-    .zone-bottom{flex:0 0 24%;border-bottom:var(--lineW) solid var(--line);display:flex;justify-content:center;align-items:center;padding:10px 16px;}
-    .panelWrap{width:100%;display:flex;justify-content:center;align-items:center;transform-origin:center;}
-    .rot-top{transform:rotate(180deg);} .rot-left{transform:rotate(90deg);} .rot-right{transform:rotate(-90deg);}
-    .rowTB{display:inline-flex;align-items:center;}
-    .name{font-size:34px;font-weight:700;color:var(--black);}
-    .scoreBig{font-size:var(--scoreBigSize);font-weight:700;line-height:1;margin-left:var(--gapNameToBig);}
-    .scoreSmall{font-size:calc(var(--scoreBigSize)*var(--scoreSmallScale));margin-left:var(--gapBigToSmall);opacity:.95;}
-    .colSide{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;}
-    .sideName{font-size:30px;font-weight:700;white-space:nowrap;}
-    .sideScoreRow{display:flex;align-items:baseline;gap:var(--gapBigToSmall);}
-    .numRed{color:var(--red)!important;} .numBlack{color:var(--black)!important;}
-    .playerPanel{border-radius:10px;padding:6px 8px;} .playerPanel.isVorhand{background:var(--markVorhand);} .playerPanel.isPaused{opacity:var(--markPausedOpacity);}
-    .bottombar{height:calc(62px + env(safe-area-inset-bottom));background:var(--barBg);border-top:var(--lineW) solid var(--line);--padX:clamp(6px,2vw,10px);--gapX:clamp(3px,1.4vw,10px);--padY:6px;--btnW:clamp(38px,calc((100% - (2*var(--padX)) - (6*var(--gapX)))/7),56px);--btnH:clamp(40px,calc(var(--btnW)*0.92),50px);padding:var(--padY) var(--padX) calc(var(--padY) + env(safe-area-inset-bottom)) var(--padX);display:grid;grid-template-columns:repeat(7,1fr);column-gap:var(--gapX);align-items:center;justify-items:center;}
-    .btn{width:var(--btnW);height:var(--btnH);background:var(--btnBg);border:1px solid var(--btnBorder);border-radius:var(--btnRadius);display:grid;place-items:center;user-select:none;color:var(--iconDark);cursor:pointer;}
-    .btn.pm{font-size:clamp(20px,calc(var(--btnW)*0.48),26px);font-weight:700;} .btn.close{font-size:clamp(18px,calc(var(--btnW)*0.40),22px);font-weight:800;}
-    .rbBall{width:clamp(20px,calc(var(--btnW)*0.50),26px);height:clamp(20px,calc(var(--btnW)*0.50),26px);border-radius:50%;background:radial-gradient(circle at 30% 28%, rgba(255,255,255,.55), transparent 35%), linear-gradient(135deg, #c00000 0 50%, #111111 50% 100%);}
-    .iconSvg{width:30px;height:30px;display:block;color:var(--iconDark);} .iconSvg *{fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;} .iconSvg .fillDot{fill:currentColor;stroke:none;}
-    .btn .iconSvg{width:clamp(22px,calc(var(--btnW)*0.55),30px);height:clamp(22px,calc(var(--btnW)*0.55),30px);}
+    :root{
+      --bg:#cfe9ff;
+      --panel:#cfe9ff;
+      --barBg:#3b6fa8;
+
+      --line:#000;
+      --lineW:3px;
+
+      --font: Arial, sans-serif;
+
+      --black:#000;
+      --red:#c00000;
+
+      --btnBg:var(--panel);
+      --btnBorder:rgba(0,0,0,.70);
+      --btnRadius:6px;
+      --iconDark:rgba(0,0,0,.92);
+
+      --scoreBigSize:92px;
+      --scoreSmallScale:0.5;
+      --gapNameToBig:1ch;
+      --gapBigToSmall:1ch;
+
+      --markVorhand:#ffe65a;
+      --markPausedOpacity:0.35;
+    }
+
+    *{box-sizing:border-box;}
+    html,body{height:100%; overflow:hidden;}
+    body{
+      margin:0;
+      background:var(--bg);
+      font-family:var(--font);
+      display:flex;
+      justify-content:center;
+    }
+
+    .phone{
+      width:min(480px,100%);
+      height:100dvh;
+      background:var(--panel);
+      display:flex;
+      flex-direction:column;
+      overflow:hidden;
+    }
+
+    .topbar{
+      height: calc(58px + env(safe-area-inset-top));
+      padding: calc(8px + env(safe-area-inset-top)) 12px 8px 12px;
+      background:var(--barBg);
+      border-bottom:var(--lineW) solid var(--line);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .statusPill{
+      display:inline-flex;
+      align-items:center;
+      gap:12px;
+      padding:8px 14px;
+      background:var(--btnBg);
+      border:1px solid var(--btnBorder);
+      border-radius:var(--btnRadius);
+      color:var(--iconDark);
+      font-size:17px;
+      font-weight:800;
+      white-space:nowrap;
+    }
+
+    .content{flex:1 1 auto; min-height:0; display:flex; flex-direction:column; overflow:hidden;}
+
+    .zone-top{
+      flex:0 0 30%;
+      border-bottom:var(--lineW) solid var(--line);
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      padding:10px;
+      min-height:0;
+    }
+
+    .zone-mid{
+      flex:1 1 auto;
+      border-bottom:var(--lineW) solid var(--line);
+      display:flex;
+      position:relative;
+      min-height:0;
+    }
+
+    .mid-left,.mid-right{
+      flex:1;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      min-width:0;
+    }
+
+    .centerLine{
+      position:absolute;
+      left:50%;
+      top:0;
+      bottom:0;
+      width:var(--lineW);
+      background:var(--line);
+      transform:translateX(-50%);
+    }
+
+    .zone-bottom{
+      flex:0 0 24%;
+      border-bottom:var(--lineW) solid var(--line);
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      padding:10px 16px;
+      min-height:0;
+    }
+
+    .panelWrap{
+      width:100%;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      transform-origin:center;
+      min-width:0;
+    }
+    .rot-top{ transform: rotate(180deg); }
+    .rot-left{ transform: rotate(90deg); }
+    .rot-right{ transform: rotate(-90deg); }
+
+    /* Name + Scores */
+    .rowTB{display:inline-flex; align-items:center; min-width:0;}
+    .colSide{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; text-align:center; min-width:0;}
+    .sideScoreRow{display:flex; align-items:baseline; gap:var(--gapBigToSmall); white-space:nowrap;}
+
+    /* zweizeilig */
+    .name{
+      font-size:34px;
+      font-weight:700;
+      color:var(--black);
+      white-space:normal;
+      line-height:1.05;
+      text-align:center;
+    }
+    .sideName{
+      font-size:30px;
+      font-weight:700;
+      color:var(--black);
+      white-space:normal;
+      line-height:1.05;
+      text-align:center;
+    }
+
+    .scoreBig{
+      font-size:var(--scoreBigSize);
+      font-weight:700;
+      line-height:1;
+      letter-spacing:-1px;
+      margin-left:var(--gapNameToBig);
+    }
+
+    .scoreSmall{
+      font-size:calc(var(--scoreBigSize) * var(--scoreSmallScale));
+      line-height:1;
+      margin-left:var(--gapBigToSmall);
+      opacity:.95;
+      white-space:nowrap;
+    }
+
+    .numRed{color:var(--red)!important;}
+    .numBlack{color:var(--black)!important;}
+
+    /* Markierungen */
+    .playerPanel{border-radius:10px; padding:6px 8px;}
+    .playerPanel.isVorhand{background:var(--markVorhand);}
+    .playerPanel.isPaused{opacity:var(--markPausedOpacity);}
+
+    /* Bottom bar (Icons) */
+    .bottombar{
+      height: calc(62px + env(safe-area-inset-bottom));
+      background:var(--barBg);
+      border-top:var(--lineW) solid var(--line);
+
+      --padX: clamp(6px, 2vw, 10px);
+      --gapX: clamp(3px, 1.4vw, 10px);
+      --padY: 6px;
+
+      --btnW: clamp(38px, calc((100% - (2 * var(--padX)) - (6 * var(--gapX))) / 7), 56px);
+      --btnH: clamp(40px, calc(var(--btnW) * 0.92), 50px);
+
+      padding: var(--padY) var(--padX) calc(var(--padY) + env(safe-area-inset-bottom)) var(--padX);
+      display:grid;
+      grid-template-columns: repeat(7, 1fr);
+      column-gap: var(--gapX);
+      align-items:center;
+      justify-items:center;
+      min-width:0;
+    }
+
+    .btn{
+      width:var(--btnW);
+      height:var(--btnH);
+      background:var(--btnBg);
+      border:1px solid var(--btnBorder);
+      border-radius:var(--btnRadius);
+      display:grid;
+      place-items:center;
+      user-select:none;
+      color:var(--iconDark);
+      cursor:pointer;
+      -webkit-tap-highlight-color: transparent;
+      overflow:hidden;
+    }
+    .btn.pm{font-size:clamp(20px, calc(var(--btnW) * 0.48), 26px); font-weight:700; line-height:1;}
+    .btn.close{font-size:clamp(18px, calc(var(--btnW) * 0.40), 22px); font-weight:800; line-height:1;}
+
+    .rbBall{
+      width: clamp(20px, calc(var(--btnW) * 0.50), 26px);
+      height: clamp(20px, calc(var(--btnW) * 0.50), 26px);
+      border-radius:50%;
+      background:
+        radial-gradient(circle at 30% 28%, rgba(255,255,255,.55), transparent 35%),
+        linear-gradient(135deg, #c00000 0 50%, #111111 50% 100%);
+    }
+
+    .iconSvg{width:30px;height:30px;display:block;color:var(--iconDark);}
+    .iconSvg *{fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke;}
+    .iconSvg .fillDot{fill:currentColor;stroke:none;}
+    .btn .iconSvg{
+      width: clamp(22px, calc(var(--btnW) * 0.55), 30px);
+      height: clamp(22px, calc(var(--btnW) * 0.55), 30px);
+    }
   </style>
 </head>
+
 <body>
   <div class="phone">
-    <div class="topbar"><div class="statusPill">ETS Tisch – 4 Spieler</div></div>
+    <div class="topbar">
+      <div class="statusPill">ETS Tisch – 4 Spieler</div>
+    </div>
 
     <div class="content">
-      <div class="zone-top"><div class="panelWrap rot-top"><div class="rowTB playerPanel" data-seat="TOP"><div id="name_TOP" class="name">—</div><div class="scoreBig" data-role="total">0</div><div class="scoreSmall" data-role="delta">(0)</div></div></div></div>
-      <div class="zone-mid">
-        <div class="mid-left"><div class="panelWrap rot-left"><div class="colSide playerPanel" data-seat="LEFT"><div id="name_LEFT" class="sideName">—</div><div class="sideScoreRow"><div class="scoreBig" data-role="total" style="margin-left:0;">0</div><div class="scoreSmall" data-role="delta" style="margin-left:0;">(0)</div></div></div></div></div>
-        <div class="centerLine"></div>
-        <div class="mid-right"><div class="panelWrap rot-right"><div class="colSide playerPanel" data-seat="RIGHT"><div id="name_RIGHT" class="sideName">—</div><div class="sideScoreRow"><div class="scoreBig" data-role="total" style="margin-left:0;">0</div><div class="scoreSmall" data-role="delta" style="margin-left:0;">(0)</div></div></div></div></div>
+      <div class="zone-top">
+        <div class="panelWrap rot-top">
+          <div class="rowTB playerPanel" data-seat="TOP">
+            <div id="name_TOP" class="name">—</div>
+            <div class="scoreBig" data-role="total">0</div>
+            <div class="scoreSmall" data-role="delta">(0)</div>
+          </div>
+        </div>
       </div>
-      <div class="zone-bottom"><div class="panelWrap"><div class="rowTB playerPanel" data-seat="BOTTOM"><div id="name_BOTTOM" class="name">—</div><div class="scoreBig" data-role="total">0</div><div class="scoreSmall" data-role="delta">(0)</div></div></div></div>
+
+      <div class="zone-mid">
+        <div class="mid-left">
+          <div class="panelWrap rot-left">
+            <div class="colSide playerPanel" data-seat="LEFT">
+              <div id="name_LEFT" class="sideName">—</div>
+              <div class="sideScoreRow">
+                <div class="scoreBig" data-role="total" style="margin-left:0;">0</div>
+                <div class="scoreSmall" data-role="delta" style="margin-left:0;">(0)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="centerLine"></div>
+
+        <div class="mid-right">
+          <div class="panelWrap rot-right">
+            <div class="colSide playerPanel" data-seat="RIGHT">
+              <div id="name_RIGHT" class="sideName">—</div>
+              <div class="sideScoreRow">
+                <div class="scoreBig" data-role="total" style="margin-left:0;">0</div>
+                <div class="scoreSmall" data-role="delta" style="margin-left:0;">(0)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="zone-bottom">
+        <div class="panelWrap">
+          <div class="rowTB playerPanel" data-seat="BOTTOM">
+            <div id="name_BOTTOM" class="name">—</div>
+            <div class="scoreBig" data-role="total">0</div>
+            <div class="scoreSmall" data-role="delta">(0)</div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="bottombar">
-      <div class="btn" title="Statistik"><svg class="iconSvg" viewBox="0 0 24 24"><path d="M4 19.5H20"></path><path d="M7 19.5V11"></path><path d="M12 19.5V6.5"></path><path d="M17 19.5V14"></path></svg></div>
-      <div class="btn" title="Liste"><svg class="iconSvg" viewBox="0 0 24 24"><path d="M7 7H20"></path><path d="M7 12H20"></path><path d="M7 17H20"></path><circle class="fillDot" cx="4" cy="7" r="1"></circle><circle class="fillDot" cx="4" cy="12" r="1"></circle><circle class="fillDot" cx="4" cy="17" r="1"></circle></svg></div>
-      <div class="btn pm" title="Positivspiel">+</div>
-      <div class="btn pm" title="Negativspiel">−</div>
-      <div class="btn" title="Farbenspiel"><div class="rbBall"></div></div>
-      <div class="btn" title="Korrigieren"><svg class="iconSvg" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7"></path><path d="M20 5v4h-4"></path></svg></div>
-      <div class="btn close" title="Schließen">✕</div>
+      <div class="btn" title="Statistik" aria-label="Statistik">
+        <svg class="iconSvg" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 19.5H20"></path><path d="M7 19.5V11"></path><path d="M12 19.5V6.5"></path><path d="M17 19.5V14"></path>
+        </svg>
+      </div>
+      <div class="btn" title="Liste" aria-label="Liste">
+        <svg class="iconSvg" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M7 7H20"></path><path d="M7 12H20"></path><path d="M7 17H20"></path>
+          <circle class="fillDot" cx="4" cy="7" r="1"></circle><circle class="fillDot" cx="4" cy="12" r="1"></circle><circle class="fillDot" cx="4" cy="17" r="1"></circle>
+        </svg>
+      </div>
+      <div class="btn pm" title="Positivspiel (+)" aria-label="Positivspiel">+</div>
+      <div class="btn pm" title="Negativspiel (−)" aria-label="Negativspiel">−</div>
+      <div class="btn" title="Farbenspiel" aria-label="Farbenspiel"><div class="rbBall"></div></div>
+      <div class="btn" title="Korrigieren" aria-label="Korrigieren">
+        <svg class="iconSvg" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M20 12a8 8 0 1 1-2.3-5.7"></path><path d="M20 5v4h-4"></path>
+        </svg>
+      </div>
+      <div class="btn close" title="Schließen" aria-label="Schließen">✕</div>
     </div>
   </div>
 
+  <!-- Close Confirm -->
   <script>
     (function(){
       const btn = document.querySelector('.btn.close');
@@ -75,7 +336,7 @@
     })();
   </script>
 
-
+  <!-- Loader: names (2-line), scores, Vorhand (yellow), paused (gray) -->
   <script>
   (function(){
     const DB_NAME = 'ets_db';
@@ -86,22 +347,13 @@
     const CURR_KEY = 'current';
     const TABLE_TYPE_EXPECTED = 4;
 
-    const seatKeys = ["TOP", "LEFT", "RIGHT", "BOTTOM"];
-    const ccwOrder = ["BOTTOM", "RIGHT", "TOP", "LEFT"];
-
-    const opposite = {
-      'TOP':'BOTTOM',
-      'BOTTOM':'TOP',
-      'LEFT_TOP':'RIGHT_BOTTOM',
-      'RIGHT_BOTTOM':'LEFT_TOP',
-      'RIGHT_TOP':'LEFT_BOTTOM',
-      'LEFT_BOTTOM':'RIGHT_TOP'
-    };
+    const seatKeys = ["TOP","LEFT","RIGHT","BOTTOM"];
+    const ccwOrder = ["BOTTOM","RIGHT","TOP","LEFT"];
 
     function openDb(){
       return new Promise((resolve, reject) => {
         const req = indexedDB.open(DB_NAME, DB_VERSION);
-        req.onupgradeneeded = () => { /* stores are created in index/picker */ };
+        req.onupgradeneeded = () => {};
         req.onsuccess = () => resolve(req.result);
         req.onerror = () => reject(req.error);
       });
@@ -125,6 +377,15 @@
         rq.onsuccess = () => resolve(rq.result);
         rq.onerror = () => reject(rq.error);
       });
+    }
+
+    function escapeHtml(s){
+      return String(s)
+        .replaceAll('&','&amp;')
+        .replaceAll('<','&lt;')
+        .replaceAll('>','&gt;')
+        .replaceAll('"','&quot;')
+        .replaceAll("'",'&#39;');
     }
 
     function setNum(el, n){
@@ -173,17 +434,16 @@
         return;
       }
 
-      const seats = sess.seats || {};
+      const seats  = sess.seats || {};
       const totals = (state && state.totalByPlayerId) ? state.totalByPlayerId : {};
       const lastD  = (state && state.lastDeltaByPlayerId) ? state.lastDeltaByPlayerId : {};
       const nextGabeNr = (state && Number.isFinite(state.lastGabeNr)) ? (Number(state.lastGabeNr) + 1) : 1;
 
-      // Set names + scores
       for (const seat of seatKeys) {
         const pid = seats[seat];
         const nameEl = document.getElementById('name_' + seat);
-        const totEl = document.querySelector(`.playerPanel[data-seat="${seat}"] [data-role="total"]`);
-        const delEl = document.querySelector(`.playerPanel[data-seat="${seat}"] [data-role="delta"]`);
+        const totEl  = document.querySelector(`.playerPanel[data-seat="${seat}"] [data-role="total"]`);
+        const delEl  = document.querySelector(`.playerPanel[data-seat="${seat}"] [data-role="delta"]`);
 
         if (pid == null) {
           if (nameEl) nameEl.textContent = '—';
@@ -193,21 +453,23 @@
         }
 
         const p = await getPlayer(db, pid).catch(() => null);
-        const fullName = p ? (((p.nachname || '') + ' ' + (p.vorname || '')).trim()) : String(pid);
-        if (nameEl) nameEl.textContent = fullName || String(pid);
+        if (nameEl) {
+          if (p) {
+            const nach = String(p.nachname || '');
+            const vor  = String(p.vorname  || '');
+            nameEl.innerHTML = escapeHtml(nach || String(pid)) + '<br>' + escapeHtml(vor);
+          } else {
+            nameEl.textContent = String(pid);
+          }
+        }
 
         setNum(totEl, Number(totals[String(pid)] ?? 0));
         setDelta(delEl, Number(lastD[String(pid)] ?? 0));
       }
 
-      // Mark paused & Vorhand for next Gabe
+      // 4er: niemand pausiert
       clearMarkers();
       const dealerSeat = computeDealerSeat(nextGabeNr);
-      let pausedSeats = [];
-      if ('none' === 'dealer') pausedSeats = [dealerSeat];
-      if ('none' === 'dealer+opposite') pausedSeats = [dealerSeat, opposite[dealerSeat]].filter(Boolean);
-
-      pausedSeats.forEach(s => markSeat(s, 'isPaused'));
       const vorhandSeat = nextCcwSeat(dealerSeat);
       markSeat(vorhandSeat, 'isVorhand');
 
@@ -215,9 +477,7 @@
     }).catch(() => {
       window.location.href = 'index.html';
     });
-
   })();
   </script>
-
 </body>
 </html>
