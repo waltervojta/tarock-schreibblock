@@ -8,134 +8,115 @@
   <!--
   ====================================================
   ETS – Elektronischer Tarock Schreibblock
-  SCREEN: Spiel auswählen
+  SCREEN: Spiel auswählen (positiv)
 
-  VERDRAHTUNG (Iconleiste)
-  ------------------------
-  - PLUS     → spiel-auswahl-positiv.html
-  - MINUS    → spiel-auswahl-negativ.html
-  - FARbkugel→ spiel-auswahl-farbspiele.html
-
-  FACHLICH
-  --------
-  - In diesem Screen wird nur das Spiel gewählt.
-  - KEINE Spieler, KEIN Ergebnis, KEINE Prämien, KEIN Kontra.
-  - Übergabe via sessionStorage.selectedGame = { code, value, category }
+  FIX (Flow)
+  ----------
+  - Spielklick setzt selectedGame UND navigiert zu gabenergebnis.html
+  - Zurück-Icon: history.back() (Fallback index.html)
   ====================================================
   -->
 
   <style>
-:root{
-  --bg:#cfe9ff;
-  --bar:#3b6fa8;
-  --panel:#d9efff;
-  --line:#000;
-  --radius:12px;
-  --font:Arial, sans-serif;
-  --iconBg:#e6f3ff;
-  --iconFill:#002244;
-}
+    :root{
+      --bg:#cfe9ff;
+      --bar:#3b6fa8;
+      --panel:#d9efff;
+      --line:#000;
+      --radius:12px;
+      --font:Arial, sans-serif;
+      --iconBg:#e6f3ff;
+      --iconFill:#002244;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      background:var(--bg);
+      font-family:var(--font);
+      display:flex;
+      justify-content:center;
+    }
+    .app{
+      width:min(480px,100%);
+      min-height:100vh;
+      display:flex;
+      flex-direction:column;
+    }
+    .topbar{
+      background:var(--bar);
+      border-bottom:3px solid var(--line);
+      padding:14px;
+      text-align:center;
+      font-weight:900;
+      color:#fff;
+    }
+    .content{
+      flex:1;
+      padding:12px;
+    }
+    .section{
+      background:var(--panel);
+      border:2px solid var(--line);
+      border-radius:var(--radius);
+      padding:10px;
+    }
+    .section h3{
+      margin:6px 0 12px;
+      text-align:center;
+      font-size:15px;
+      font-weight:900;
+    }
+    .game{
+      background:#fff;
+      border:1px solid rgba(0,0,0,.7);
+      border-radius:10px;
+      padding:12px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      font-weight:900;
+      margin-bottom:8px;
+      cursor:pointer;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .game:active{ transform:translateY(1px); }
 
-*{box-sizing:border-box}
-
-body{
-  margin:0;
-  background:var(--bg);
-  font-family:var(--font);
-  display:flex;
-  justify-content:center;
-}
-
-.app{
-  width:min(480px,100%);
-  min-height:100vh;
-  display:flex;
-  flex-direction:column;
-}
-
-.topbar{
-  background:var(--bar);
-  border-bottom:3px solid var(--line);
-  padding:14px;
-  text-align:center;
-  font-weight:900;
-  color:#fff;
-}
-
-.content{
-  flex:1;
-  padding:12px;
-}
-
-.section{
-  background:var(--panel);
-  border:2px solid var(--line);
-  border-radius:var(--radius);
-  padding:10px;
-}
-
-.section h3{
-  margin:6px 0 12px;
-  text-align:center;
-  font-size:15px;
-  font-weight:900;
-}
-
-.game{
-  background:#fff;
-  border:1px solid rgba(0,0,0,.7);
-  border-radius:10px;
-  padding:12px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  font-weight:900;
-  margin-bottom:8px;
-  cursor:pointer;
-  -webkit-tap-highlight-color:transparent;
-}
-
-.game:active{ transform:translateY(1px); }
-
-.iconbar{
-  display:grid;
-  grid-template-columns:repeat(7,1fr);
-  gap:6px;
-  padding:8px;
-  background:var(--bar);
-  border-top:3px solid var(--line);
-}
-
-.iconbtn{
-  height:44px;
-  border-radius:8px;
-  border:2px solid #001a33;
-  background:var(--iconBg);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  cursor:pointer;
-  -webkit-tap-highlight-color:transparent;
-}
-
-.iconbtn:active{ background:#cfe9ff; }
-
-.iconbtn svg{
-  width:22px;
-  height:22px;
-  fill:var(--iconFill);
-}
+    .iconbar{
+      display:grid;
+      grid-template-columns:repeat(7,1fr);
+      gap:6px;
+      padding:8px;
+      background:var(--bar);
+      border-top:3px solid var(--line);
+    }
+    .iconbtn{
+      height:44px;
+      border-radius:8px;
+      border:2px solid #001a33;
+      background:var(--iconBg);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .iconbtn:active{ background:#cfe9ff; }
+    .iconbtn svg{
+      width:22px;
+      height:22px;
+      fill:var(--iconFill);
+    }
   </style>
 </head>
 
 <body>
 <div class="app">
-
   <div class="topbar">Spiel auswählen</div>
 
   <div class="content">
     <div class="section">
       <h3>Positive Spiele</h3>
+
       <div class="game" data-code="KOENIG_RUFER" data-value="1"><span>(König)Rufer (V)</span><span>1</span></div>
       <div class="game" data-code="SOLO_RUFER" data-value="2"><span>Solorufer</span><span>2</span></div>
       <div class="game" data-code="PAGATRUFER" data-value="3"><span>Pagatrufer</span><span>3</span></div>
@@ -145,12 +126,11 @@ body{
       <div class="game" data-code="KAKADU_RUFER" data-value="7"><span>Kakadurufer</span><span>7</span></div>
       <div class="game" data-code="QUAPIL_RUFER" data-value="9"><span>Quapilrufer</span><span>9</span></div>
       <div class="game" data-code="SOLO_DREIER" data-value="10"><span>Solodreier</span><span>10</span></div>
+
     </div>
   </div>
 
   <div class="iconbar">
-
-    <!-- Statistik -->
     <button class="iconbtn" title="Statistik" id="btnStat" type="button">
       <svg viewBox="0 0 24 24">
         <rect x="3" y="10" width="4" height="10"></rect>
@@ -159,7 +139,6 @@ body{
       </svg>
     </button>
 
-    <!-- Liste -->
     <button class="iconbtn" title="Liste" id="btnList" type="button">
       <svg viewBox="0 0 24 24">
         <rect x="4" y="5" width="16" height="2"></rect>
@@ -168,7 +147,6 @@ body{
       </svg>
     </button>
 
-    <!-- PLUS (→ Positiv) -->
     <button class="iconbtn" title="Plus" id="btnNavPositiv" type="button">
       <svg viewBox="0 0 24 24">
         <rect x="10" y="4" width="4" height="16"></rect>
@@ -176,14 +154,12 @@ body{
       </svg>
     </button>
 
-    <!-- MINUS (→ Negativ) -->
     <button class="iconbtn" title="Minus" id="btnNavNegativ" type="button">
       <svg viewBox="0 0 24 24">
         <rect x="4" y="10" width="16" height="4"></rect>
       </svg>
     </button>
 
-    <!-- Farbkugel (halb rot/halb blau → Farbenspiele) -->
     <button class="iconbtn" title="Farbkugel" id="btnNavFarbe" type="button">
       <svg viewBox="0 0 24 24">
         <defs>
@@ -196,26 +172,22 @@ body{
       </svg>
     </button>
 
-    <!-- Neu laden -->
     <button class="iconbtn" title="Neu laden" id="btnReload" type="button">
       <svg viewBox="0 0 24 24">
         <path d="M12 5a7 7 0 1 1-6.6 4.5h2.2A5 5 0 1 0 12 7v3l4-4-4-4v3z"></path>
       </svg>
     </button>
 
-    <!-- Zurück -->
     <button class="iconbtn" title="Zurück" id="btnBack" type="button">
       <svg viewBox="0 0 24 24">
         <path d="M14 5l-7 7 7 7V5z"></path>
       </svg>
     </button>
-
   </div>
-
 </div>
 
 <script>
-// --- Spielklick: selectedGame setzen (ohne Weiterleitung, Gabenergebnis folgt später) ---
+// ✅ Spielklick: selectedGame setzen UND weiter zu gabenergebnis.html
 document.querySelectorAll('.game').forEach(btn => {
   btn.addEventListener('click', () => {
     sessionStorage.setItem('selectedGame', JSON.stringify({
@@ -223,11 +195,11 @@ document.querySelectorAll('.game').forEach(btn => {
       value: Number(btn.dataset.value),
       category: 'POSITIV'
     }));
-    // Weiterleitung zum Gabenergebnis-Screen folgt (nach Freigabe)
+    window.location.href = 'gabenergebnis.html';
   });
 });
 
-// --- ETS Navigation (Iconleiste) ---
+// Iconleiste
 (function(){
   const go = (href) => window.location.href = href;
 
@@ -241,7 +213,7 @@ document.querySelectorAll('.game').forEach(btn => {
   if(bN) bN.addEventListener('click', () => go('spiel-auswahl-negativ.html'));
   if(bF) bF.addEventListener('click', () => go('spiel-auswahl-farbspiele.html'));
   if(bR) bR.addEventListener('click', () => window.location.reload());
-  if(bB) bB.addEventListener('click', () => go('index.html'));
+  if(bB) bB.addEventListener('click', () => (history.length>1 ? history.back() : go('index.html')));
 })();
 </script>
 
