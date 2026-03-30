@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ETS – Spiel auswählen (positiv)</title>
+  <title>ETS – Spiel auswählen (negativ)</title>
 
   <style>
     :root{
@@ -16,7 +16,6 @@
       --iconBg:#e6f3ff;
       --iconFill:#002244;
     }
-
     *{box-sizing:border-box}
     body{
       margin:0;
@@ -31,7 +30,6 @@
       display:flex;
       flex-direction:column;
     }
-
     .topbar{
       background:var(--bar);
       border-bottom:3px solid var(--line);
@@ -40,26 +38,19 @@
       font-weight:900;
       color:#fff;
     }
-
-    .content{
-      flex:1;
-      padding:12px;
-    }
-
+    .content{ flex:1; padding:12px; }
     .section{
       background:var(--panel);
       border:2px solid var(--line);
       border-radius:var(--radius);
       padding:10px;
     }
-
     .section h3{
       margin:6px 0 12px;
       text-align:center;
       font-size:15px;
       font-weight:900;
     }
-
     .game{
       background:#fff;
       border:1px solid rgba(0,0,0,.7);
@@ -72,7 +63,6 @@
       margin-bottom:8px;
       cursor:pointer;
     }
-
     .game:active{ transform:translateY(1px); }
 
     .iconbar{
@@ -83,7 +73,6 @@
       background:var(--bar);
       border-top:3px solid var(--line);
     }
-
     .iconbtn{
       height:44px;
       border-radius:8px;
@@ -95,40 +84,31 @@
       cursor:pointer;
       -webkit-tap-highlight-color:transparent;
     }
-
     .iconbtn:active{ background:#cfe9ff; }
-
-    .iconbtn svg{
-      width:22px;
-      height:22px;
-      fill:var(--iconFill);
-    }
+    .iconbtn svg{ width:22px; height:22px; fill:var(--iconFill); }
   </style>
 </head>
 
 <body>
 <div class="app">
 
-  <div class="topbar">Spiel auswählen (positiv)</div>
+  <div class="topbar">Spiel auswählen (negativ)</div>
 
   <div class="content">
     <div class="section">
-      <h3>Positive Spiele</h3>
+      <h3>Negative Spiele</h3>
 
-      <div class="game" data-code="KOENIG_RUFER" data-value="1"><span>(König)Rufer (V)</span><span>1</span></div>
-      <div class="game" data-code="SOLO_RUFER" data-value="2"><span>Solorufer</span><span>2</span></div>
-      <div class="game" data-code="PAGATRUFER" data-value="3"><span>Pagatrufer</span><span>3</span></div>
-      <div class="game" data-code="SECHSERDREIER" data-value="4"><span>Sechserdreier (V)</span><span>4</span></div>
-      <div class="game" data-code="UHU_RUFER" data-value="5"><span>Uhurufer</span><span>5</span></div>
-      <div class="game" data-code="DREIER" data-value="5"><span>Dreier</span><span>5</span></div>
-      <div class="game" data-code="KAKADU_RUFER" data-value="7"><span>Kakadurufer</span><span>7</span></div>
-      <div class="game" data-code="QUAPIL_RUFER" data-value="9"><span>Quapilrufer</span><span>9</span></div>
-      <div class="game" data-code="SOLO_DREIER" data-value="10"><span>Solodreier</span><span>10</span></div>
+      <div class="game" data-code="TRISCHAKEN" data-value="2"><span>Trischaken (V)</span><span>2</span></div>
+      <div class="game" data-code="PICCOLO" data-value="2"><span>Piccolo</span><span>2</span></div>
+      <div class="game" data-code="ZWICCOLO" data-value="2"><span>Zwiccolo</span><span>2</span></div>
+      <div class="game" data-code="BETTLER" data-value="4"><span>Bettler</span><span>4</span></div>
+      <div class="game" data-code="PICCOLO_OUVERT" data-value="6"><span>Piccolo ouvert</span><span>6</span></div>
+      <div class="game" data-code="ZWICCOLO_OUVERT" data-value="6"><span>Zwiccolo ouvert</span><span>6</span></div>
+      <div class="game" data-code="BETTLER_OUVERT" data-value="8"><span>Bettler ouvert</span><span>8</span></div>
     </div>
   </div>
 
   <div class="iconbar">
-    <!-- Statistik -->
     <button class="iconbtn" title="Statistik">
       <svg viewBox="0 0 24 24">
         <rect x="3" y="10" width="4" height="10"></rect>
@@ -137,7 +117,6 @@
       </svg>
     </button>
 
-    <!-- Liste -->
     <button class="iconbtn" title="Liste">
       <svg viewBox="0 0 24 24">
         <rect x="4" y="5" width="16" height="2"></rect>
@@ -146,7 +125,6 @@
       </svg>
     </button>
 
-    <!-- Plus -->
     <button class="iconbtn" title="Plus">
       <svg viewBox="0 0 24 24">
         <rect x="10" y="4" width="4" height="16"></rect>
@@ -154,34 +132,30 @@
       </svg>
     </button>
 
-    <!-- Minus -->
     <button class="iconbtn" title="Minus">
       <svg viewBox="0 0 24 24">
         <rect x="4" y="10" width="16" height="4"></rect>
       </svg>
     </button>
 
-    <!-- Farbkugel halb rot / halb blau -->
     <button class="iconbtn" title="Farbkugel">
       <svg viewBox="0 0 24 24">
         <defs>
-          <clipPath id="posHalfLeft"><rect x="0" y="0" width="12" height="24"></rect></clipPath>
-          <clipPath id="posHalfRight"><rect x="12" y="0" width="12" height="24"></rect></clipPath>
+          <clipPath id="negHalfLeft"><rect x="0" y="0" width="12" height="24"></rect></clipPath>
+          <clipPath id="negHalfRight"><rect x="12" y="0" width="12" height="24"></rect></clipPath>
         </defs>
-        <circle cx="12" cy="12" r="9" fill="red" clip-path="url(#posHalfLeft)"></circle>
-        <circle cx="12" cy="12" r="9" fill="blue" clip-path="url(#posHalfRight)"></circle>
+        <circle cx="12" cy="12" r="9" fill="red" clip-path="url(#negHalfLeft)"></circle>
+        <circle cx="12" cy="12" r="9" fill="blue" clip-path="url(#negHalfRight)"></circle>
         <circle cx="12" cy="12" r="9" fill="none" stroke="#002244" stroke-width="2"></circle>
       </svg>
     </button>
 
-    <!-- Neu laden -->
     <button class="iconbtn" title="Neu laden" onclick="location.reload()">
       <svg viewBox="0 0 24 24">
         <path d="M12 5a7 7 0 1 1-6.6 4.5h2.2A5 5 0 1 0 12 7v3l4-4-4-4v3z"></path>
       </svg>
     </button>
 
-    <!-- Zurück -->
     <button class="iconbtn" title="Zurück" onclick="location.href='index.html'V5z"></path>
       </svg>
     </button>
@@ -197,7 +171,7 @@
         JSON.stringify({
           code: btn.dataset.code,
           value: Number(btn.dataset.value),
-          category: 'POSITIV'
+          category: 'NEGATIV'
         })
       );
       // Weiterleitung zum Gabenergebnis-Screen folgt
