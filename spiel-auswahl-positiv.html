@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ETS – Spiel auswählen</title>
+<title>ETS – Spiel auswählen (positiv)</title>
 
 <style>
 :root{
@@ -13,6 +13,7 @@
   --line:#000;
   --radius:12px;
   --font:Arial, sans-serif;
+  --iconBg:#e6f3ff;
 }
 
 *{box-sizing:border-box}
@@ -39,24 +40,13 @@ body{
   padding:14px;
   text-align:center;
   font-weight:900;
-  color:#ffffff;
+  color:#fff;
 }
 
 /* ===== CONTENT ===== */
 .content{
   flex:1;
   padding:12px;
-  padding-bottom:120px; /* Platz für Footer */
-  display:flex;
-  flex-direction:column;
-  gap:14px;
-}
-
-/* ===== GRID ===== */
-.grid-2{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:12px;
 }
 
 .section{
@@ -67,7 +57,7 @@ body{
 }
 
 .section h3{
-  margin:4px 0 10px;
+  margin:6px 0 12px;
   text-align:center;
   font-size:15px;
   font-weight:900;
@@ -80,40 +70,42 @@ body{
   padding:12px;
   display:flex;
   justify-content:space-between;
+  align-items:center;
   font-weight:900;
   margin-bottom:8px;
+  cursor:pointer;
 }
 
-.game.negative{
-  color:#b00000;
-}
+.game:active{ transform:translateY(1px); }
 
-/* ===== FOOTER – JETZT RICHTIG ===== */
-.footer{
-  position:fixed;
-  bottom:0;
-  left:50%;
-  transform:translateX(-50%);
-  width:min(480px,100%);
-  height:100px;                 /* FIXE HÖHE */
+/* ===== ICON BAR ===== */
+.iconbar{
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  gap:6px;
+  padding:8px;
   background:var(--bar);
   border-top:3px solid var(--line);
-  display:flex;
-  align-items:center;           /* VERTIKAL ZENTRIERT */
-  justify-content:center;
 }
 
-/* ✅ DER BUTTON */
-.footer button{
-  width:90%;
-  height:56px;
-  font-size:18px;
-  font-weight:900;
-  border-radius:14px;
-  border:2px solid #000;
-  background:#ffffff;
-  color:#000000;
+.iconbtn{
+  height:44px;
+  border-radius:8px;
+  border:2px solid #001a33;
+  background:var(--iconBg);
+  display:flex;
+  align-items:center;
+  justify-content:center;
   cursor:pointer;
+}
+
+.iconbtn:active{
+  background:#cfe9ff;
+}
+
+.iconbtn svg{
+  width:22px;
+  height:22px;
 }
 </style>
 </head>
@@ -121,47 +113,111 @@ body{
 <body>
 <div class="app">
 
+  <!-- TOP -->
   <div class="topbar">Spiel auswählen</div>
 
+  <!-- CONTENT -->
   <div class="content">
-
-    <div class="grid-2">
-
-      <div class="section">
-        <h3>Positive Spiele</h3>
-        <div class="game"><span>(König)Rufer (V)</span><span>1</span></div>
-        <div class="game"><span>Solorufer</span><span>2</span></div>
-        <div class="game"><span>Pagatrufer</span><span>3</span></div>
-        <div class="game"><span>Sechserdreier (V)</span><span>4</span></div>
-        <div class="game"><span>Uhurufer</span><span>5</span></div>
-        <div class="game"><span>Dreier</span><span>5</span></div>
-        <div class="game"><span>Kakadurufer</span><span>7</span></div>
-        <div class="game"><span>Quapilrufer</span><span>9</span></div>
-        <div class="game"><span>Solodreier</span><span>10</span></div>
-      </div>
-
-      <div class="section">
-        <h3>Negative Spiele</h3>
-        <div class="game negative"><span>Trischaken (V)</span><span>2</span></div>
-        <div class="game negative"><span>Piccolo</span><span>2</span></div>
-        <div class="game negative"><span>Zwiccolo</span><span>2</span></div>
-        <div class="game negative"><span>Bettler</span><span>4</span></div>
-        <div class="game negative"><span>Piccolo ouvert</span><span>6</span></div>
-        <div class="game negative"><span>Zwiccolo ouvert</span><span>6</span></div>
-        <div class="game negative"><span>Bettler ouvert</span><span>8</span></div>
-      </div>
-
-    </div>
-
     <div class="section">
-      <h3>Farbenspiele</h3>
-      <div class="game"><span>Farbendreier</span><span>5</span></div>
-      <div class="game"><span>Farbensolo</span><span>8</span></div>
+      <h3>Positive Spiele</h3>
+
+      <div class="game" data-code="KOENIG_RUFER" data-value="1"><span>(König)Rufer (V)</span><span>1</span></div>
+      <div class="game" data-code="SOLO_RUFER" data-value="2"><span>Solorufer</span><span>2</span></div>
+      <div class="game" data-code="PAGATRUFER" data-value="3"><span>Pagatrufer</span><span>3</span></div>
+      <div class="game" data-code="SECHSERDREIER" data-value="4"><span>Sechserdreier (V)</span><span>4</span></div>
+      <div class="game" data-code="UHU_RUFER" data-value="5"><span>Uhurufer</span><span>5</span></div>
+      <div class="game" data-code="DREIER" data-value="5"><span>Dreier</span><span>5</span></div>
+      <div class="game" data-code="KAKADU_RUFER" data-value="7"><span>Kakadurufer</span><span>7</span></div>
+      <div class="game" data-code="QUAPIL_RUFER" data-value="9"><span>Quapilrufer</span><span>9</span></div>
+      <div class="game" data-code="SOLO_DREIER" data-value="10"><span>Solodreier</span><span>10</span></div>
+
     </div>
+  </div>
+
+  <!-- ICON TOOLBAR -->
+  <div class="iconbar">
+
+    <!-- Statistik -->
+    <button class="iconbtn" title="Statistik">
+      <svg viewBox="0 0 24 24" fill="#002244">
+        <rect x="3" y="10" width="4" height="10"/>
+        <rect x="10" y="6" width="4" height="14"/>
+        <rect x="17" y="3" width="4" height="17"/>
+      </svg>
+    </button>
+
+    <!-- Liste -->
+    <button class="iconbtn" title="Liste">
+      <svg viewBox="0 0 24 24" fill="#002244">
+        <rect x="4" y="5" width="16" height="2"/>
+        <rect x="4" y="11" width="16" height="2"/>
+        <rect x="4" y="17" width="16" height="2"/>
+      </svg>
+    </button>
+
+    <!-- Plus -->
+    <button class="iconbtn" title="Plus">
+      <svg viewBox="0 0 24 24" fill="#002244">
+        <rect x="10" y="4" width="4" height="16"/>
+        <rect x="4" y="10" width="16" height="4"/>
+      </svg>
+    </button>
+
+    <!-- Minus -->
+    <button class="iconbtn" title="Minus">
+      <svg viewBox="0 0 24 24" fill="#002244">
+        <rect x="4" y="10" width="16" height="4"/>
+      </svg>
+    </button>
+
+    <!-- ✅ Farbkugel halb rot / halb blau -->
+    <button class="iconbtn" title="Farbkugel">
+      <svg viewBox="0 0 24 24">
+        <defs>
+          <clipPath id="halfLeft">
+            <rect x="0" y="0" width="12" height="24"/>
+          </clipPath>
+          <clipPath id="halfRight">
+            <rect x="12" y="0" width="12" height="24"/>
+          </clipPath>
+        </defs>
+        <circle cx="12" cy="12" r="9" fill="red" clip-path="url(#halfLeft)"/>
+        <circle cx="12" cy="12" r="9" fill="blue" clip-path="url(#halfRight)"/>
+        <circle cx="12" cy="12" r="9" fill="none" stroke="#002244" stroke-width="2"/>
+      </svg>
+    </button>
+
+    <!-- Neu laden -->
+    <button class="iconbtn" title="Neu laden">
+      <svg viewBox="0 0 24 24" fill="#002244">
+        <path d="M12 5a7 7 0 1 1-6.6 4.5h2.2A5 5 0 1 0 12 7v3l4-4-4-4v3z"/>
+      </svg>
+    </button>
+
+    <!-- Zurück -->
+    <button class="iconbtn" title="Zurück" onclick="#002244">
+        <path d="M14 5l-7 7 7 7V5z"/>
+      </svg>
+    </button>
 
   </div>
 
-  <!-- ✅ HIER IST ER. SICHTBAR. -->
-  <div class="footer">
-    <button onclick="location.href='index.html'</body>
+</div>
+
+<script>
+document.querySelectorAll('.game').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    sessionStorage.setItem(
+      'selectedGame',
+      JSON.stringify({
+        code: btn.dataset.code,
+        value: Number(btn.dataset.value)
+      })
+    );
+    // Weiterleitung folgt nach Freigabe
+  });
+});
+</script>
+
+</body>
 </html>
