@@ -43,6 +43,7 @@
       overflow:hidden;
     }
 
+    /* TOPBAR now has status left and round right */
     .topbar{
       height: calc(58px + env(safe-area-inset-top));
       padding: calc(8px + env(safe-area-inset-top)) 12px 8px 12px;
@@ -50,10 +51,11 @@
       border-bottom:var(--lineW) solid var(--line);
       display:flex;
       align-items:center;
-      justify-content:center;
+      justify-content:space-between;
+      gap:10px;
     }
 
-    /* Status pill: now "Letztes Spiel: ..." */
+    /* Status pill (Letztes Spiel) – one size smaller */
     .statusPill{
       display:inline-flex;
       align-items:center;
@@ -63,10 +65,10 @@
       border:1px solid var(--btnBorder);
       border-radius:var(--btnRadius);
       color:var(--iconDark);
-      font-size:15px;
+      font-size:14px; /* was 15 */
       font-weight:800;
       white-space:nowrap;
-      max-width:100%;
+      max-width: calc(100% - 120px);
       overflow:hidden;
       text-overflow:ellipsis;
     }
@@ -74,6 +76,24 @@
     .tok{font-weight:900;}
     .numRed{color:var(--red)!important;}
     .numBlack{color:var(--black)!important;}
+
+    /* Runde pill (fixed small field) */
+    .roundPill{
+      flex:0 0 auto;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:8px 12px;
+      background:var(--btnBg);
+      border:1px solid var(--btnBorder);
+      border-radius:var(--btnRadius);
+      color:var(--iconDark);
+      font-size:14px;
+      font-weight:900;
+      white-space:nowrap;
+      min-width:92px;
+      text-align:center;
+    }
 
     .content{flex:1 1 auto; min-height:0; display:flex; flex-direction:column; overflow:hidden;}
     .zone-top{
@@ -133,7 +153,6 @@
     .colSide{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; text-align:center; min-width:0;}
     .sideScoreRow{display:flex; align-items:baseline; gap:var(--gapBigToSmall); white-space:nowrap;}
 
-    /* zweizeilig */
     .name{
       font-size:34px;
       font-weight:700;
@@ -165,12 +184,10 @@
       white-space:nowrap;
     }
 
-    /* Markierungen */
     .playerPanel{border-radius:10px; padding:6px 8px;}
     .playerPanel.isVorhand{background:var(--markVorhand);}
     .playerPanel.isPaused{opacity:var(--markPausedOpacity);}
 
-    /* Bottom bar (Icons) */
     .bottombar{
       height: calc(62px + env(safe-area-inset-bottom));
       background:var(--barBg);
@@ -226,6 +243,7 @@
 <div class="phone">
   <div class="topbar">
     <div class="statusPill" id="statusPill"><span class="lbl">Letztes Spiel:</span>&nbsp;—</div>
+    <div class="roundPill" id="roundPill">Runde: 0</div>
   </div>
 
   <div class="content">
@@ -317,7 +335,7 @@
 })();
 </script>
 
-<!-- ETS_NAV_WIRING: PLUS/MINUS/FARBKUGEL → Spielauswahl-Screens -->
+<!-- ETS_NAV_WIRING -->
 <script>
 (function(){
   function go(href){ window.location.href = href; }
@@ -330,7 +348,7 @@
 })();
 </script>
 
-<!-- Loader: names, scores, Vorhand, Status "Letztes Spiel" -->
+<!-- Loader: names, scores, Vorhand, Status "Letztes Spiel", Runde -->
 <script>
 (function(){
   const DB_NAME = 'ets_db';
@@ -345,7 +363,6 @@
   const seatKeys = ["TOP","LEFT","RIGHT","BOTTOM"];
   const ccwOrder = ["BOTTOM","RIGHT","TOP","LEFT"];
 
-  // Rufer-Spiele: immer Anzeige "Rufer <Fixprämie>"
   const RUFER_GAMES = new Set(['KOENIG_RUFER','PAGATRUFER','UHU_RUFER','KAKADU_RUFER','QUAPIL_RUFER']);
   const RUFER_FIX_PREM = {
     KOENIG_RUFER: 'KOENIG_ULT',
@@ -357,13 +374,13 @@
 
   const GAME_LABELS = {
     KOENIG_RUFER: 'Rufer',
-    SOLO_RUFER: 'Solorufer',
-    PAGATRUFER: 'Rufer',        // bewusst "Rufer" (fix)
-    SECHSERDREIER: 'Sechserdreier',
+    PAGATRUFER: 'Rufer',
     UHU_RUFER: 'Rufer',
-    DREIER: 'Dreier',
     KAKADU_RUFER: 'Rufer',
     QUAPIL_RUFER: 'Rufer',
+    SOLO_RUFER: 'Solorufer',
+    SECHSERDREIER: 'Sechserdreier',
+    DREIER: 'Dreier',
     SOLO_DREIER: 'Solodreier',
     TRISCHAKEN: 'Trischaken',
     PICCOLO: 'Piccolo',
@@ -442,8 +459,7 @@
   }
 
   function computeDealerSeat(nextGabeNr){
-    const idx = (nextGabeNr - 1) % ccwOrder.length;
-    return ccwOrder[idx];
+    return ccwOrder[(nextGabeNr - 1) % ccwOrder.length];
   }
 
   function nextCcwSeat(seat){
@@ -462,15 +478,12 @@
   }
 
   function normalizePremiumEntry(p){
-    // supports new format (mag/sign) and old format (state)
     if(!p) return {mag:0, sign:+1};
-
     if(typeof p.mag === 'number' || typeof p.sign === 'number'){
       const mag = Number(p.mag) || 0;
       const sign = (Number(p.sign) === -1) ? -1 : +1;
       return {mag, sign};
     }
-
     if(typeof p.state === 'number'){
       const st = Number(p.state) || 0;
       if(st === 0) return {mag:0, sign:+1};
@@ -479,100 +492,69 @@
       if(st === 3) return {mag:2, sign:+1};
       if(st === 4) return {mag:2, sign:-1};
     }
-
     return {mag:0, sign:+1};
   }
 
   function getGameSign(gabe){
-    // tokenfarbe für Spiel: negativ => rot, sonst schwarz
     if(!gabe || !gabe.game) return +1;
-
-    // new: displayRaw exists for Sechserdreier and normal games
     if(typeof gabe.game.displayRaw === 'number'){
       const v = Number(gabe.game.displayRaw) || 0;
       if(v === 0) return +1;
       return (v < 0) ? -1 : +1;
     }
-
-    // fallback: sign
     if(typeof gabe.game.sign === 'number'){
       return (Number(gabe.game.sign) < 0) ? -1 : +1;
     }
-
-    // fallback: displayValue
     if(typeof gabe.game.displayValue === 'number'){
       return (Number(gabe.game.displayValue) < 0) ? -1 : +1;
     }
-
     return +1;
+  }
+
+  function tokSpan(text, sign){
+    const cls = (Number(sign) < 0) ? 'numRed' : 'numBlack';
+    return `<span class="tok ${cls}">${escapeHtml(text)}</span>`;
   }
 
   function buildStatusHtml(gabe){
     const gameCode = gabe && gabe.game && gabe.game.code ? String(gabe.game.code) : '';
+    if(!gameCode) return `<span class="lbl">Letztes Spiel:</span>&nbsp;—`;
+
     const isRufer = RUFER_GAMES.has(gameCode);
-
-    const gameLabel = GAME_LABELS[gameCode] || gameCode || '—';
     const gameSign = getGameSign(gabe);
-
-    // premiums
     const premArr = (gabe && Array.isArray(gabe.premiums)) ? gabe.premiums : [];
     const premMap = new Map();
     for(const pr of premArr){
-      if(!pr || !pr.key) continue;
-      premMap.set(String(pr.key), pr);
-    }
-
-    // helper to color token
-    function tokSpan(text, sign){
-      const cls = (Number(sign) < 0) ? 'numRed' : 'numBlack';
-      return `<span class="tok ${cls}">${escapeHtml(text)}</span>`;
+      if(pr && pr.key) premMap.set(String(pr.key), pr);
     }
 
     let html = `<span class="lbl">Letztes Spiel:</span>&nbsp;`;
 
-    if(!gameCode){
-      html += '—';
-      return html;
-    }
-
     if(isRufer){
-      // Always "Rufer <Fixprämie>"
       const fixKey = RUFER_FIX_PREM[gameCode] || null;
-
-      // "Rufer" token colored by game outcome
       html += tokSpan('Rufer', gameSign);
 
       if(fixKey){
         const fixEntry = premMap.get(fixKey) || null;
         const {mag, sign} = normalizePremiumEntry(fixEntry);
-        // if fix premium not set for some reason, assume positive (still show name)
         const fixSign = (mag === 0) ? +1 : sign;
-        const fixLabel = PREM_LABELS[fixKey] || fixKey;
-        html += ' ' + tokSpan(fixLabel, fixSign);
+        html += ' ' + tokSpan(PREM_LABELS[fixKey] || fixKey, fixSign);
       }
 
-      // Add other premiums that are set (!=0), excluding the fix key
       const extras = [];
       for(const pr of premArr){
         const key = pr && pr.key ? String(pr.key) : '';
         if(!key) continue;
         if(fixKey && key === fixKey) continue;
-
         const {mag, sign} = normalizePremiumEntry(pr);
         if(mag === 0) continue;
-
-        const name = PREM_LABELS[key] || key;
-        extras.push(tokSpan(name, sign));
+        extras.push(tokSpan(PREM_LABELS[key] || key, sign));
       }
-
-      if(extras.length > 0){
-        html += ', ' + extras.join(', ');
-      }
-
+      if(extras.length > 0) html += ', ' + extras.join(', ');
       return html;
     }
 
-    // Non-rufer: "<Game>, <prem...>"
+    const gameLabel = GAME_LABELS[gameCode] || gameCode;
     html += tokSpan(gameLabel, gameSign);
 
     const used = [];
@@ -581,13 +563,9 @@
       if(!key) continue;
       const {mag, sign} = normalizePremiumEntry(pr);
       if(mag === 0) continue;
-      const name = PREM_LABELS[key] || key;
-      used.push(tokSpan(name, sign));
+      used.push(tokSpan(PREM_LABELS[key] || key, sign));
     }
-    if(used.length > 0){
-      html += ', ' + used.join(', ');
-    }
-
+    if(used.length > 0) html += ', ' + used.join(', ');
     return html;
   }
 
@@ -608,7 +586,12 @@
     const lastGabeNr = (state && Number.isFinite(state.lastGabeNr)) ? Number(state.lastGabeNr) : 0;
     const nextGabeNr = lastGabeNr + 1;
 
-    // render players
+    // Runde display (played gaben)
+    const roundPill = document.getElementById('roundPill');
+    if(roundPill){
+      roundPill.textContent = 'Runde: ' + String(lastGabeNr);
+    }
+
     for (const seat of seatKeys) {
       const pid = seats[seat];
       const nameEl = document.getElementById('name_' + seat);
@@ -637,23 +620,18 @@
       setDelta(delEl, Number(lastD[String(pid)] ?? 0));
     }
 
-    // Vorhand mark
     clearMarkers();
     const dealerSeat = computeDealerSeat(nextGabeNr);
     const vorhandSeat = nextCcwSeat(dealerSeat);
     markSeat(vorhandSeat, 'isVorhand');
 
-    // Status: Letztes Spiel
+    // Status pill: letztes Spiel
     const pill = document.getElementById('statusPill');
     if(pill){
       if(lastGabeNr > 0){
         const gabe = await get(db, STORE_GABEN, lastGabeNr).catch(() => null);
-        if(gabe){
-          pill.innerHTML = buildStatusHtml(gabe);
-        } else {
-          pill.innerHTML = `<span class="lbl">Letztes Spiel:</span>&nbsp;—`;
-        }
-      } else {
+        pill.innerHTML = gabe ? buildStatusHtml(gabe) : `<span class="lbl">Letztes Spiel:</span>&nbsp;—`;
+      }else{
         pill.innerHTML = `<span class="lbl">Letztes Spiel:</span>&nbsp;—`;
       }
     }
