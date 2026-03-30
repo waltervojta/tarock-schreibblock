@@ -1,0 +1,1233 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ETS – Gabenergebnis</title>
+
+  <!--
+  ====================================================
+  ETS – Elektronischer Tarock Schreibblock
+  SCREEN: Gabenergebnis (STC)
+
+  ZWECK
+  -----
+  - Ergebnis einer Gabe erfassen (nach Spielauswahl).
+  - Hier erst werden Spieler, Gewinn/Verlust, Prämien, Kontra/Re/Sub definiert.
+  - Danach werden Deltas (Summe=0) berechnet und in IndexedDB persistiert.
+
+  INPUT
+  -----
+  - sessionStorage.selectedGame = { code, value, category }
+  - IndexedDB current_session (key="current") liefert Tisch (tableType, seats)
+  - IndexedDB players liefert Namen
+  - IndexedDB current_state (key="current") liefert lastGabeNr, totals, lastDelta
+
+  OUTPUT (Persistenz)
+  ------------------
+  - STORE_GABEN: neue Gabe (gabeNr, game, players, premiums, kontra, deltaByPlayerId, createdUtc)
+  - STORE_CURR_STATE: totals + lastDelta aktualisiert, lastGabeNr++
+
+  UI / UX (festgelegt)
+  --------------------
+  - Spielwert: Klick toggelt Gewinn/Verlust (Vorzeichen), bei Sechserdreier Spezialmodus.
+  - Prämien:
+      0           = existiert, aber nicht gespielt
+      +Wert       = still gewonnen
+      -Wert       = still verloren
+      +2*Wert     = angesagt gewonnen
+      -2*Wert     = angesagt verloren
+    (Bei Solo-Spielen sind Prämien zusätzlich von Haus aus ×2.)
+  - Kontra/Re/Sub:
+      Button zyklisch: AUS → Kontra → Re → Sub → Reset → AUS ...
+      Danach Ziel wählen (Spiel oder Prämie). Faktor gilt nur für dieses Ziel.
+
+  Team / Verteilung (aktuelle Annahme)
+  -----------------------------------
+  - 1vs3: Spieler 1 ist Alleinspieler, Gegner sind die restlichen Spieler.
+          Spiel: Alleinspieler ±(Wert*3), Gegner je ∓Wert
+  - 2vs2 (Rufer-Spiele): Spieler 1 + Spieler 2 bilden Team.
+          Spiel: Team je ±Wert, Gegner je ∓Wert
+  - Sechserdreier (V): Spezialverteilung
+          Gewinn: Alleinspieler +12, Gegner je -4
+          Verlust: Alleinspieler -24, Gegner je +8
+          (Kontra/Re/Sub multipliziert diese Spielkomponente.)
+
+  - Prämien werden (vorerst) dem Spieler 1 zugerechnet:
+          Spieler 1 erhält (PrämieEffektiv * GegnerAnzahl),
+          jeder Gegner erhält -PrämieEffektiv,
+          Partner (falls 2vs2) bleibt 0.
+    -> integer-stabil und Summe=0; kann später erweitert werden.
+
+  ====================================================
+  -->
+
+  <style>
+    :root{
+      --bg:#cfe9ff;
+      --panel:#cfe9ff;
+      --barBg:#3b6fa8;
+      --line:#000;
+      --lineW:3px;
+      --font: Arial, sans-serif;
+      --black:#000;
+      --red:#c00000;
+      --btnBorder:rgba(0,0,0,.70);
+      --btnRadius:10px;
+      --iconDark:rgba(0,0,0,.92);
+      --padX:12px;
+
+      --cardBg: rgba(255,255,255,.60);
+      --chipBg: rgba(255,255,255,.18);
+      --chipBorder: rgba(0,0,0,.25);
+      --softBorder: rgba(0,0,0,.20);
+      --okBg: rgba(255,255,255,.26);
+      --disabledOpacity: .35;
+      --hilite: rgba(59,111,168,.28);
+    }
+
+    *{box-sizing:border-box;}
+    html,body{height:100%; overflow:hidden;}
+
+    body{
+      margin:0;
+      background:var(--bg);
+      font-family:var(--font);
+      display:flex;
+      justify-content:center;
+      color:var(--black);
+    }
+
+    .phone{
+      width:min(480px,100%);
+      height:100dvh;
+      background:var(--panel);
+      display:flex;
+      flex-direction:column;
+      overflow:hidden;
+    }
+
+    /* Topbar */
+    .topbar{
+      height: calc(58px + env(safe-area-inset-top));
+      padding: calc(8px + env(safe-area-inset-top)) var(--padX) 8px var(--padX);
+      background:var(--barBg);
+      border-bottom:var(--lineW) solid var(--line);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+
+    .titleWrap{min-width:0;display:flex;flex-direction:column;gap:2px;}
+    .title{
+      font-size:16px;
+      font-weight:900;
+      color:#fff;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      line-height:1.1;
+    }
+    .subtitle{
+      font-size:11px;
+      font-weight:700;
+      color:rgba(255,255,255,.85);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .pill{
+      flex:0 0 auto;
+      height:30px;
+      padding:0 10px;
+      border-radius:10px;
+      background:var(--chipBg);
+      border:1px solid var(--chipBorder);
+      display:flex;
+      align-items:center;
+      gap:8px;
+      color:#fff;
+      font-weight:900;
+      font-size:12px;
+      white-space:nowrap;
+    }
+
+    /* Content */
+    .content{
+      flex:1 1 auto;
+      min-height:0;
+      padding:12px var(--padX);
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      overflow:auto;
+      -webkit-overflow-scrolling:touch;
+    }
+
+    .card{
+      border:1px solid var(--btnBorder);
+      border-radius:var(--btnRadius);
+      background:var(--cardBg);
+      overflow:hidden;
+    }
+
+    .cardHeader{
+      padding:10px 10px;
+      border-bottom:1px solid var(--softBorder);
+      background:rgba(0,0,0,.03);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      font-weight:900;
+    }
+
+    .cardBody{ padding:10px; display:flex; flex-direction:column; gap:10px; }
+
+    /* Game line */
+    .gameLine{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:10px 10px;
+      background:#fff;
+      border:1px solid rgba(0,0,0,.35);
+      border-radius:10px;
+      user-select:none;
+      -webkit-tap-highlight-color:transparent;
+    }
+
+    .gameName{
+      min-width:0;
+      font-weight:900;
+      font-size:15px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .gameValue{
+      font-weight:900;
+      font-size:18px;
+      padding:6px 10px;
+      border-radius:10px;
+      border:1px solid rgba(0,0,0,.25);
+      background:rgba(59,111,168,.12);
+      cursor:pointer;
+      white-space:nowrap;
+    }
+
+    .numRed{color:var(--red)!important;}
+    .numBlack{color:var(--black)!important;}
+
+    .hintSmall{
+      font-size:11px;
+      font-weight:800;
+      color:rgba(0,0,0,.65);
+    }
+
+    /* Player selection */
+    .playerGrid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:8px;
+    }
+
+    .pbtn{
+      padding:10px 10px;
+      border-radius:10px;
+      border:1px solid rgba(0,0,0,.35);
+      background:#fff;
+      cursor:pointer;
+      user-select:none;
+      -webkit-tap-highlight-color:transparent;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      min-width:0;
+    }
+    .pbtn:active{transform:translateY(1px);}
+    .pbtn .pname{
+      min-width:0;
+      font-weight:900;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .pbtn .ptag{
+      font-size:11px;
+      font-weight:900;
+      color:rgba(0,0,0,.65);
+      white-space:nowrap;
+    }
+    .pbtn.selectedPrimary{background:rgba(59,111,168,.18); border-color:rgba(59,111,168,.85);}
+    .pbtn.selectedSecondary{background:rgba(255,230,90,.55); border-color:rgba(0,0,0,.35);}
+
+    .rowSplit{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+
+    .chip{
+      border:1px solid rgba(0,0,0,.25);
+      background:rgba(255,255,255,.55);
+      border-radius:10px;
+      padding:6px 10px;
+      font-size:12px;
+      font-weight:900;
+      color:rgba(0,0,0,.80);
+      white-space:nowrap;
+    }
+
+    /* Premiums list */
+    .premRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:10px 10px;
+      background:#fff;
+      border:1px solid rgba(0,0,0,.25);
+      border-radius:10px;
+      cursor:pointer;
+      user-select:none;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .premRow:active{transform:translateY(1px);}
+
+    .premLeft{
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+    }
+    .premName{
+      font-weight:900;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .premMeta{
+      font-size:11px;
+      font-weight:800;
+      color:rgba(0,0,0,.60);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .premVal{
+      font-weight:900;
+      font-size:16px;
+      padding:6px 10px;
+      border-radius:10px;
+      border:1px solid rgba(0,0,0,.20);
+      background:rgba(0,0,0,.04);
+      white-space:nowrap;
+      min-width:70px;
+      text-align:right;
+    }
+
+    .premRow.disabled{
+      opacity:var(--disabledOpacity);
+      cursor:default;
+    }
+
+    /* Kontra mode highlight */
+    .targetable{
+      outline:2px dashed rgba(59,111,168,.0);
+      outline-offset:2px;
+    }
+    .kontraPending .targetable{
+      outline-color: rgba(59,111,168,.85);
+    }
+
+    .kontraBadge{
+      font-size:11px;
+      font-weight:900;
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid rgba(0,0,0,.20);
+      background:rgba(59,111,168,.12);
+      white-space:nowrap;
+    }
+
+    .btnRow{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+
+    .btnAction{
+      flex:1 1 auto;
+      height:44px;
+      border-radius:12px;
+      border:1px solid rgba(0,0,0,.25);
+      background:rgba(255,255,255,.20);
+      color:#fff;
+      font-size:14px;
+      font-weight:900;
+      cursor:pointer;
+      user-select:none;
+      -webkit-tap-highlight-color:transparent;
+      background:rgba(59,111,168,.14);
+      color:rgba(0,0,0,.88);
+    }
+
+    .btnAction.primary{
+      background:rgba(59,111,168,.22);
+    }
+
+    .btnAction:disabled{
+      opacity:.45;
+      cursor:default;
+    }
+
+    /* Bottom actions */
+    .bottombar{
+      height: calc(62px + env(safe-area-inset-bottom));
+      background:var(--barBg);
+      border-top:var(--lineW) solid var(--line);
+      padding: 8px var(--padX) calc(8px + env(safe-area-inset-bottom)) var(--padX);
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      flex:0 0 auto;
+    }
+
+    .actionBtn{
+      flex:1 1 auto;
+      height:46px;
+      border-radius:12px;
+      border:1px solid rgba(0,0,0,.25);
+      background:rgba(255,255,255,.20);
+      color:#fff;
+      font-size:14px;
+      font-weight:900;
+      cursor:pointer;
+      user-select:none;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .actionBtn.primary{
+      background:rgba(255,255,255,.26);
+    }
+    .actionBtn:disabled{opacity:.45;cursor:default;}
+    .actionBtn:active:not(:disabled){transform:translateY(1px);}
+
+    /* Summary */
+    .sumList{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .sumRow{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      padding:8px 10px;
+      border-radius:10px;
+      background:rgba(255,255,255,.55);
+      border:1px solid rgba(0,0,0,.15);
+      font-weight:900;
+    }
+    .sumRow .who{min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+    .sumRow .val{white-space:nowrap;}
+    .sumCheck{
+      font-size:12px;
+      font-weight:900;
+      color:rgba(0,0,0,.75);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      padding-top:4px;
+    }
+  </style>
+</head>
+
+<body>
+<div class="phone" id="root">
+
+  <div class="topbar">
+    <div class="titleWrap">
+      <div class="title">Gabe erfassen</div>
+      <div id="sub" class="subtitle">—</div>
+    </div>
+    <div class="pill"><span id="gabeInfo">Gabe …</span></div>
+  </div>
+
+  <div class="content" id="content">
+
+    <!-- Spiel -->
+    <div class="card" id="cardGame">
+      <div class="cardHeader">
+        <div>Spiel</div>
+        <div class="kontraBadge" id="kontraHint">Kontra: AUS</div>
+      </div>
+      <div class="cardBody">
+
+        <div class="gameLine targetable" id="gameTarget">
+          <div class="gameName" id="gameName">—</div>
+          <div class="gameValue" id="gameValue">0</div>
+        </div>
+
+        <div class="hintSmall" id="gameHint">
+          Tipp: Klick auf den Wert toggelt Gewinn/Verlust. Kontra → Ziel wählen.
+        </div>
+
+        <div class="btnRow">
+          <button class="btnAction" id="btnKontra" type="button">Kontra (AUS)</button>
+          <div class="chip" id="teamHint">Team: —</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Spieler -->
+    <div class="card">
+      <div class="cardHeader">
+        <div>Spieler</div>
+        <div class="hintSmall" id="playerReqHint">Wähle den/die Spieler des Spiels.</div>
+      </div>
+      <div class="cardBody">
+        <div class="hintSmall" id="playerHint">
+          Spieler 1 ist der Ansager/Alleinspieler. Bei Rufer-Spielen kann ein 2. Spieler markiert werden.
+        </div>
+        <div class="playerGrid" id="playerGrid"></div>
+      </div>
+    </div>
+
+    <!-- Prämien -->
+    <div class="card">
+      <div class="cardHeader">
+        <div>Prämien</div>
+        <div class="hintSmall" id="soloHint">—</div>
+      </div>
+      <div class="cardBody" id="premList"></div>
+    </div>
+
+    <!-- Zusammenfassung -->
+    <div class="card">
+      <div class="cardHeader">
+        <div>Ergebnis dieser Gabe</div>
+        <div class="hintSmall" id="sumForPrimary">—</div>
+      </div>
+      <div class="cardBody">
+        <div class="sumList" id="sumList"></div>
+        <div class="sumCheck">
+          <div id="sumZero">Summe: —</div>
+          <div id="sumWarn"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="bottombar">
+    <button id="btnCancel" class="actionBtn" type="button">Zurück</button>
+    <button id="btnSave" class="actionBtn primary" type="button" disabled>Übernehmen</button>
+  </div>
+
+</div>
+
+<script>
+/* =========================================================
+   Konstanten / Konfiguration
+   ========================================================= */
+const DB_NAME='ets_db';
+const DB_VERSION=2;
+const STORE_PLAYERS='players', STORE_CURR_SESSION='current_session', STORE_CURR_STATE='current_state', STORE_GABEN='gaben';
+const CURR_KEY='current';
+
+const GAME_LABELS = {
+  KOENIG_RUFER: '(König)Rufer (V)',
+  SOLO_RUFER: 'Solorufer',
+  PAGATRUFER: 'Pagatrufer',
+  SECHSERDREIER: 'Sechserdreier (V)',
+  UHU_RUFER: 'Uhurufer',
+  DREIER: 'Dreier',
+  KAKADU_RUFER: 'Kakadurufer',
+  QUAPIL_RUFER: 'Quapilrufer',
+  SOLO_DREIER: 'Solodreier',
+
+  TRISCHAKEN: 'Trischaken (V)',
+  PICCOLO: 'Piccolo',
+  ZWICCOLO: 'Zwiccolo',
+  BETTLER: 'Bettler',
+  PICCOLO_OUVERT: 'Piccolo ouvert',
+  ZWICCOLO_OUVERT: 'Zwiccolo ouvert',
+  BETTLER_OUVERT: 'Bettler ouvert',
+
+  FARBENDREIER: 'Farbendreier',
+  FARBENSOLO: 'Farbensolo'
+};
+
+// Spiele mit 2 Spielern (Team 2vs2). Hier bewusst die Rufer-Spiele.
+const TWO_PLAYER_GAMES = new Set(['KOENIG_RUFER','PAGATRUFER','UHU_RUFER','KAKADU_RUFER','QUAPIL_RUFER']);
+
+// Solo-Spiele (Prämien von Haus aus ×2)
+const SOLO_GAMES = new Set(['SOLO_RUFER','SOLO_DREIER','FARBENSOLO']);
+
+// Prämienkatalog (STC)
+const PREMIUMS = [
+  { key:'PAGAT_ULTIMO', label:'Pagat ultimo', base:1 },
+  { key:'UHU',         label:'Uhu',          base:2 },
+  { key:'KAKADU',      label:'Kakadu',       base:3 },
+  { key:'QUAPIL',      label:'Quapil',       base:4 },
+  { key:'KOENIG_ULT',  label:'König ultimo', base:1 },
+  { key:'TRULL',       label:'Trull',        base:1 },
+  { key:'VIER_KOENIGE',label:'4 Könige',     base:1 },
+  { key:'VALAT',       label:'Valat',        base:10 }
+];
+
+/*
+  Prämien-Zulässigkeit (minimaler Start):
+  - Abakus: "Ultimo" ist beim Dreier ausgegraut.
+  - Wir implementieren konservativ:
+      Ultimo-Prämien (Pagat/König) nur bei Rufer-/SoloRufer-Games aktiv.
+  - Alle anderen Prämien bleiben aktiv (kann später verfeinert werden).
+*/
+function premiumAllowed(gameCode, premKey){
+  const ultimo = (premKey==='PAGAT_ULTIMO' || premKey==='KOENIG_ULT');
+  if(!ultimo) return true;
+  // Ultimo nur bei (König)Rufer/Ansage-Rufer und SoloRufer
+  return ['KOENIG_RUFER','PAGATRUFER','UHU_RUFER','KAKADU_RUFER','QUAPIL_RUFER','SOLO_RUFER'].includes(gameCode);
+}
+
+/* =========================================================
+   State
+   ========================================================= */
+let selectedGame = null;                 // {code,value,category}
+let sess = null;                         // current_session
+let state = null;                        // current_state
+let seatPlayers = [];                    // [{seat, playerId, displayName}]
+let primaryId = null;                    // playerId
+let secondaryId = null;                  // optional playerId
+let gameSign = +1;                       // +1 win / -1 loss (normal games)
+let sechserMode = 'WIN';                 // WIN/LOSS (Sechserdreier special)
+let gameKontraLevel = 0;                 // 0/1/2/3 => 1/2/4/8
+let premState = {};                      // premKey -> stateIndex 0..4
+let premKontra = {};                     // premKey -> level 0..3
+let kontraStage = 0;                     // 0..3 currently selected stage
+let kontraPending = false;               // waiting for target selection
+
+/* =========================================================
+   DOM
+   ========================================================= */
+const root = document.getElementById('root');
+const sub = document.getElementById('sub');
+const gabeInfo = document.getElementById('gabeInfo');
+
+const gameNameEl = document.getElementById('gameName');
+const gameValueEl = document.getElementById('gameValue');
+const gameHintEl = document.getElementById('gameHint');
+const teamHintEl = document.getElementById('teamHint');
+
+const playerGrid = document.getElementById('playerGrid');
+const playerReqHint = document.getElementById('playerReqHint');
+
+const premList = document.getElementById('premList');
+const soloHint = document.getElementById('soloHint');
+const kontraHint = document.getElementById('kontraHint');
+
+const btnKontra = document.getElementById('btnKontra');
+const btnCancel = document.getElementById('btnCancel');
+const btnSave = document.getElementById('btnSave');
+
+const sumList = document.getElementById('sumList');
+const sumZero = document.getElementById('sumZero');
+const sumWarn = document.getElementById('sumWarn');
+const sumForPrimary = document.getElementById('sumForPrimary');
+
+const gameTarget = document.getElementById('gameTarget');
+
+/* =========================================================
+   Helpers
+   ========================================================= */
+function esc(s){
+  return String(s)
+    .replaceAll('&','&amp;')
+    .replaceAll('<','&lt;')
+    .replaceAll('>','&gt;')
+    .replaceAll('"','&quot;')
+    .replaceAll("'",'&#39;');
+}
+function fmtSigned(n){
+  const v = Number(n)||0;
+  return (v<0?String(v):String(v));
+}
+function kontraFactor(level){
+  if(level===1) return 2;
+  if(level===2) return 4;
+  if(level===3) return 8;
+  return 1;
+}
+function kontraLabel(level){
+  if(level===1) return 'Kontra';
+  if(level===2) return 'Re';
+  if(level===3) return 'Sub';
+  return 'AUS';
+}
+function stageNext(level){
+  // 0->1->2->3->0
+  return (level+1) % 4;
+}
+function isTwoPlayerGame(){
+  return selectedGame && TWO_PLAYER_GAMES.has(selectedGame.code);
+}
+function isSoloGame(){
+  return selectedGame && SOLO_GAMES.has(selectedGame.code);
+}
+function tableType(){
+  return sess && Number(sess.tableType)||4;
+}
+function opponentsOfTeam(teamIds){
+  const set = new Set(teamIds.filter(x=>x!=null));
+  const opp = seatPlayers.map(p=>p.playerId).filter(id=>id!=null && !set.has(id));
+  return opp;
+}
+function playerNameById(id){
+  const p = seatPlayers.find(x=>x.playerId===id);
+  return p ? p.displayName : String(id);
+}
+function seatOrderFromSession(){
+  // we rely on sess.seats keys. Order not critical, but stable display.
+  const keys = Object.keys(sess.seats||{});
+  // prefer common order if present
+  const pref = ['TOP','LEFT','RIGHT','BOTTOM','LEFT_TOP','LEFT_BOTTOM','RIGHT_TOP','RIGHT_BOTTOM','TOP','BOTTOM'];
+  keys.sort((a,b)=>pref.indexOf(a)-pref.indexOf(b));
+  return keys;
+}
+
+/* =========================================================
+   IndexedDB
+   ========================================================= */
+function openDb(){
+  return new Promise((resolve,reject)=>{
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = ()=>{};
+    req.onsuccess = ()=>resolve(req.result);
+    req.onerror = ()=>reject(req.error);
+  });
+}
+function get(db, store, key){
+  return new Promise((resolve,reject)=>{
+    const tx=db.transaction(store,'readonly');
+    const st=tx.objectStore(store);
+    const rq=st.get(key);
+    rq.onsuccess=()=>resolve(rq.result);
+    rq.onerror=()=>reject(rq.error);
+  });
+}
+function getPlayer(db, id){
+  return new Promise((resolve,reject)=>{
+    const tx=db.transaction(STORE_PLAYERS,'readonly');
+    const st=tx.objectStore(STORE_PLAYERS);
+    const rq=st.get(Number(id));
+    rq.onsuccess=()=>resolve(rq.result);
+    rq.onerror=()=>reject(rq.error);
+  });
+}
+
+/* =========================================================
+   Init
+   ========================================================= */
+btnCancel.addEventListener('click', ()=>{
+  if(history.length>1) history.back();
+  else window.location.href='index.html';
+});
+
+window.addEventListener('load', async ()=>{
+  // selectedGame
+  try{
+    selectedGame = JSON.parse(sessionStorage.getItem('selectedGame')||'null');
+  } catch(e){
+    selectedGame = null;
+  }
+  if(!selectedGame || !selectedGame.code){
+    // kein Spiel gewählt -> zurück
+    if(history.length>1) history.back();
+    else window.location.href='index.html';
+    return;
+  }
+
+  // defaults
+  gameSign = +1;
+  sechserMode = 'WIN';
+  gameKontraLevel = 0;
+  PREMIUMS.forEach(p=>{ premState[p.key]=0; premKontra[p.key]=0; });
+
+  // load session and state
+  const db = await openDb();
+  sess = await get(db, STORE_CURR_SESSION, CURR_KEY);
+  state = await get(db, STORE_CURR_STATE, CURR_KEY);
+
+  if(!sess || !sess.tableType || !sess.seats){
+    db.close();
+    window.location.href='index.html';
+    return;
+  }
+
+  // header info
+  const gabeNr = (state && Number.isFinite(state.lastGabeNr)) ? (Number(state.lastGabeNr)+1) : 1;
+  gabeInfo.textContent = 'Gabe ' + gabeNr;
+  sub.textContent = 'Spiel: ' + (GAME_LABELS[selectedGame.code]||selectedGame.code) + ' (' + selectedGame.category + ')';
+
+  // load seat players names
+  const seatKeys = seatOrderFromSession();
+  seatPlayers = [];
+  for(const seat of seatKeys){
+    const pid = sess.seats[seat];
+    if(pid==null) continue;
+    const pl = await getPlayer(db, pid).catch(()=>null);
+    let disp = String(pid);
+    if(pl){
+      disp = (String(pl.nachname||'').trim() + ' ' + String(pl.vorname||'').trim()).trim();
+      if(!disp) disp = String(pid);
+    }
+    seatPlayers.push({ seat, playerId:Number(pid), displayName:disp });
+  }
+  db.close();
+
+  // UI render
+  renderGameHeader();
+  renderPlayers();
+  renderPremiums();
+  recomputeAndRender();
+
+  // events
+  gameValueEl.addEventListener('click', ()=>{
+    if(selectedGame.code === 'SECHSERDREIER'){
+      sechserMode = (sechserMode==='WIN') ? 'LOSS' : 'WIN';
+    } else {
+      gameSign = (gameSign===1) ? -1 : 1;
+    }
+    recomputeAndRender();
+  });
+
+  btnKontra.addEventListener('click', ()=>{
+    kontraStage = stageNext(kontraStage);
+    kontraPending = true;
+    updateKontraUi();
+  });
+
+  gameTarget.addEventListener('click', ()=>{
+    if(!kontraPending) return;
+    // apply stage to game
+    gameKontraLevel = kontraStage;
+    kontraPending = false;
+    updateKontraUi();
+    recomputeAndRender();
+  });
+
+  btnSave.addEventListener('click', onSave);
+});
+
+function renderGameHeader(){
+  const label = GAME_LABELS[selectedGame.code] || selectedGame.code;
+  gameNameEl.textContent = label;
+  updateKontraUi();
+
+  // team hint
+  if(selectedGame.code === 'SECHSERDREIER'){
+    teamHintEl.textContent = 'Modus: ' + (sechserMode==='WIN' ? 'Gewinn' : 'Verlust');
+    gameHintEl.textContent = 'Sechserdreier: Klick toggelt Gewinn/Verlust-Modus. Kontra → Ziel wählen.';
+  } else if(isTwoPlayerGame()){
+    teamHintEl.textContent = 'Team: 2 vs 2 (2 Spieler wählen)';
+    gameHintEl.textContent = 'Klick auf Wert toggelt Gewinn/Verlust. Kontra → Ziel wählen.';
+  } else {
+    teamHintEl.textContent = 'Team: 1 vs 3 (Alleinspieler)';
+    gameHintEl.textContent = 'Klick auf Wert toggelt Gewinn/Verlust. Kontra → Ziel wählen.';
+  }
+
+  // solo hint
+  soloHint.textContent = isSoloGame() ? 'Solo: alle Prämien ×2 (automatisch)' : '—';
+}
+
+function renderPlayers(){
+  playerGrid.innerHTML='';
+  // hint
+  playerReqHint.textContent = isTwoPlayerGame()
+    ? 'Wähle Spieler 1 und Spieler 2 (Team).'
+    : 'Wähle Spieler 1 (Alleinspieler).';
+
+  // build buttons
+  for(const p of seatPlayers){
+    const b = document.createElement('div');
+    b.className = 'pbtn';
+    b.dataset.pid = String(p.playerId);
+
+    b.innerHTML = `<div class="pname">${esc(p.displayName)}</div><div class="ptag">${esc(p.seat)}</div>`;
+
+    b.addEventListener('click', ()=>{
+      const pid = Number(b.dataset.pid);
+      // if no primary or clicking primary -> toggle off
+      if(primaryId===pid){
+        primaryId = null;
+        // if primary cleared -> also clear secondary
+        secondaryId = null;
+      } else if(secondaryId===pid){
+        secondaryId = null;
+      } else if(primaryId==null){
+        primaryId = pid;
+      } else if(isTwoPlayerGame() && secondaryId==null && pid!==primaryId){
+        secondaryId = pid;
+      } else {
+        // replace primary if not 2-player selection is enabled
+        if(!isTwoPlayerGame()){
+          primaryId = pid;
+          secondaryId = null;
+        } else {
+          // if 2-player game and both already set -> replace secondary
+          secondaryId = pid;
+        }
+      }
+      updatePlayerButtons();
+      recomputeAndRender();
+    });
+
+    playerGrid.appendChild(b);
+  }
+
+  updatePlayerButtons();
+}
+
+function updatePlayerButtons(){
+  const btns = [...playerGrid.querySelectorAll('.pbtn')];
+  for(const b of btns){
+    const pid = Number(b.dataset.pid);
+    b.classList.remove('selectedPrimary','selectedSecondary');
+    if(primaryId===pid) b.classList.add('selectedPrimary');
+    if(secondaryId===pid) b.classList.add('selectedSecondary');
+  }
+}
+
+function renderPremiums(){
+  premList.innerHTML='';
+  for(const prem of PREMIUMS){
+    const row = document.createElement('div');
+    row.className = 'premRow targetable';
+    row.dataset.pkey = prem.key;
+
+    const allowed = premiumAllowed(selectedGame.code, prem.key);
+    if(!allowed) row.classList.add('disabled');
+
+    row.innerHTML = `
+      <div class="premLeft">
+        <div class="premName">${esc(prem.label)}</div>
+        <div class="premMeta">${allowed ? 'aktiv' : 'inaktiv'}</div>
+      </div>
+      <div class="premVal" id="val_${prem.key}">0</div>
+    `;
+
+    row.addEventListener('click', ()=>{
+      if(row.classList.contains('disabled')) return;
+
+      if(kontraPending){
+        premKontra[prem.key] = kontraStage;
+        kontraPending = false;
+        updateKontraUi();
+        recomputeAndRender();
+        return;
+      }
+
+      // cycle state: 0 -> +still -> -still -> +angesagt -> -angesagt -> 0
+      premState[prem.key] = (premState[prem.key] + 1) % 5;
+      recomputeAndRender();
+    });
+
+    premList.appendChild(row);
+  }
+}
+
+function updateKontraUi(){
+  // visual: pending highlights
+  if(kontraPending) root.classList.add('kontraPending');
+  else root.classList.remove('kontraPending');
+
+  const name = kontraLabel(kontraStage);
+  btnKontra.textContent = 'Kontra (' + name + ') → Ziel wählen';
+  kontraHint.textContent = kontraPending ? ('Kontra: Ziel wählen ('+name+')') : ('Kontra: ' + kontraLabel(0));
+}
+
+/* =========================================================
+   Berechnung
+   ========================================================= */
+
+function calcGameComponent(teamIds){
+  // returns deltaByPlayerId contribution from game component
+  const delta = {};
+  seatPlayers.forEach(p=>delta[String(p.playerId)]=0);
+
+  const opp = opponentsOfTeam(teamIds);
+  const oppCount = opp.length;
+
+  // game multiplier
+  const kf = kontraFactor(gameKontraLevel);
+
+  if(selectedGame.code === 'SECHSERDREIER'){
+    // special distribution
+    if(teamIds.length!==1){
+      // should be solo only
+    }
+    const solo = teamIds[0];
+    if(solo==null) return delta;
+
+    if(sechserMode==='WIN'){
+      // +12 / -4 each
+      delta[String(solo)] += 12 * kf;
+      opp.forEach(id => delta[String(id)] -= 4 * kf);
+    } else {
+      // -24 / +8 each
+      delta[String(solo)] -= 24 * kf;
+      opp.forEach(id => delta[String(id)] += 8 * kf);
+    }
+    return delta;
+  }
+
+  const base = Number(selectedGame.value)||0;
+  const v = base * kf;
+
+  if(teamIds.length===2){
+    // 2vs2
+    const a=teamIds[0], b=teamIds[1];
+    if(a!=null) delta[String(a)] += gameSign * v;
+    if(b!=null) delta[String(b)] += gameSign * v;
+    opp.forEach(id => delta[String(id)] -= gameSign * v);
+  } else {
+    // 1vs3
+    const a=teamIds[0];
+    if(a!=null) delta[String(a)] += gameSign * v * oppCount;
+    opp.forEach(id => delta[String(id)] -= gameSign * v);
+  }
+  return delta;
+}
+
+function premEffectiveValue(prem){
+  // premState: 0..4
+  const st = premState[prem.key] || 0;
+  if(st===0) return 0;
+
+  // state mapping
+  // 1: +still, 2: -still, 3:+angesagt, 4:-angesagt
+  const sign = (st===2 || st===4) ? -1 : 1;
+  const announced = (st===3 || st===4) ? 2 : 1;
+
+  const soloFactor = isSoloGame() ? 2 : 1;
+  const kf = kontraFactor(premKontra[prem.key]||0);
+
+  return sign * prem.base * soloFactor * announced * kf;
+}
+
+function calcPremiumsComponent(teamIds){
+  // Prämien werden (vorerst) dem primären Spieler zugerechnet.
+  // Gegner zahlen jeweils den effektiven Prämienwert. Partner bleibt 0.
+  const delta = {};
+  seatPlayers.forEach(p=>delta[String(p.playerId)]=0);
+
+  const primary = teamIds[0] ?? null;
+  if(primary==null) return delta;
+
+  const opp = opponentsOfTeam(teamIds);
+  const oppCount = opp.length;
+
+  for(const prem of PREMIUMS){
+    if(!premiumAllowed(selectedGame.code, prem.key)) continue;
+
+    const ev = premEffectiveValue(prem);
+    const valEl = document.getElementById('val_'+prem.key);
+    if(valEl){
+      valEl.textContent = String(ev);
+      valEl.classList.remove('numRed','numBlack');
+      if(ev<0) valEl.classList.add('numRed'); else valEl.classList.add('numBlack');
+    }
+
+    if(ev===0) continue;
+
+    // primary gets paid by each opponent
+    delta[String(primary)] += ev * oppCount;
+    // each opponent pays ev
+    opp.forEach(id => delta[String(id)] -= ev);
+    // partner (if exists) remains 0 (intentional)
+  }
+
+  return delta;
+}
+
+function mergeDelta(a,b){
+  const out = {};
+  for(const k in a) out[k]=(out[k]||0)+Number(a[k]||0);
+  for(const k in b) out[k]=(out[k]||0)+Number(b[k]||0);
+  return out;
+}
+
+function recomputeAndRender(){
+  renderGameHeader();
+
+  // update game value display
+  if(selectedGame.code === 'SECHSERDREIER'){
+    const disp = (sechserMode==='WIN') ? 'Gewinn' : 'Verlust';
+    gameValueEl.textContent = disp;
+    gameValueEl.classList.remove('numRed','numBlack');
+    gameValueEl.classList.add(sechserMode==='LOSS' ? 'numRed' : 'numBlack');
+  } else {
+    const v = Number(selectedGame.value)||0;
+    const disp = gameSign===1 ? v : -v;
+    gameValueEl.textContent = String(disp);
+    gameValueEl.classList.remove('numRed','numBlack');
+    gameValueEl.classList.add(disp<0 ? 'numRed' : 'numBlack');
+  }
+
+  // set targetable class for game + premiums
+  gameTarget.classList.add('targetable');
+  [...premList.querySelectorAll('.premRow')].forEach(r=>r.classList.add('targetable'));
+
+  // team determination
+  const team = [];
+  if(primaryId!=null) team.push(primaryId);
+  if(isTwoPlayerGame() && secondaryId!=null) team.push(secondaryId);
+
+  // enable save only if required players chosen
+  let canSave = (primaryId!=null);
+  if(isTwoPlayerGame()) canSave = canSave && (secondaryId!=null);
+  btnSave.disabled = !canSave;
+
+  // compute deltas
+  const dGame = calcGameComponent(team);
+  const dPrem = calcPremiumsComponent(team);
+  const dAll = mergeDelta(dGame, dPrem);
+
+  // update premium displays for disabled ones
+  for(const prem of PREMIUMS){
+    if(!premiumAllowed(selectedGame.code, prem.key)){
+      const valEl = document.getElementById('val_'+prem.key);
+      if(valEl) valEl.textContent = '0';
+    }
+  }
+
+  // summary list
+  sumList.innerHTML='';
+  let sum = 0;
+  for(const sp of seatPlayers){
+    const v = Number(dAll[String(sp.playerId)]||0);
+    sum += v;
+    const row = document.createElement('div');
+    row.className = 'sumRow';
+    row.innerHTML = `<div class="who">${esc(sp.displayName)}</div><div class="val ${v<0?'numRed':'numBlack'}">${esc(fmtSigned(v))}</div>`;
+    sumList.appendChild(row);
+  }
+
+  sumZero.textContent = 'Summe: ' + String(sum);
+  sumWarn.textContent = (sum===0) ? 'OK' : '⚠️ nicht 0';
+  sumWarn.style.fontWeight = '900';
+  sumWarn.style.color = (sum===0) ? 'rgba(0,0,0,.75)' : '#c00000';
+
+  // primary sum info (wie Abakus: nur Anzeige für den Hauptspieler)
+  if(primaryId!=null){
+    const pv = Number(dAll[String(primaryId)]||0);
+    sumForPrimary.textContent = 'Spieler 1: ' + playerNameById(primaryId) + ' → ' + String(pv);
+  } else {
+    sumForPrimary.textContent = '—';
+  }
+}
+
+/* =========================================================
+   Save (IndexedDB)
+   ========================================================= */
+async function onSave(){
+  if(btnSave.disabled) return;
+
+  // compute final deltas once more (avoid drift)
+  const team = [];
+  team.push(primaryId);
+  if(isTwoPlayerGame()) team.push(secondaryId);
+
+  const dGame = calcGameComponent(team);
+  const dPrem = calcPremiumsComponent(team);
+  const dAll = mergeDelta(dGame, dPrem);
+
+  // next gabe nr
+  const nextGabeNr = (state && Number.isFinite(state.lastGabeNr)) ? (Number(state.lastGabeNr)+1) : 1;
+  const now = new Date().toISOString();
+
+  // prepare gabe record
+  const gabe = {
+    gabeNr: nextGabeNr,
+    createdUtc: now,
+    tableType: Number(sess.tableType),
+    game: {
+      code: selectedGame.code,
+      value: Number(selectedGame.value)||0,
+      category: String(selectedGame.category||''),
+      sign: (selectedGame.code==='SECHSERDREIER') ? null : gameSign,
+      sechserMode: (selectedGame.code==='SECHSERDREIER') ? sechserMode : null,
+      kontraLevel: gameKontraLevel
+    },
+    players: {
+      primaryId,
+      secondaryId: (isTwoPlayerGame()?secondaryId:null)
+    },
+    premiums: PREMIUMS.map(p=>({
+      key: p.key,
+      base: p.base,
+      state: premState[p.key]||0,
+      kontraLevel: premKontra[p.key]||0,
+      allowed: premiumAllowed(selectedGame.code, p.key)
+    })),
+    deltaByPlayerId: dAll
+  };
+
+  // update current_state
+  const totals = (state && state.totalByPlayerId) ? {...state.totalByPlayerId} : {};
+  const lastD  = (state && state.lastDeltaByPlayerId) ? {...state.lastDeltaByPlayerId} : {};
+
+  for(const sp of seatPlayers){
+    const pid = String(sp.playerId);
+    const dv = Number(dAll[pid]||0);
+    totals[pid] = Number(totals[pid]||0) + dv;
+    lastD[pid] = dv;
+  }
+
+  const newState = {
+    key: CURR_KEY,
+    totalByPlayerId: totals,
+    lastDeltaByPlayerId: lastD,
+    lastGabeNr: nextGabeNr,
+    updatedUtc: now
+  };
+
+  // write transaction
+  const db = await openDb();
+  await new Promise((resolve,reject)=>{
+    const tx = db.transaction([STORE_GABEN, STORE_CURR_STATE], 'readwrite');
+    tx.objectStore(STORE_GABEN).put(gabe);
+    tx.objectStore(STORE_CURR_STATE).put(newState);
+    tx.oncomplete = ()=>resolve();
+    tx.onerror = ()=>reject(tx.error);
+    tx.onabort = ()=>reject(tx.error);
+  });
+  db.close();
+
+  // cleanup selectedGame (optional)
+  // sessionStorage.removeItem('selectedGame');
+
+  // navigate back to table screen
+  const t = Number(sess.tableType);
+  const target = (t===4) ? '4er-Screen.html' : (t===5) ? '5er-Screen.html' : '6er-Screen.html';
+  window.location.href = target;
+}
+</script>
+
+</body>
+</html>
