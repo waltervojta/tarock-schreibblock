@@ -6,60 +6,36 @@
   <title>ETS – Gabenergebnis</title>
 
   <!--
-  ====================================================
-  ETS – Elektronischer Tarock Schreibblock
-  SCREEN: Gabenergebnis (STC)
+    ETS – Elektronischer Tarock Schreibblock
+    SCREEN: Gabenergebnis (STC)
+    INPUT:
+      - sessionStorage.selectedGame = { code, value, category }
+      - IndexedDB current_session (key="current") liefert Tisch (tableType, seats, ccwOrder)
+      - IndexedDB players liefert Namen
+      - IndexedDB current_state (key="current") liefert lastGabeNr, totals, lastDelta
+    OUTPUT:
+      - STORE_GABEN: neue Gabe (gabeNr, game, players, premiums, kontra, deltaByPlayerId, createdUtc)
+      - STORE_CURR_STATE: totals + lastDelta aktualisiert, lastGabeNr++
 
-  ZWECK
-  -----
-  - Ergebnis einer Gabe erfassen (nach Spielauswahl).
-  - Hier erst werden Spieler, Gewinn/Verlust, Prämien, Kontra/Re/Sub definiert.
-  - Danach werden Deltas (Summe=0) berechnet und in IndexedDB persistiert.
+    TEAM-LOGIK FINAL:
+      - Aktive Spieler pro Gabe:
+          4er: alle 4 aktiv
+          5er: Geber pausiert
+          6er: Geber + diagonal gegenüber pausieren
+        -> Pausierer erhalten Delta=0
+      - Team-Modi:
+          Standard: 1 vs (N-1) (N=aktive Spieler)
+          Selberrufer/Rufer: optional Partner => 2vs2 oder 1vs3
+          Trischaken & Negativ: immer 1vs3 (Partner deaktiviert)
+          Sechserdreier (V): Spezialverteilung (+12/-4 bzw -24/+8) über aktive Spieler
+      - Prämienverteilung (team-konsistent):
+          1vs3: Ansager +ev*(N-1), jeder Gegner -ev
+          2vs2: Team je +ev, Gegner je -ev
+        (ev enthält still/angesagt, solo×2, kontra/re/sub)
 
-  INPUT
-  -----
-  - sessionStorage.selectedGame = { code, value, category }
-  - IndexedDB current_session (key="current") liefert Tisch (tableType, seats)
-  - IndexedDB players liefert Namen
-  - IndexedDB current_state (key="current") liefert lastGabeNr, totals, lastDelta
-
-  OUTPUT (Persistenz)
-  ------------------
-  - STORE_GABEN: neue Gabe (gabeNr, game, players, premiums, kontra, deltaByPlayerId, createdUtc)
-  - STORE_CURR_STATE: totals + lastDelta aktualisiert, lastGabeNr++
-
-  UI / UX (festgelegt)
-  --------------------
-  - Spielwert: Klick toggelt Gewinn/Verlust (Vorzeichen), bei Sechserdreier Spezialmodus.
-  - Prämien:
-      0           = existiert, aber nicht gespielt
-      +Wert       = still gewonnen
-      -Wert       = still verloren
-      +2*Wert     = angesagt gewonnen
-      -2*Wert     = angesagt verloren
-    (Bei Solo-Spielen sind Prämien zusätzlich von Haus aus ×2.)
-  - Kontra/Re/Sub:
-      Button zyklisch: AUS → Kontra → Re → Sub → Reset → AUS ...
-      Danach Ziel wählen (Spiel oder Prämie). Faktor gilt nur für dieses Ziel.
-
-  Team / Verteilung (aktuelle Annahme)
-  -----------------------------------
-  - 1vs3: Spieler 1 ist Alleinspieler, Gegner sind die restlichen Spieler.
-          Spiel: Alleinspieler ±(Wert*3), Gegner je ∓Wert
-  - 2vs2 (Rufer-Spiele): Spieler 1 + Spieler 2 bilden Team.
-          Spiel: Team je ±Wert, Gegner je ∓Wert
-  - Sechserdreier (V): Spezialverteilung
-          Gewinn: Alleinspieler +12, Gegner je -4
-          Verlust: Alleinspieler -24, Gegner je +8
-          (Kontra/Re/Sub multipliziert diese Spielkomponente.)
-
-  - Prämien werden (vorerst) dem Spieler 1 zugerechnet:
-          Spieler 1 erhält (PrämieEffektiv * GegnerAnzahl),
-          jeder Gegner erhält -PrämieEffektiv,
-          Partner (falls 2vs2) bleibt 0.
-    -> integer-stabil und Summe=0; kann später erweitert werden.
-
-  ====================================================
+    UX:
+      - Spielwert: Klick toggelt Gewinn/Verlust (Vorzeichen), bei Sechserdreier Spezialmodus.
+      - Kontra/Re/Sub: Button zyklisch AUS → Kontra → Re → Sub → AUS ... danach Ziel wählen (Spiel oder Prämie).
   -->
 
   <style>
@@ -81,14 +57,11 @@
       --chipBg: rgba(255,255,255,.18);
       --chipBorder: rgba(0,0,0,.25);
       --softBorder: rgba(0,0,0,.20);
-      --okBg: rgba(255,255,255,.26);
       --disabledOpacity: .35;
-      --hilite: rgba(59,111,168,.28);
     }
 
     *{box-sizing:border-box;}
     html,body{height:100%; overflow:hidden;}
-
     body{
       margin:0;
       background:var(--bg);
@@ -97,7 +70,6 @@
       justify-content:center;
       color:var(--black);
     }
-
     .phone{
       width:min(480px,100%);
       height:100dvh;
@@ -117,8 +89,8 @@
       align-items:center;
       justify-content:space-between;
       gap:10px;
+      flex:0 0 auto;
     }
-
     .titleWrap{min-width:0;display:flex;flex-direction:column;gap:2px;}
     .title{
       font-size:16px;
@@ -137,7 +109,6 @@
       overflow:hidden;
       text-overflow:ellipsis;
     }
-
     .pill{
       flex:0 0 auto;
       height:30px;
@@ -165,14 +136,12 @@
       overflow:auto;
       -webkit-overflow-scrolling:touch;
     }
-
     .card{
       border:1px solid var(--btnBorder);
       border-radius:var(--btnRadius);
       background:var(--cardBg);
       overflow:hidden;
     }
-
     .cardHeader{
       padding:10px 10px;
       border-bottom:1px solid var(--softBorder);
@@ -183,7 +152,6 @@
       gap:10px;
       font-weight:900;
     }
-
     .cardBody{ padding:10px; display:flex; flex-direction:column; gap:10px; }
 
     /* Game line */
@@ -199,7 +167,6 @@
       user-select:none;
       -webkit-tap-highlight-color:transparent;
     }
-
     .gameName{
       min-width:0;
       font-weight:900;
@@ -208,7 +175,6 @@
       overflow:hidden;
       text-overflow:ellipsis;
     }
-
     .gameValue{
       font-weight:900;
       font-size:18px;
@@ -220,14 +186,14 @@
       white-space:nowrap;
     }
 
-    .numRed{color:var(--red)!important;}
-    .numBlack{color:var(--black)!important;}
-
     .hintSmall{
       font-size:11px;
       font-weight:800;
       color:rgba(0,0,0,.65);
     }
+
+    .numRed{color:var(--red)!important;}
+    .numBlack{color:var(--black)!important;}
 
     /* Player selection */
     .playerGrid{
@@ -235,7 +201,6 @@
       grid-template-columns:1fr 1fr;
       gap:8px;
     }
-
     .pbtn{
       padding:10px 10px;
       border-radius:10px;
@@ -267,12 +232,10 @@
     .pbtn.selectedPrimary{background:rgba(59,111,168,.18); border-color:rgba(59,111,168,.85);}
     .pbtn.selectedSecondary{background:rgba(255,230,90,.55); border-color:rgba(0,0,0,.35);}
 
-    .rowSplit{
-      display:flex;
-      gap:10px;
-      align-items:center;
-      justify-content:space-between;
-      flex-wrap:wrap;
+    .pbtn.paused{
+      opacity:.38;
+      cursor:default;
+      background:rgba(255,255,255,.35);
     }
 
     .chip{
@@ -301,7 +264,6 @@
       -webkit-tap-highlight-color:transparent;
     }
     .premRow:active{transform:translateY(1px);}
-
     .premLeft{
       min-width:0;
       display:flex;
@@ -322,7 +284,6 @@
       overflow:hidden;
       text-overflow:ellipsis;
     }
-
     .premVal{
       font-weight:900;
       font-size:16px;
@@ -334,21 +295,19 @@
       min-width:70px;
       text-align:right;
     }
-
     .premRow.disabled{
-      opacity:var(--disabledOpacity);
+      opacity:.35;
       cursor:default;
     }
 
     /* Kontra mode highlight */
     .targetable{
-      outline:2px dashed rgba(59,111,168,.0);
+      outline:2px dashed rgba(59,111,168,0);
       outline-offset:2px;
     }
     .kontraPending .targetable{
       outline-color: rgba(59,111,168,.85);
     }
-
     .kontraBadge{
       font-size:11px;
       font-weight:900;
@@ -358,7 +317,6 @@
       background:rgba(59,111,168,.12);
       white-space:nowrap;
     }
-
     .btnRow{
       display:flex;
       gap:10px;
@@ -366,31 +324,20 @@
       justify-content:space-between;
       flex-wrap:wrap;
     }
-
     .btnAction{
       flex:1 1 auto;
       height:44px;
       border-radius:12px;
       border:1px solid rgba(0,0,0,.25);
-      background:rgba(255,255,255,.20);
-      color:#fff;
-      font-size:14px;
-      font-weight:900;
       cursor:pointer;
       user-select:none;
       -webkit-tap-highlight-color:transparent;
       background:rgba(59,111,168,.14);
       color:rgba(0,0,0,.88);
+      font-size:14px;
+      font-weight:900;
     }
-
-    .btnAction.primary{
-      background:rgba(59,111,168,.22);
-    }
-
-    .btnAction:disabled{
-      opacity:.45;
-      cursor:default;
-    }
+    .btnAction:disabled{ opacity:.45; cursor:default; }
 
     /* Bottom actions */
     .bottombar{
@@ -404,7 +351,6 @@
       justify-content:space-between;
       flex:0 0 auto;
     }
-
     .actionBtn{
       flex:1 1 auto;
       height:46px;
@@ -418,18 +364,12 @@
       user-select:none;
       -webkit-tap-highlight-color:transparent;
     }
-    .actionBtn.primary{
-      background:rgba(255,255,255,.26);
-    }
+    .actionBtn.primary{ background:rgba(255,255,255,.26); }
     .actionBtn:disabled{opacity:.45;cursor:default;}
     .actionBtn:active:not(:disabled){transform:translateY(1px);}
 
     /* Summary */
-    .sumList{
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-    }
+    .sumList{ display:flex; flex-direction:column; gap:8px; }
     .sumRow{
       display:flex;
       justify-content:space-between;
@@ -457,777 +397,985 @@
 </head>
 
 <body>
-<div class="phone" id="root">
-
-  <div class="topbar">
-    <div class="titleWrap">
-      <div class="title">Gabe erfassen</div>
-      <div id="sub" class="subtitle">—</div>
+  <div class="phone" id="root">
+    <div class="topbar">
+      <div class="titleWrap">
+        <div class="title">Gabe erfassen</div>
+        <div id="sub" class="subtitle">—</div>
+      </div>
+      <div class="pill"><span id="gabeInfo">Gabe …</span></div>
     </div>
-    <div class="pill"><span id="gabeInfo">Gabe …</span></div>
+
+    <div class="content" id="content">
+      <!-- Spiel -->
+      <div class="card" id="cardGame">
+        <div class="cardHeader">
+          <div>Spiel</div>
+          <div class="kontraBadge" id="kontraHint">Kontra: AUS</div>
+        </div>
+        <div class="cardBody">
+          <div class="gameLine targetable" id="gameTarget">
+            <div class="gameName" id="gameName">—</div>
+            <div class="gameValue" id="gameValue">0</div>
+          </div>
+          <div class="hintSmall" id="gameHint">
+            Tipp: Klick auf den Wert toggelt Gewinn/Verlust. Kontra → Ziel wählen.
+          </div>
+          <div class="btnRow">
+            <button class="btnAction" id="btnKontra" type="button">Kontra (AUS)</button>
+            <div class="chip" id="teamHint">Team: —</div>
+          </div>
+          <div class="hintSmall" id="pauseHint">—</div>
+        </div>
+      </div>
+
+      <!-- Spieler -->
+      <div class="card">
+        <div class="cardHeader">
+          <div>Spieler</div>
+          <div class="hintSmall" id="playerReqHint">—</div>
+        </div>
+        <div class="cardBody">
+          <div class="hintSmall" id="playerHint">
+            Spieler 1 = Ansager. Bei Selberrufer/Rufer optional Partner wählen (2vs2) – sonst bleibt es 1vs3.
+          </div>
+          <div class="playerGrid" id="playerGrid"></div>
+        </div>
+      </div>
+
+      <!-- Prämien -->
+      <div class="card">
+        <div class="cardHeader">
+          <div>Prämien</div>
+          <div class="hintSmall" id="soloHint">—</div>
+        </div>
+        <div class="cardBody" id="premList"></div>
+      </div>
+
+      <!-- Zusammenfassung -->
+      <div class="card">
+        <div class="cardHeader">
+          <div>Ergebnis dieser Gabe</div>
+          <div class="hintSmall" id="sumForPrimary">—</div>
+        </div>
+        <div class="cardBody">
+          <div class="sumList" id="sumList"></div>
+          <div class="sumCheck">
+            <div id="sumZero">Summe: —</div>
+            <div id="sumWarn"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bottombar">
+      <button id="btnCancel" class="actionBtn" type="button">Zurück</button>
+      <button id="btnSave" class="actionBtn primary" type="button" disabled>Übernehmen</button>
+    </div>
   </div>
 
-  <div class="content" id="content">
+  <script>
+    /* =========================================================
+      Konstanten / Konfiguration
+    ========================================================= */
+    const DB_NAME = 'ets_db';
+    const DB_VERSION = 2;
+    const STORE_PLAYERS = 'players';
+    const STORE_CURR_SESSION = 'current_session';
+    const STORE_CURR_STATE = 'current_state';
+    const STORE_GABEN = 'gaben';
+    const CURR_KEY = 'current';
 
-    <!-- Spiel -->
-    <div class="card" id="cardGame">
-      <div class="cardHeader">
-        <div>Spiel</div>
-        <div class="kontraBadge" id="kontraHint">Kontra: AUS</div>
-      </div>
-      <div class="cardBody">
+    const GAME_LABELS = {
+      KOENIG_RUFER: '(König)Rufer (V)',
+      SOLO_RUFER: 'Solorufer',
+      PAGATRUFER: 'Pagatrufer',
+      SECHSERDREIER: 'Sechserdreier (V)',
+      UHU_RUFER: 'Uhurufer',
+      DREIER: 'Dreier',
+      KAKADU_RUFER: 'Kakadurufer',
+      QUAPIL_RUFER: 'Quapilrufer',
+      SOLO_DREIER: 'Solodreier',
+      TRISCHAKEN: 'Trischaken (V)',
+      PICCOLO: 'Piccolo',
+      ZWICCOLO: 'Zwiccolo',
+      BETTLER: 'Bettler',
+      PICCOLO_OUVERT: 'Piccolo ouvert',
+      ZWICCOLO_OUVERT: 'Zwiccolo ouvert',
+      BETTLER_OUVERT: 'Bettler ouvert',
+      FARBENDREIER: 'Farbendreier',
+      FARBENSOLO: 'Farbensolo'
+    };
 
-        <div class="gameLine targetable" id="gameTarget">
-          <div class="gameName" id="gameName">—</div>
-          <div class="gameValue" id="gameValue">0</div>
-        </div>
+    // "Selberrufer/Rufer"-Spiele: optional Partner (2vs2) oder ohne Partner (1vs3)
+    const SELBER_RUFER_GAMES = new Set([
+      'KOENIG_RUFER','PAGATRUFER','UHU_RUFER','KAKADU_RUFER','QUAPIL_RUFER'
+    ]);
 
-        <div class="hintSmall" id="gameHint">
-          Tipp: Klick auf den Wert toggelt Gewinn/Verlust. Kontra → Ziel wählen.
-        </div>
+    // Solo-Spiele (Prämien von Haus aus ×2)
+    const SOLO_GAMES = new Set(['SOLO_RUFER','SOLO_DREIER','FARBENSOLO']);
 
-        <div class="btnRow">
-          <button class="btnAction" id="btnKontra" type="button">Kontra (AUS)</button>
-          <div class="chip" id="teamHint">Team: —</div>
-        </div>
+    // Negativ-Spiele (Partner nie erlaubt)
+    const NEGATIVE_GAMES = new Set([
+      'TRISCHAKEN','PICCOLO','ZWICCOLO','BETTLER',
+      'PICCOLO_OUVERT','ZWICCOLO_OUVERT','BETTLER_OUVERT'
+    ]);
 
-      </div>
-    </div>
+    // Prämienkatalog (STC)
+    const PREMIUMS = [
+      { key:'PAGAT_ULTIMO', label:'Pagat ultimo', base:1 },
+      { key:'UHU', label:'Uhu', base:2 },
+      { key:'KAKADU', label:'Kakadu', base:3 },
+      { key:'QUAPIL', label:'Quapil', base:4 },
+      { key:'KOENIG_ULT', label:'König ultimo', base:1 },
+      { key:'TRULL', label:'Trull', base:1 },
+      { key:'VIER_KOENIGE', label:'4 Könige', base:1 },
+      { key:'VALAT', label:'Valat', base:10 }
+    ];
 
-    <!-- Spieler -->
-    <div class="card">
-      <div class="cardHeader">
-        <div>Spieler</div>
-        <div class="hintSmall" id="playerReqHint">Wähle den/die Spieler des Spiels.</div>
-      </div>
-      <div class="cardBody">
-        <div class="hintSmall" id="playerHint">
-          Spieler 1 ist der Ansager/Alleinspieler. Bei Rufer-Spielen kann ein 2. Spieler markiert werden.
-        </div>
-        <div class="playerGrid" id="playerGrid"></div>
-      </div>
-    </div>
-
-    <!-- Prämien -->
-    <div class="card">
-      <div class="cardHeader">
-        <div>Prämien</div>
-        <div class="hintSmall" id="soloHint">—</div>
-      </div>
-      <div class="cardBody" id="premList"></div>
-    </div>
-
-    <!-- Zusammenfassung -->
-    <div class="card">
-      <div class="cardHeader">
-        <div>Ergebnis dieser Gabe</div>
-        <div class="hintSmall" id="sumForPrimary">—</div>
-      </div>
-      <div class="cardBody">
-        <div class="sumList" id="sumList"></div>
-        <div class="sumCheck">
-          <div id="sumZero">Summe: —</div>
-          <div id="sumWarn"></div>
-        </div>
-      </div>
-    </div>
-
-  </div>
-
-  <div class="bottombar">
-    <button id="btnCancel" class="actionBtn" type="button">Zurück</button>
-    <button id="btnSave" class="actionBtn primary" type="button" disabled>Übernehmen</button>
-  </div>
-
-</div>
-
-<script>
-/* =========================================================
-   Konstanten / Konfiguration
-   ========================================================= */
-const DB_NAME='ets_db';
-const DB_VERSION=2;
-const STORE_PLAYERS='players', STORE_CURR_SESSION='current_session', STORE_CURR_STATE='current_state', STORE_GABEN='gaben';
-const CURR_KEY='current';
-
-const GAME_LABELS = {
-  KOENIG_RUFER: '(König)Rufer (V)',
-  SOLO_RUFER: 'Solorufer',
-  PAGATRUFER: 'Pagatrufer',
-  SECHSERDREIER: 'Sechserdreier (V)',
-  UHU_RUFER: 'Uhurufer',
-  DREIER: 'Dreier',
-  KAKADU_RUFER: 'Kakadurufer',
-  QUAPIL_RUFER: 'Quapilrufer',
-  SOLO_DREIER: 'Solodreier',
-
-  TRISCHAKEN: 'Trischaken (V)',
-  PICCOLO: 'Piccolo',
-  ZWICCOLO: 'Zwiccolo',
-  BETTLER: 'Bettler',
-  PICCOLO_OUVERT: 'Piccolo ouvert',
-  ZWICCOLO_OUVERT: 'Zwiccolo ouvert',
-  BETTLER_OUVERT: 'Bettler ouvert',
-
-  FARBENDREIER: 'Farbendreier',
-  FARBENSOLO: 'Farbensolo'
-};
-
-// Spiele mit 2 Spielern (Team 2vs2). Hier bewusst die Rufer-Spiele.
-const TWO_PLAYER_GAMES = new Set(['KOENIG_RUFER','PAGATRUFER','UHU_RUFER','KAKADU_RUFER','QUAPIL_RUFER']);
-
-// Solo-Spiele (Prämien von Haus aus ×2)
-const SOLO_GAMES = new Set(['SOLO_RUFER','SOLO_DREIER','FARBENSOLO']);
-
-// Prämienkatalog (STC)
-const PREMIUMS = [
-  { key:'PAGAT_ULTIMO', label:'Pagat ultimo', base:1 },
-  { key:'UHU',         label:'Uhu',          base:2 },
-  { key:'KAKADU',      label:'Kakadu',       base:3 },
-  { key:'QUAPIL',      label:'Quapil',       base:4 },
-  { key:'KOENIG_ULT',  label:'König ultimo', base:1 },
-  { key:'TRULL',       label:'Trull',        base:1 },
-  { key:'VIER_KOENIGE',label:'4 Könige',     base:1 },
-  { key:'VALAT',       label:'Valat',        base:10 }
-];
-
-/*
-  Prämien-Zulässigkeit (minimaler Start):
-  - Abakus: "Ultimo" ist beim Dreier ausgegraut.
-  - Wir implementieren konservativ:
-      Ultimo-Prämien (Pagat/König) nur bei Rufer-/SoloRufer-Games aktiv.
-  - Alle anderen Prämien bleiben aktiv (kann später verfeinert werden).
-*/
-function premiumAllowed(gameCode, premKey){
-  const ultimo = (premKey==='PAGAT_ULTIMO' || premKey==='KOENIG_ULT');
-  if(!ultimo) return true;
-  // Ultimo nur bei (König)Rufer/Ansage-Rufer und SoloRufer
-  return ['KOENIG_RUFER','PAGATRUFER','UHU_RUFER','KAKADU_RUFER','QUAPIL_RUFER','SOLO_RUFER'].includes(gameCode);
-}
-
-/* =========================================================
-   State
-   ========================================================= */
-let selectedGame = null;                 // {code,value,category}
-let sess = null;                         // current_session
-let state = null;                        // current_state
-let seatPlayers = [];                    // [{seat, playerId, displayName}]
-let primaryId = null;                    // playerId
-let secondaryId = null;                  // optional playerId
-let gameSign = +1;                       // +1 win / -1 loss (normal games)
-let sechserMode = 'WIN';                 // WIN/LOSS (Sechserdreier special)
-let gameKontraLevel = 0;                 // 0/1/2/3 => 1/2/4/8
-let premState = {};                      // premKey -> stateIndex 0..4
-let premKontra = {};                     // premKey -> level 0..3
-let kontraStage = 0;                     // 0..3 currently selected stage
-let kontraPending = false;               // waiting for target selection
-
-/* =========================================================
-   DOM
-   ========================================================= */
-const root = document.getElementById('root');
-const sub = document.getElementById('sub');
-const gabeInfo = document.getElementById('gabeInfo');
-
-const gameNameEl = document.getElementById('gameName');
-const gameValueEl = document.getElementById('gameValue');
-const gameHintEl = document.getElementById('gameHint');
-const teamHintEl = document.getElementById('teamHint');
-
-const playerGrid = document.getElementById('playerGrid');
-const playerReqHint = document.getElementById('playerReqHint');
-
-const premList = document.getElementById('premList');
-const soloHint = document.getElementById('soloHint');
-const kontraHint = document.getElementById('kontraHint');
-
-const btnKontra = document.getElementById('btnKontra');
-const btnCancel = document.getElementById('btnCancel');
-const btnSave = document.getElementById('btnSave');
-
-const sumList = document.getElementById('sumList');
-const sumZero = document.getElementById('sumZero');
-const sumWarn = document.getElementById('sumWarn');
-const sumForPrimary = document.getElementById('sumForPrimary');
-
-const gameTarget = document.getElementById('gameTarget');
-
-/* =========================================================
-   Helpers
-   ========================================================= */
-function esc(s){
-  return String(s)
-    .replaceAll('&','&amp;')
-    .replaceAll('<','&lt;')
-    .replaceAll('>','&gt;')
-    .replaceAll('"','&quot;')
-    .replaceAll("'",'&#39;');
-}
-function fmtSigned(n){
-  const v = Number(n)||0;
-  return (v<0?String(v):String(v));
-}
-function kontraFactor(level){
-  if(level===1) return 2;
-  if(level===2) return 4;
-  if(level===3) return 8;
-  return 1;
-}
-function kontraLabel(level){
-  if(level===1) return 'Kontra';
-  if(level===2) return 'Re';
-  if(level===3) return 'Sub';
-  return 'AUS';
-}
-function stageNext(level){
-  // 0->1->2->3->0
-  return (level+1) % 4;
-}
-function isTwoPlayerGame(){
-  return selectedGame && TWO_PLAYER_GAMES.has(selectedGame.code);
-}
-function isSoloGame(){
-  return selectedGame && SOLO_GAMES.has(selectedGame.code);
-}
-function tableType(){
-  return sess && Number(sess.tableType)||4;
-}
-function opponentsOfTeam(teamIds){
-  const set = new Set(teamIds.filter(x=>x!=null));
-  const opp = seatPlayers.map(p=>p.playerId).filter(id=>id!=null && !set.has(id));
-  return opp;
-}
-function playerNameById(id){
-  const p = seatPlayers.find(x=>x.playerId===id);
-  return p ? p.displayName : String(id);
-}
-function seatOrderFromSession(){
-  // we rely on sess.seats keys. Order not critical, but stable display.
-  const keys = Object.keys(sess.seats||{});
-  // prefer common order if present
-  const pref = ['TOP','LEFT','RIGHT','BOTTOM','LEFT_TOP','LEFT_BOTTOM','RIGHT_TOP','RIGHT_BOTTOM','TOP','BOTTOM'];
-  keys.sort((a,b)=>pref.indexOf(a)-pref.indexOf(b));
-  return keys;
-}
-
-/* =========================================================
-   IndexedDB
-   ========================================================= */
-function openDb(){
-  return new Promise((resolve,reject)=>{
-    const req = indexedDB.open(DB_NAME, DB_VERSION);
-    req.onupgradeneeded = ()=>{};
-    req.onsuccess = ()=>resolve(req.result);
-    req.onerror = ()=>reject(req.error);
-  });
-}
-function get(db, store, key){
-  return new Promise((resolve,reject)=>{
-    const tx=db.transaction(store,'readonly');
-    const st=tx.objectStore(store);
-    const rq=st.get(key);
-    rq.onsuccess=()=>resolve(rq.result);
-    rq.onerror=()=>reject(rq.error);
-  });
-}
-function getPlayer(db, id){
-  return new Promise((resolve,reject)=>{
-    const tx=db.transaction(STORE_PLAYERS,'readonly');
-    const st=tx.objectStore(STORE_PLAYERS);
-    const rq=st.get(Number(id));
-    rq.onsuccess=()=>resolve(rq.result);
-    rq.onerror=()=>reject(rq.error);
-  });
-}
-
-/* =========================================================
-   Init
-   ========================================================= */
-btnCancel.addEventListener('click', ()=>{
-  if(history.length>1) history.back();
-  else window.location.href='index.html';
-});
-
-window.addEventListener('load', async ()=>{
-  // selectedGame
-  try{
-    selectedGame = JSON.parse(sessionStorage.getItem('selectedGame')||'null');
-  } catch(e){
-    selectedGame = null;
-  }
-  if(!selectedGame || !selectedGame.code){
-    // kein Spiel gewählt -> zurück
-    if(history.length>1) history.back();
-    else window.location.href='index.html';
-    return;
-  }
-
-  // defaults
-  gameSign = +1;
-  sechserMode = 'WIN';
-  gameKontraLevel = 0;
-  PREMIUMS.forEach(p=>{ premState[p.key]=0; premKontra[p.key]=0; });
-
-  // load session and state
-  const db = await openDb();
-  sess = await get(db, STORE_CURR_SESSION, CURR_KEY);
-  state = await get(db, STORE_CURR_STATE, CURR_KEY);
-
-  if(!sess || !sess.tableType || !sess.seats){
-    db.close();
-    window.location.href='index.html';
-    return;
-  }
-
-  // header info
-  const gabeNr = (state && Number.isFinite(state.lastGabeNr)) ? (Number(state.lastGabeNr)+1) : 1;
-  gabeInfo.textContent = 'Gabe ' + gabeNr;
-  sub.textContent = 'Spiel: ' + (GAME_LABELS[selectedGame.code]||selectedGame.code) + ' (' + selectedGame.category + ')';
-
-  // load seat players names
-  const seatKeys = seatOrderFromSession();
-  seatPlayers = [];
-  for(const seat of seatKeys){
-    const pid = sess.seats[seat];
-    if(pid==null) continue;
-    const pl = await getPlayer(db, pid).catch(()=>null);
-    let disp = String(pid);
-    if(pl){
-      disp = (String(pl.nachname||'').trim() + ' ' + String(pl.vorname||'').trim()).trim();
-      if(!disp) disp = String(pid);
+    // Minimal-Regel: Ultimo nur bei Rufer-/SoloRufer-Games aktiv.
+    function premiumAllowed(gameCode, premKey){
+      const isUltimo = (premKey === 'PAGAT_ULTIMO' || premKey === 'KOENIG_ULT');
+      if(!isUltimo) return true;
+      return ['KOENIG_RUFER','PAGATRUFER','UHU_RUFER','KAKADU_RUFER','QUAPIL_RUFER','SOLO_RUFER'].includes(gameCode);
     }
-    seatPlayers.push({ seat, playerId:Number(pid), displayName:disp });
-  }
-  db.close();
 
-  // UI render
-  renderGameHeader();
-  renderPlayers();
-  renderPremiums();
-  recomputeAndRender();
+    /* =========================================================
+      State
+    ========================================================= */
+    let selectedGame = null;      // {code,value,category}
+    let sess = null;              // current_session
+    let currState = null;         // current_state
 
-  // events
-  gameValueEl.addEventListener('click', ()=>{
-    if(selectedGame.code === 'SECHSERDREIER'){
-      sechserMode = (sechserMode==='WIN') ? 'LOSS' : 'WIN';
-    } else {
-      gameSign = (gameSign===1) ? -1 : 1;
+    // all players at table
+    let seatPlayers = [];         // [{seat, playerId, displayName}]
+
+    // computed per gabe:
+    let gabeNr = 1;
+    let activeSeatPlayers = [];   // subset of seatPlayers (non-paused)
+    let pausedSeatSet = new Set(); // paused seat keys
+    let pausedPlayerIdSet = new Set(); // paused playerIds
+
+    // selected players for the game
+    let primaryId = null;
+    let secondaryId = null;
+
+    // game state
+    let gameSign = +1;            // +1 win / -1 loss (normal)
+    let sechserMode = 'WIN';      // WIN / LOSS for Sechserdreier
+    let gameKontraLevel = 0;      // applied to game 0..3
+
+    // premiums
+    let premState = {};           // premKey -> 0..4
+    let premKontra = {};          // premKey -> 0..3
+
+    // kontra selection stage
+    let kontraStage = 0;
+    let kontraPending = false;
+
+    /* =========================================================
+      DOM
+    ========================================================= */
+    const root = document.getElementById('root');
+    const sub = document.getElementById('sub');
+    const gabeInfoEl = document.getElementById('gabeInfo');
+
+    const gameNameEl = document.getElementById('gameName');
+    const gameValueEl = document.getElementById('gameValue');
+    const gameHintEl = document.getElementById('gameHint');
+    const teamHintEl = document.getElementById('teamHint');
+    const pauseHintEl = document.getElementById('pauseHint');
+
+    const playerGrid = document.getElementById('playerGrid');
+    const playerReqHint = document.getElementById('playerReqHint');
+
+    const premList = document.getElementById('premList');
+    const soloHint = document.getElementById('soloHint');
+
+    const kontraHint = document.getElementById('kontraHint');
+    const btnKontra = document.getElementById('btnKontra');
+
+    const btnCancel = document.getElementById('btnCancel');
+    const btnSave = document.getElementById('btnSave');
+
+    const sumList = document.getElementById('sumList');
+    const sumZero = document.getElementById('sumZero');
+    const sumWarn = document.getElementById('sumWarn');
+    const sumForPrimary = document.getElementById('sumForPrimary');
+
+    const gameTarget = document.getElementById('gameTarget');
+
+    /* =========================================================
+      Helpers
+    ========================================================= */
+    function esc(s){
+      return String(s)
+        .replaceAll('&','&amp;')
+        .replaceAll('<','&lt;')
+        .replaceAll('>','&gt;')
+        .replaceAll('"','&quot;')
+        .replaceAll("'","&#39;");
     }
-    recomputeAndRender();
-  });
 
-  btnKontra.addEventListener('click', ()=>{
-    kontraStage = stageNext(kontraStage);
-    kontraPending = true;
-    updateKontraUi();
-  });
+    function kontraFactor(level){
+      if(level === 1) return 2;
+      if(level === 2) return 4;
+      if(level === 3) return 8;
+      return 1;
+    }
+    function kontraLabel(level){
+      if(level === 1) return 'Kontra';
+      if(level === 2) return 'Re';
+      if(level === 3) return 'Sub';
+      return 'AUS';
+    }
+    function stageNext(level){
+      return (level + 1) % 4;
+    }
 
-  gameTarget.addEventListener('click', ()=>{
-    if(!kontraPending) return;
-    // apply stage to game
-    gameKontraLevel = kontraStage;
-    kontraPending = false;
-    updateKontraUi();
-    recomputeAndRender();
-  });
+    function isSoloGame(){
+      return !!(selectedGame && SOLO_GAMES.has(selectedGame.code));
+    }
+    function isNegativeGame(){
+      return !!(selectedGame && NEGATIVE_GAMES.has(selectedGame.code));
+    }
+    function isSelberRuferGame(){
+      return !!(selectedGame && SELBER_RUFER_GAMES.has(selectedGame.code));
+    }
+    function allowsPartner(){
+      // Partner nur bei Selberrufer/Rufer und nicht bei Sechserdreier/Negativ
+      if(!selectedGame) return false;
+      if(selectedGame.code === 'SECHSERDREIER') return false;
+      if(isNegativeGame()) return false;
+      return isSelberRuferGame();
+    }
 
-  btnSave.addEventListener('click', onSave);
-});
+    function playerNameById(id){
+      const p = seatPlayers.find(x => x.playerId === id);
+      return p ? p.displayName : String(id);
+    }
 
-function renderGameHeader(){
-  const label = GAME_LABELS[selectedGame.code] || selectedGame.code;
-  gameNameEl.textContent = label;
-  updateKontraUi();
+    function preferredSeatOrderByTableType(t){
+      if(t === 4) return ['TOP','LEFT','RIGHT','BOTTOM'];
+      if(t === 5) return ['LEFT_TOP','RIGHT_TOP','LEFT_BOTTOM','RIGHT_BOTTOM','BOTTOM'];
+      if(t === 6) return ['TOP','LEFT_TOP','RIGHT_TOP','LEFT_BOTTOM','RIGHT_BOTTOM','BOTTOM'];
+      return ['TOP','LEFT','RIGHT','BOTTOM','LEFT_TOP','RIGHT_TOP','LEFT_BOTTOM','RIGHT_BOTTOM','BOTTOM'];
+    }
 
-  // team hint
-  if(selectedGame.code === 'SECHSERDREIER'){
-    teamHintEl.textContent = 'Modus: ' + (sechserMode==='WIN' ? 'Gewinn' : 'Verlust');
-    gameHintEl.textContent = 'Sechserdreier: Klick toggelt Gewinn/Verlust-Modus. Kontra → Ziel wählen.';
-  } else if(isTwoPlayerGame()){
-    teamHintEl.textContent = 'Team: 2 vs 2 (2 Spieler wählen)';
-    gameHintEl.textContent = 'Klick auf Wert toggelt Gewinn/Verlust. Kontra → Ziel wählen.';
-  } else {
-    teamHintEl.textContent = 'Team: 1 vs 3 (Alleinspieler)';
-    gameHintEl.textContent = 'Klick auf Wert toggelt Gewinn/Verlust. Kontra → Ziel wählen.';
-  }
+    function seatOrderFromSession(){
+      const seatsObj = (sess && sess.seats) ? sess.seats : {};
+      const keys = Object.keys(seatsObj);
+      const t = Number(sess && sess.tableType) || 4;
+      const pref = preferredSeatOrderByTableType(t);
 
-  // solo hint
-  soloHint.textContent = isSoloGame() ? 'Solo: alle Prämien ×2 (automatisch)' : '—';
-}
+      keys.sort((a,b) => {
+        const ia = pref.indexOf(a);
+        const ib = pref.indexOf(b);
+        const sa = (ia === -1) ? 999 : ia;
+        const sb = (ib === -1) ? 999 : ib;
+        if(sa !== sb) return sa - sb;
+        return a.localeCompare(b);
+      });
 
-function renderPlayers(){
-  playerGrid.innerHTML='';
-  // hint
-  playerReqHint.textContent = isTwoPlayerGame()
-    ? 'Wähle Spieler 1 und Spieler 2 (Team).'
-    : 'Wähle Spieler 1 (Alleinspieler).';
+      return keys;
+    }
 
-  // build buttons
-  for(const p of seatPlayers){
-    const b = document.createElement('div');
-    b.className = 'pbtn';
-    b.dataset.pid = String(p.playerId);
+    function getCcwOrder(){
+      // use session-stored order when present; otherwise fallback by tableType
+      if(sess && Array.isArray(sess.ccwOrder) && sess.ccwOrder.length){
+        return sess.ccwOrder.slice();
+      }
+      const t = Number(sess && sess.tableType) || 4;
+      if(t === 5) return ['BOTTOM','RIGHT_BOTTOM','RIGHT_TOP','LEFT_TOP','LEFT_BOTTOM'];
+      if(t === 6) return ['BOTTOM','RIGHT_BOTTOM','RIGHT_TOP','TOP','LEFT_TOP','LEFT_BOTTOM'];
+      return ['BOTTOM','RIGHT','TOP','LEFT'];
+    }
 
-    b.innerHTML = `<div class="pname">${esc(p.displayName)}</div><div class="ptag">${esc(p.seat)}</div>`;
+    function computeDealerSeat(nextGabeNr){
+      const ccw = getCcwOrder();
+      const idx = (nextGabeNr - 1) % ccw.length;
+      return ccw[idx];
+    }
 
-    b.addEventListener('click', ()=>{
-      const pid = Number(b.dataset.pid);
-      // if no primary or clicking primary -> toggle off
-      if(primaryId===pid){
-        primaryId = null;
-        // if primary cleared -> also clear secondary
-        secondaryId = null;
-      } else if(secondaryId===pid){
-        secondaryId = null;
-      } else if(primaryId==null){
-        primaryId = pid;
-      } else if(isTwoPlayerGame() && secondaryId==null && pid!==primaryId){
-        secondaryId = pid;
-      } else {
-        // replace primary if not 2-player selection is enabled
-        if(!isTwoPlayerGame()){
-          primaryId = pid;
-          secondaryId = null;
-        } else {
-          // if 2-player game and both already set -> replace secondary
-          secondaryId = pid;
+    function computePausedSeats(nextGabeNr){
+      const t = Number(sess && sess.tableType) || 4;
+      const dealer = computeDealerSeat(nextGabeNr);
+      const paused = new Set();
+
+      if(t === 5){
+        paused.add(dealer);
+      } else if(t === 6){
+        paused.add(dealer);
+        // diagonal gegenüber (wie 6er-Screen)
+        const opposite = {
+          TOP:'BOTTOM',
+          BOTTOM:'TOP',
+          LEFT_TOP:'RIGHT_BOTTOM',
+          RIGHT_BOTTOM:'LEFT_TOP',
+          RIGHT_TOP:'LEFT_BOTTOM',
+          LEFT_BOTTOM:'RIGHT_TOP'
+        };
+        const opp = opposite[dealer];
+        if(opp) paused.add(opp);
+      }
+      return paused;
+    }
+
+    function refreshActivePlayers(){
+      pausedSeatSet = computePausedSeats(gabeNr);
+      pausedPlayerIdSet = new Set();
+
+      for(const sp of seatPlayers){
+        if(pausedSeatSet.has(sp.seat)){
+          pausedPlayerIdSet.add(sp.playerId);
         }
       }
-      updatePlayerButtons();
-      recomputeAndRender();
+
+      activeSeatPlayers = seatPlayers.filter(sp => !pausedSeatSet.has(sp.seat));
+    }
+
+    function activePlayerIds(){
+      return activeSeatPlayers.map(p => p.playerId);
+    }
+
+    function ensureSelectionsValid(){
+      // if selected primary/secondary are paused, clear them
+      if(primaryId != null && pausedPlayerIdSet.has(primaryId)) primaryId = null;
+      if(secondaryId != null && pausedPlayerIdSet.has(secondaryId)) secondaryId = null;
+      // if partner not allowed, clear secondary
+      if(!allowsPartner()) secondaryId = null;
+      // if partner equals primary
+      if(primaryId != null && secondaryId === primaryId) secondaryId = null;
+    }
+
+    function buildTeamIds(){
+      const team = [];
+      if(primaryId != null) team.push(primaryId);
+      if(allowsPartner() && secondaryId != null) team.push(secondaryId);
+      return team;
+    }
+
+    function opponentsOfTeam(teamIds){
+      const teamSet = new Set((teamIds || []).filter(x => x != null));
+      return activeSeatPlayers
+        .map(p => p.playerId)
+        .filter(id => id != null && !teamSet.has(id));
+    }
+
+    function fmtSigned(n){
+      const v = Number(n) || 0;
+      return String(v);
+    }
+
+    function mergeDelta(a,b){
+      const out = {};
+      for(const k in a) out[k] = (Number(out[k]) || 0) + (Number(a[k]) || 0);
+      for(const k in b) out[k] = (Number(out[k]) || 0) + (Number(b[k]) || 0);
+      return out;
+    }
+
+    /* =========================================================
+      IndexedDB
+    ========================================================= */
+    function openDb(){
+      return new Promise((resolve,reject) => {
+        const req = indexedDB.open(DB_NAME, DB_VERSION);
+        req.onupgradeneeded = () => {};
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    function idbGet(db, store, key){
+      return new Promise((resolve,reject) => {
+        const tx = db.transaction(store,'readonly');
+        const st = tx.objectStore(store);
+        const rq = st.get(key);
+        rq.onsuccess = () => resolve(rq.result);
+        rq.onerror = () => reject(rq.error);
+      });
+    }
+
+    function idbGetPlayer(db, id){
+      return new Promise((resolve,reject) => {
+        const tx = db.transaction(STORE_PLAYERS,'readonly');
+        const st = tx.objectStore(STORE_PLAYERS);
+        const rq = st.get(Number(id));
+        rq.onsuccess = () => resolve(rq.result);
+        rq.onerror = () => reject(rq.error);
+      });
+    }
+
+    /* =========================================================
+      Init / Navigation
+    ========================================================= */
+    btnCancel.addEventListener('click', () => {
+      if(history.length > 1) history.back();
+      else window.location.href = 'index.html';
     });
 
-    playerGrid.appendChild(b);
-  }
+    window.addEventListener('load', async () => {
+      // load selectedGame
+      try{
+        selectedGame = JSON.parse(sessionStorage.getItem('selectedGame') || 'null');
+      } catch {
+        selectedGame = null;
+      }
 
-  updatePlayerButtons();
-}
-
-function updatePlayerButtons(){
-  const btns = [...playerGrid.querySelectorAll('.pbtn')];
-  for(const b of btns){
-    const pid = Number(b.dataset.pid);
-    b.classList.remove('selectedPrimary','selectedSecondary');
-    if(primaryId===pid) b.classList.add('selectedPrimary');
-    if(secondaryId===pid) b.classList.add('selectedSecondary');
-  }
-}
-
-function renderPremiums(){
-  premList.innerHTML='';
-  for(const prem of PREMIUMS){
-    const row = document.createElement('div');
-    row.className = 'premRow targetable';
-    row.dataset.pkey = prem.key;
-
-    const allowed = premiumAllowed(selectedGame.code, prem.key);
-    if(!allowed) row.classList.add('disabled');
-
-    row.innerHTML = `
-      <div class="premLeft">
-        <div class="premName">${esc(prem.label)}</div>
-        <div class="premMeta">${allowed ? 'aktiv' : 'inaktiv'}</div>
-      </div>
-      <div class="premVal" id="val_${prem.key}">0</div>
-    `;
-
-    row.addEventListener('click', ()=>{
-      if(row.classList.contains('disabled')) return;
-
-      if(kontraPending){
-        premKontra[prem.key] = kontraStage;
-        kontraPending = false;
-        updateKontraUi();
-        recomputeAndRender();
+      if(!selectedGame || !selectedGame.code){
+        if(history.length > 1) history.back();
+        else window.location.href = 'index.html';
         return;
       }
 
-      // cycle state: 0 -> +still -> -still -> +angesagt -> -angesagt -> 0
-      premState[prem.key] = (premState[prem.key] + 1) % 5;
+      // defaults
+      gameSign = +1;
+      sechserMode = 'WIN';
+      gameKontraLevel = 0;
+      kontraStage = 0;
+      kontraPending = false;
+
+      PREMIUMS.forEach(p => {
+        premState[p.key] = 0;
+        premKontra[p.key] = 0;
+      });
+
+      // load session/state
+      const db = await openDb();
+      sess = await idbGet(db, STORE_CURR_SESSION, CURR_KEY);
+      currState = await idbGet(db, STORE_CURR_STATE, CURR_KEY);
+
+      if(!sess || !sess.tableType || !sess.seats){
+        db.close();
+        window.location.href = 'index.html';
+        return;
+      }
+
+      gabeNr = (currState && Number.isFinite(currState.lastGabeNr)) ? (Number(currState.lastGabeNr) + 1) : 1;
+      gabeInfoEl.textContent = 'Gabe ' + gabeNr;
+
+      const gameLabel = GAME_LABELS[selectedGame.code] || selectedGame.code;
+      sub.textContent = 'Spiel: ' + gameLabel + ' (' + String(selectedGame.category || '') + ')';
+
+      // build seatPlayers with names
+      seatPlayers = [];
+      const seatKeys = seatOrderFromSession();
+      for(const seat of seatKeys){
+        const pid = sess.seats[seat];
+        if(pid == null) continue;
+
+        const pl = await idbGetPlayer(db, pid).catch(() => null);
+        let disp = String(pid);
+        if(pl){
+          const nach = String(pl.nachname || '').trim();
+          const vor = String(pl.vorname || '').trim();
+          disp = (nach + ' ' + vor).trim() || String(pid);
+        }
+        seatPlayers.push({ seat, playerId: Number(pid), displayName: disp });
+      }
+      db.close();
+
+      // compute active/paused
+      refreshActivePlayers();
+      ensureSelectionsValid();
+
+      // render & bind
+      renderGameHeader();
+      renderPlayers();
+      renderPremiums();
       recomputeAndRender();
+
+      // events
+      gameValueEl.addEventListener('click', () => {
+        if(selectedGame.code === 'SECHSERDREIER'){
+          sechserMode = (sechserMode === 'WIN') ? 'LOSS' : 'WIN';
+        } else {
+          gameSign = (gameSign === 1) ? -1 : 1;
+        }
+        recomputeAndRender();
+      });
+
+      btnKontra.addEventListener('click', () => {
+        kontraStage = stageNext(kontraStage);
+        kontraPending = true;
+        updateKontraUi();
+      });
+
+      gameTarget.addEventListener('click', () => {
+        if(!kontraPending) return;
+        gameKontraLevel = kontraStage;
+        kontraPending = false;
+        updateKontraUi();
+        recomputeAndRender();
+      });
+
+      btnSave.addEventListener('click', onSave);
     });
 
-    premList.appendChild(row);
-  }
-}
+    /* =========================================================
+      Render
+    ========================================================= */
+    function renderGameHeader(){
+      const label = GAME_LABELS[selectedGame.code] || selectedGame.code;
+      gameNameEl.textContent = label;
 
-function updateKontraUi(){
-  // visual: pending highlights
-  if(kontraPending) root.classList.add('kontraPending');
-  else root.classList.remove('kontraPending');
+      const t = Number(sess && sess.tableType) || 4;
+      const dealerSeat = computeDealerSeat(gabeNr);
+      const pausedSeatsArr = Array.from(pausedSeatSet);
+      pauseHintEl.textContent = (t === 4)
+        ? 'Aktiv: alle Spieler (4er)'
+        : 'Pause: ' + pausedSeatsArr.join(', ') + ' | Geber: ' + dealerSeat;
 
-  const name = kontraLabel(kontraStage);
-  btnKontra.textContent = 'Kontra (' + name + ') → Ziel wählen';
-  kontraHint.textContent = kontraPending ? ('Kontra: Ziel wählen ('+name+')') : ('Kontra: ' + kontraLabel(0));
-}
+      if(selectedGame.code === 'SECHSERDREIER'){
+        teamHintEl.textContent = 'Modus: ' + (sechserMode === 'WIN' ? 'Gewinn' : 'Verlust') + ' (1vs' + (activeSeatPlayers.length-1) + ')';
+        gameHintEl.textContent = 'Sechserdreier: Klick toggelt Gewinn/Verlust-Modus. Kontra → Ziel wählen.';
+      } else if(allowsPartner()){
+        teamHintEl.textContent = 'Team: optional Partner (2vs2 oder 1vs' + (activeSeatPlayers.length-1) + ')';
+        gameHintEl.textContent = 'Klick auf Wert toggelt Gewinn/Verlust. Kontra → Ziel wählen. Partner optional.';
+      } else {
+        teamHintEl.textContent = 'Team: 1 vs ' + (activeSeatPlayers.length-1);
+        gameHintEl.textContent = 'Klick auf Wert toggelt Gewinn/Verlust. Kontra → Ziel wählen.';
+      }
 
-/* =========================================================
-   Berechnung
-   ========================================================= */
-
-function calcGameComponent(teamIds){
-  // returns deltaByPlayerId contribution from game component
-  const delta = {};
-  seatPlayers.forEach(p=>delta[String(p.playerId)]=0);
-
-  const opp = opponentsOfTeam(teamIds);
-  const oppCount = opp.length;
-
-  // game multiplier
-  const kf = kontraFactor(gameKontraLevel);
-
-  if(selectedGame.code === 'SECHSERDREIER'){
-    // special distribution
-    if(teamIds.length!==1){
-      // should be solo only
-    }
-    const solo = teamIds[0];
-    if(solo==null) return delta;
-
-    if(sechserMode==='WIN'){
-      // +12 / -4 each
-      delta[String(solo)] += 12 * kf;
-      opp.forEach(id => delta[String(id)] -= 4 * kf);
-    } else {
-      // -24 / +8 each
-      delta[String(solo)] -= 24 * kf;
-      opp.forEach(id => delta[String(id)] += 8 * kf);
-    }
-    return delta;
-  }
-
-  const base = Number(selectedGame.value)||0;
-  const v = base * kf;
-
-  if(teamIds.length===2){
-    // 2vs2
-    const a=teamIds[0], b=teamIds[1];
-    if(a!=null) delta[String(a)] += gameSign * v;
-    if(b!=null) delta[String(b)] += gameSign * v;
-    opp.forEach(id => delta[String(id)] -= gameSign * v);
-  } else {
-    // 1vs3
-    const a=teamIds[0];
-    if(a!=null) delta[String(a)] += gameSign * v * oppCount;
-    opp.forEach(id => delta[String(id)] -= gameSign * v);
-  }
-  return delta;
-}
-
-function premEffectiveValue(prem){
-  // premState: 0..4
-  const st = premState[prem.key] || 0;
-  if(st===0) return 0;
-
-  // state mapping
-  // 1: +still, 2: -still, 3:+angesagt, 4:-angesagt
-  const sign = (st===2 || st===4) ? -1 : 1;
-  const announced = (st===3 || st===4) ? 2 : 1;
-
-  const soloFactor = isSoloGame() ? 2 : 1;
-  const kf = kontraFactor(premKontra[prem.key]||0);
-
-  return sign * prem.base * soloFactor * announced * kf;
-}
-
-function calcPremiumsComponent(teamIds){
-  // Prämien werden (vorerst) dem primären Spieler zugerechnet.
-  // Gegner zahlen jeweils den effektiven Prämienwert. Partner bleibt 0.
-  const delta = {};
-  seatPlayers.forEach(p=>delta[String(p.playerId)]=0);
-
-  const primary = teamIds[0] ?? null;
-  if(primary==null) return delta;
-
-  const opp = opponentsOfTeam(teamIds);
-  const oppCount = opp.length;
-
-  for(const prem of PREMIUMS){
-    if(!premiumAllowed(selectedGame.code, prem.key)) continue;
-
-    const ev = premEffectiveValue(prem);
-    const valEl = document.getElementById('val_'+prem.key);
-    if(valEl){
-      valEl.textContent = String(ev);
-      valEl.classList.remove('numRed','numBlack');
-      if(ev<0) valEl.classList.add('numRed'); else valEl.classList.add('numBlack');
+      soloHint.textContent = isSoloGame() ? 'Solo: alle Prämien ×2 (automatisch)' : '—';
+      updateKontraUi();
     }
 
-    if(ev===0) continue;
+    function renderPlayers(){
+      playerGrid.innerHTML = '';
 
-    // primary gets paid by each opponent
-    delta[String(primary)] += ev * oppCount;
-    // each opponent pays ev
-    opp.forEach(id => delta[String(id)] -= ev);
-    // partner (if exists) remains 0 (intentional)
-  }
+      if(selectedGame.code === 'SECHSERDREIER'){
+        playerReqHint.textContent = 'Wähle Spieler 1 (Alleinspieler). (Aktiv: ' + activeSeatPlayers.length + ')';
+      } else if(allowsPartner()){
+        playerReqHint.textContent = 'Wähle Spieler 1 (Ansager). Partner optional (2vs2). (Aktiv: ' + activeSeatPlayers.length + ')';
+      } else {
+        playerReqHint.textContent = 'Wähle Spieler 1 (Ansager/Alleinspieler). (Aktiv: ' + activeSeatPlayers.length + ')';
+      }
 
-  return delta;
-}
+      // show all table players, but disable paused
+      for(const p of seatPlayers){
+        const isPaused = pausedSeatSet.has(p.seat) || pausedPlayerIdSet.has(p.playerId);
 
-function mergeDelta(a,b){
-  const out = {};
-  for(const k in a) out[k]=(out[k]||0)+Number(a[k]||0);
-  for(const k in b) out[k]=(out[k]||0)+Number(b[k]||0);
-  return out;
-}
+        const b = document.createElement('div');
+        b.className = 'pbtn' + (isPaused ? ' paused' : '');
+        b.dataset.pid = String(p.playerId);
+        b.dataset.paused = isPaused ? '1' : '0';
 
-function recomputeAndRender(){
-  renderGameHeader();
+        const tag = isPaused ? (p.seat + ' · PAUSE') : p.seat;
+        b.innerHTML = `<div class="pname">${esc(p.displayName)}</div><div class="ptag">${esc(tag)}</div>`;
 
-  // update game value display
-  if(selectedGame.code === 'SECHSERDREIER'){
-    const disp = (sechserMode==='WIN') ? 'Gewinn' : 'Verlust';
-    gameValueEl.textContent = disp;
-    gameValueEl.classList.remove('numRed','numBlack');
-    gameValueEl.classList.add(sechserMode==='LOSS' ? 'numRed' : 'numBlack');
-  } else {
-    const v = Number(selectedGame.value)||0;
-    const disp = gameSign===1 ? v : -v;
-    gameValueEl.textContent = String(disp);
-    gameValueEl.classList.remove('numRed','numBlack');
-    gameValueEl.classList.add(disp<0 ? 'numRed' : 'numBlack');
-  }
+        b.addEventListener('click', () => {
+          if(b.dataset.paused === '1') return;
 
-  // set targetable class for game + premiums
-  gameTarget.classList.add('targetable');
-  [...premList.querySelectorAll('.premRow')].forEach(r=>r.classList.add('targetable'));
+          const pid = Number(b.dataset.pid);
 
-  // team determination
-  const team = [];
-  if(primaryId!=null) team.push(primaryId);
-  if(isTwoPlayerGame() && secondaryId!=null) team.push(secondaryId);
+          // selection logic:
+          // primary: first click
+          // secondary: only if partner allowed; can set/unset
+          if(primaryId === pid){
+            primaryId = null;
+            secondaryId = null;
+          } else if(secondaryId === pid){
+            secondaryId = null;
+          } else if(primaryId == null){
+            primaryId = pid;
+          } else if(allowsPartner() && secondaryId == null && pid !== primaryId){
+            secondaryId = pid;
+          } else {
+            // replace behavior
+            if(!allowsPartner()){
+              primaryId = pid;
+              secondaryId = null;
+            } else {
+              // if partner allowed and already have primary:
+              // if we have secondary -> replace secondary, else set secondary
+              if(pid !== primaryId){
+                secondaryId = pid;
+              }
+            }
+          }
 
-  // enable save only if required players chosen
-  let canSave = (primaryId!=null);
-  if(isTwoPlayerGame()) canSave = canSave && (secondaryId!=null);
-  btnSave.disabled = !canSave;
+          ensureSelectionsValid();
+          updatePlayerButtons();
+          recomputeAndRender();
+        });
 
-  // compute deltas
-  const dGame = calcGameComponent(team);
-  const dPrem = calcPremiumsComponent(team);
-  const dAll = mergeDelta(dGame, dPrem);
+        playerGrid.appendChild(b);
+      }
 
-  // update premium displays for disabled ones
-  for(const prem of PREMIUMS){
-    if(!premiumAllowed(selectedGame.code, prem.key)){
-      const valEl = document.getElementById('val_'+prem.key);
-      if(valEl) valEl.textContent = '0';
+      updatePlayerButtons();
     }
-  }
 
-  // summary list
-  sumList.innerHTML='';
-  let sum = 0;
-  for(const sp of seatPlayers){
-    const v = Number(dAll[String(sp.playerId)]||0);
-    sum += v;
-    const row = document.createElement('div');
-    row.className = 'sumRow';
-    row.innerHTML = `<div class="who">${esc(sp.displayName)}</div><div class="val ${v<0?'numRed':'numBlack'}">${esc(fmtSigned(v))}</div>`;
-    sumList.appendChild(row);
-  }
+    function updatePlayerButtons(){
+      const btns = [...playerGrid.querySelectorAll('.pbtn')];
+      for(const b of btns){
+        const pid = Number(b.dataset.pid);
+        b.classList.remove('selectedPrimary','selectedSecondary');
+        if(primaryId === pid) b.classList.add('selectedPrimary');
+        if(secondaryId === pid) b.classList.add('selectedSecondary');
+      }
+    }
 
-  sumZero.textContent = 'Summe: ' + String(sum);
-  sumWarn.textContent = (sum===0) ? 'OK' : '⚠️ nicht 0';
-  sumWarn.style.fontWeight = '900';
-  sumWarn.style.color = (sum===0) ? 'rgba(0,0,0,.75)' : '#c00000';
+    function renderPremiums(){
+      premList.innerHTML = '';
 
-  // primary sum info (wie Abakus: nur Anzeige für den Hauptspieler)
-  if(primaryId!=null){
-    const pv = Number(dAll[String(primaryId)]||0);
-    sumForPrimary.textContent = 'Spieler 1: ' + playerNameById(primaryId) + ' → ' + String(pv);
-  } else {
-    sumForPrimary.textContent = '—';
-  }
-}
+      for(const prem of PREMIUMS){
+        const row = document.createElement('div');
+        row.className = 'premRow targetable';
+        row.dataset.pkey = prem.key;
 
-/* =========================================================
-   Save (IndexedDB)
-   ========================================================= */
-async function onSave(){
-  if(btnSave.disabled) return;
+        const allowed = premiumAllowed(selectedGame.code, prem.key);
+        if(!allowed) row.classList.add('disabled');
 
-  // compute final deltas once more (avoid drift)
-  const team = [];
-  team.push(primaryId);
-  if(isTwoPlayerGame()) team.push(secondaryId);
+        row.innerHTML = `
+          <div class="premLeft">
+            <div class="premName">${esc(prem.label)}</div>
+            <div class="premMeta">${allowed ? 'aktiv' : 'inaktiv'}</div>
+          </div>
+          <div class="premVal" id="val_${prem.key}">0</div>
+        `;
 
-  const dGame = calcGameComponent(team);
-  const dPrem = calcPremiumsComponent(team);
-  const dAll = mergeDelta(dGame, dPrem);
+        row.addEventListener('click', () => {
+          if(row.classList.contains('disabled')) return;
 
-  // next gabe nr
-  const nextGabeNr = (state && Number.isFinite(state.lastGabeNr)) ? (Number(state.lastGabeNr)+1) : 1;
-  const now = new Date().toISOString();
+          if(kontraPending){
+            premKontra[prem.key] = kontraStage;
+            kontraPending = false;
+            updateKontraUi();
+            recomputeAndRender();
+            return;
+          }
 
-  // prepare gabe record
-  const gabe = {
-    gabeNr: nextGabeNr,
-    createdUtc: now,
-    tableType: Number(sess.tableType),
-    game: {
-      code: selectedGame.code,
-      value: Number(selectedGame.value)||0,
-      category: String(selectedGame.category||''),
-      sign: (selectedGame.code==='SECHSERDREIER') ? null : gameSign,
-      sechserMode: (selectedGame.code==='SECHSERDREIER') ? sechserMode : null,
-      kontraLevel: gameKontraLevel
-    },
-    players: {
-      primaryId,
-      secondaryId: (isTwoPlayerGame()?secondaryId:null)
-    },
-    premiums: PREMIUMS.map(p=>({
-      key: p.key,
-      base: p.base,
-      state: premState[p.key]||0,
-      kontraLevel: premKontra[p.key]||0,
-      allowed: premiumAllowed(selectedGame.code, p.key)
-    })),
-    deltaByPlayerId: dAll
-  };
+          premState[prem.key] = (Number(premState[prem.key]) + 1) % 5;
+          recomputeAndRender();
+        });
 
-  // update current_state
-  const totals = (state && state.totalByPlayerId) ? {...state.totalByPlayerId} : {};
-  const lastD  = (state && state.lastDeltaByPlayerId) ? {...state.lastDeltaByPlayerId} : {};
+        premList.appendChild(row);
+      }
+    }
 
-  for(const sp of seatPlayers){
-    const pid = String(sp.playerId);
-    const dv = Number(dAll[pid]||0);
-    totals[pid] = Number(totals[pid]||0) + dv;
-    lastD[pid] = dv;
-  }
+    function updateKontraUi(){
+      if(kontraPending) root.classList.add('kontraPending');
+      else root.classList.remove('kontraPending');
 
-  const newState = {
-    key: CURR_KEY,
-    totalByPlayerId: totals,
-    lastDeltaByPlayerId: lastD,
-    lastGabeNr: nextGabeNr,
-    updatedUtc: now
-  };
+      const stageName = kontraLabel(kontraStage);
+      const appliedGame = kontraLabel(gameKontraLevel);
 
-  // write transaction
-  const db = await openDb();
-  await new Promise((resolve,reject)=>{
-    const tx = db.transaction([STORE_GABEN, STORE_CURR_STATE], 'readwrite');
-    tx.objectStore(STORE_GABEN).put(gabe);
-    tx.objectStore(STORE_CURR_STATE).put(newState);
-    tx.oncomplete = ()=>resolve();
-    tx.onerror = ()=>reject(tx.error);
-    tx.onabort = ()=>reject(tx.error);
-  });
-  db.close();
+      btnKontra.textContent = 'Kontra (' + stageName + ') → Ziel wählen';
+      kontraHint.textContent = kontraPending
+        ? ('Kontra: Ziel wählen (' + stageName + ')')
+        : ('Spiel-Kontra: ' + appliedGame);
+    }
 
-  // cleanup selectedGame (optional)
-  // sessionStorage.removeItem('selectedGame');
+    /* =========================================================
+      Berechnung (Team-Logic final)
+    ========================================================= */
+    function calcGameComponent(teamIds){
+      // delta across ALL table players:
+      // - active players receive computed delta
+      // - paused players receive 0
+      const delta = {};
+      for(const sp of seatPlayers){
+        delta[String(sp.playerId)] = 0;
+      }
 
-  // navigate back to table screen
-  const t = Number(sess.tableType);
-  const target = (t===4) ? '4er-Screen.html' : (t===5) ? '5er-Screen.html' : '6er-Screen.html';
-  window.location.href = target;
-}
-</script>
+      const activeIds = activePlayerIds();
+      const activeCount = activeIds.length;
+      if(activeCount < 2) return delta;
 
+      const kf = kontraFactor(gameKontraLevel);
+
+      // Sechserdreier special distribution over ACTIVE players only
+      if(selectedGame.code === 'SECHSERDREIER'){
+        const solo = (teamIds && teamIds.length) ? teamIds[0] : null;
+        if(solo == null) return delta;
+        if(pausedPlayerIdSet.has(solo)) return delta;
+
+        const opp = activeIds.filter(id => id !== solo);
+        const oppCount = opp.length;
+
+        // safe-guard: should be 3 opponents
+        if(sechserMode === 'WIN'){
+          // +12 / -4 each (scaled by kf)
+          delta[String(solo)] += 12 * kf;
+          for(const id of opp) delta[String(id)] -= 4 * kf;
+        } else {
+          // -24 / +8 each
+          delta[String(solo)] -= 24 * kf;
+          for(const id of opp) delta[String(id)] += 8 * kf;
+        }
+        return delta;
+      }
+
+      // Standard games: value distribution must sum to 0 among active
+      const base = Number(selectedGame.value) || 0;
+      const v = base * kf;
+
+      const primary = (teamIds && teamIds.length) ? teamIds[0] : null;
+      const partner = (teamIds && teamIds.length === 2) ? teamIds[1] : null;
+
+      if(primary == null || pausedPlayerIdSet.has(primary)) return delta;
+
+      // Partner is only meaningful if allowed; if not allowed ignore
+      const teamSize = (allowsPartner() && partner != null && !pausedPlayerIdSet.has(partner) && partner !== primary) ? 2 : 1;
+
+      if(teamSize === 2){
+        // 2vs2 among active players:
+        // team members each +sign*v
+        // opponents each -sign*v
+        const team = [primary, partner];
+        const opp = activeIds.filter(id => id !== primary && id !== partner);
+        // if not exactly 2 opponents, still behave generically
+        delta[String(primary)] += gameSign * v;
+        delta[String(partner)] += gameSign * v;
+        for(const id of opp){
+          delta[String(id)] -= gameSign * v;
+        }
+      } else {
+        // 1vs(N-1):
+        // primary +sign*v*(N-1), each opponent -sign*v
+        const opp = activeIds.filter(id => id !== primary);
+        const oppCount = opp.length;
+        delta[String(primary)] += gameSign * v * oppCount;
+        for(const id of opp){
+          delta[String(id)] -= gameSign * v;
+        }
+      }
+
+      return delta;
+    }
+
+    function premEffectiveValue(prem){
+      const st = Number(premState[prem.key]) || 0;
+      if(st === 0) return 0;
+
+      const sign = (st === 2 || st === 4) ? -1 : 1;
+      const announced = (st === 3 || st === 4) ? 2 : 1;
+      const soloFactor = isSoloGame() ? 2 : 1;
+      const kf = kontraFactor(Number(premKontra[prem.key]) || 0);
+
+      return sign * prem.base * soloFactor * announced * kf;
+    }
+
+    function calcPremiumsComponent(teamIds){
+      // delta across ALL table players (paused => 0)
+      const delta = {};
+      for(const sp of seatPlayers){
+        delta[String(sp.playerId)] = 0;
+      }
+
+      const activeIds = activePlayerIds();
+      const activeCount = activeIds.length;
+      if(activeCount < 2) return delta;
+
+      const primary = (teamIds && teamIds.length) ? teamIds[0] : null;
+      const partner = (teamIds && teamIds.length === 2) ? teamIds[1] : null;
+      if(primary == null || pausedPlayerIdSet.has(primary)) return delta;
+
+      const teamSize = (allowsPartner() && partner != null && !pausedPlayerIdSet.has(partner) && partner !== primary) ? 2 : 1;
+      const teamSet = new Set(teamSize === 2 ? [primary, partner] : [primary]);
+      const opp = activeIds.filter(id => !teamSet.has(id));
+
+      for(const prem of PREMIUMS){
+        if(!premiumAllowed(selectedGame.code, prem.key)) continue;
+
+        const ev = premEffectiveValue(prem);
+        if(ev === 0) continue;
+
+        if(teamSize === 2){
+          // 2vs2: team each +ev, opp each -ev
+          delta[String(primary)] += ev;
+          delta[String(partner)] += ev;
+          for(const id of opp){
+            delta[String(id)] -= ev;
+          }
+        } else {
+          // 1vs(N-1): primary +ev*(N-1), each opp -ev
+          delta[String(primary)] += ev * opp.length;
+          for(const id of opp){
+            delta[String(id)] -= ev;
+          }
+        }
+      }
+
+      return delta;
+    }
+
+    function recomputeAndRender(){
+      refreshActivePlayers();
+      ensureSelectionsValid();
+      renderGameHeader();
+      updatePlayerButtons();
+
+      // Game value display
+      if(selectedGame.code === 'SECHSERDREIER'){
+        const disp = (sechserMode === 'WIN') ? 'Gewinn' : 'Verlust';
+        gameValueEl.textContent = disp;
+        gameValueEl.classList.remove('numRed','numBlack');
+        gameValueEl.classList.add(sechserMode === 'LOSS' ? 'numRed' : 'numBlack');
+      } else {
+        const v = Number(selectedGame.value) || 0;
+        const disp = (gameSign === 1) ? v : -v;
+        gameValueEl.textContent = String(disp);
+        gameValueEl.classList.remove('numRed','numBlack');
+        gameValueEl.classList.add(disp < 0 ? 'numRed' : 'numBlack');
+      }
+
+      // targetable highlight
+      gameTarget.classList.add('targetable');
+      [...premList.querySelectorAll('.premRow')].forEach(r => r.classList.add('targetable'));
+
+      // team ids
+      const team = buildTeamIds();
+
+      // enable save rules:
+      // - primary must be chosen and active
+      // - partner is optional (never required) – except: none
+      let canSave = (primaryId != null && !pausedPlayerIdSet.has(primaryId));
+      // For Sechserdreier: partner never allowed
+      // For others: optional partner, but if selected must be active and distinct
+      if(secondaryId != null){
+        if(pausedPlayerIdSet.has(secondaryId)) canSave = false;
+        if(primaryId === secondaryId) canSave = false;
+        if(!allowsPartner()) canSave = false;
+      }
+      btnSave.disabled = !canSave;
+
+      // compute deltas
+      const dGame = calcGameComponent(team);
+      const dPrem = calcPremiumsComponent(team);
+      const dAll = mergeDelta(dGame, dPrem);
+
+      // update premium value displays
+      for(const prem of PREMIUMS){
+        const valEl = document.getElementById('val_' + prem.key);
+        if(!valEl) continue;
+
+        if(!premiumAllowed(selectedGame.code, prem.key)){
+          valEl.textContent = '0';
+          valEl.classList.remove('numRed','numBlack');
+          valEl.classList.add('numBlack');
+          continue;
+        }
+
+        const ev = premEffectiveValue(prem);
+        valEl.textContent = String(ev);
+        valEl.classList.remove('numRed','numBlack');
+        valEl.classList.add(ev < 0 ? 'numRed' : 'numBlack');
+      }
+
+      // summary list (show all table players, paused should be 0)
+      sumList.innerHTML = '';
+      let sum = 0;
+
+      for(const sp of seatPlayers){
+        const v = Number(dAll[String(sp.playerId)]) || 0;
+        sum += v;
+
+        const who = sp.displayName + (pausedPlayerIdSet.has(sp.playerId) ? ' (Pause)' : '');
+        const row = document.createElement('div');
+        row.className = 'sumRow';
+        row.innerHTML = `<div class="who">${esc(who)}</div><div class="val ${v<0?'numRed':'numBlack'}">${esc(fmtSigned(v))}</div>`;
+        sumList.appendChild(row);
+      }
+
+      sumZero.textContent = 'Summe: ' + String(sum);
+      sumWarn.textContent = (sum === 0) ? 'OK' : '⚠️ nicht 0';
+      sumWarn.style.fontWeight = '900';
+      sumWarn.style.color = (sum === 0) ? 'rgba(0,0,0,.75)' : '#c00000';
+
+      // primary summary
+      if(primaryId != null){
+        const pv = Number(dAll[String(primaryId)]) || 0;
+        const teamMode = (allowsPartner() && secondaryId != null) ? '2vs2' : ('1vs' + (activeSeatPlayers.length-1));
+        sumForPrimary.textContent = 'Spieler 1: ' + playerNameById(primaryId) + ' → ' + String(pv) + ' (' + teamMode + ')';
+      } else {
+        sumForPrimary.textContent = '—';
+      }
+    }
+
+    /* =========================================================
+      Save (IndexedDB)
+    ========================================================= */
+    async function onSave(){
+      if(btnSave.disabled) return;
+
+      const team = buildTeamIds();
+
+      const dGame = calcGameComponent(team);
+      const dPrem = calcPremiumsComponent(team);
+      const dAll = mergeDelta(dGame, dPrem);
+
+      const nextGabeNr = gabeNr; // already computed
+      const now = new Date().toISOString();
+
+      const gabe = {
+        gabeNr: nextGabeNr,
+        createdUtc: now,
+        tableType: Number(sess.tableType),
+        active: {
+          activeSeatCount: activeSeatPlayers.length,
+          pausedSeats: Array.from(pausedSeatSet),
+          pausedPlayerIds: Array.from(pausedPlayerIdSet)
+        },
+        game: {
+          code: selectedGame.code,
+          value: Number(selectedGame.value) || 0,
+          category: String(selectedGame.category || ''),
+          sign: (selectedGame.code === 'SECHSERDREIER') ? null : gameSign,
+          sechserMode: (selectedGame.code === 'SECHSERDREIER') ? sechserMode : null,
+          kontraLevel: gameKontraLevel,
+          teamMode: (allowsPartner() && secondaryId != null) ? '2v2' : ('1v' + (activeSeatPlayers.length-1))
+        },
+        players: {
+          primaryId: primaryId,
+          secondaryId: (allowsPartner() ? (secondaryId || null) : null)
+        },
+        premiums: PREMIUMS.map(p => ({
+          key: p.key,
+          base: p.base,
+          state: Number(premState[p.key]) || 0,
+          kontraLevel: Number(premKontra[p.key]) || 0,
+          allowed: premiumAllowed(selectedGame.code, p.key)
+        })),
+        deltaByPlayerId: dAll
+      };
+
+      const totals = (currState && currState.totalByPlayerId) ? {...currState.totalByPlayerId} : {};
+      const lastD = (currState && currState.lastDeltaByPlayerId) ? {...currState.lastDeltaByPlayerId} : {};
+
+      // update totals/lastDelta for ALL players (paused => 0)
+      for(const sp of seatPlayers){
+        const pid = String(sp.playerId);
+        const dv = Number(dAll[pid]) || 0;
+        totals[pid] = (Number(totals[pid]) || 0) + dv;
+        lastD[pid] = dv;
+      }
+
+      const newState = {
+        key: CURR_KEY,
+        totalByPlayerId: totals,
+        lastDeltaByPlayerId: lastD,
+        lastGabeNr: nextGabeNr,
+        updatedUtc: now
+      };
+
+      const db = await openDb();
+      await new Promise((resolve,reject) => {
+        const tx = db.transaction([STORE_GABEN, STORE_CURR_STATE], 'readwrite');
+        tx.objectStore(STORE_GABEN).put(gabe);
+        tx.objectStore(STORE_CURR_STATE).put(newState);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+        tx.onabort = () => reject(tx.error);
+      });
+      db.close();
+
+      // navigate back to table screen
+      const t = Number(sess.tableType);
+      const target = (t === 4) ? '4er-Screen.html' : (t === 5) ? '5er-Screen.html' : '6er-Screen.html';
+      window.location.href = target;
+    }
+  </script>
 </body>
 </html>
