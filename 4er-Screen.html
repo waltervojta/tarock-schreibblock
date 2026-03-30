@@ -4,31 +4,24 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Tarock-Schreibblock – 4er Tisch</title>
-
   <style>
     :root{
       --bg:#cfe9ff;
       --panel:#cfe9ff;
       --barBg:#3b6fa8;
-
       --line:#000;
       --lineW:3px;
-
       --font: Arial, sans-serif;
-
       --black:#000;
       --red:#c00000;
-
       --btnBg:var(--panel);
       --btnBorder:rgba(0,0,0,.70);
       --btnRadius:6px;
       --iconDark:rgba(0,0,0,.92);
-
       --scoreBigSize:92px;
       --scoreSmallScale:0.5;
       --gapNameToBig:1ch;
       --gapBigToSmall:1ch;
-
       --markVorhand:#ffe65a;
       --markPausedOpacity:0.35;
     }
@@ -132,6 +125,7 @@
       transform-origin:center;
       min-width:0;
     }
+
     .rot-top{ transform: rotate(180deg); }
     .rot-left{ transform: rotate(90deg); }
     .rot-right{ transform: rotate(-90deg); }
@@ -166,7 +160,6 @@
       letter-spacing:-1px;
       margin-left:var(--gapNameToBig);
     }
-
     .scoreSmall{
       font-size:calc(var(--scoreBigSize) * var(--scoreSmallScale));
       line-height:1;
@@ -192,7 +185,6 @@
       --padX: clamp(6px, 2vw, 10px);
       --gapX: clamp(3px, 1.4vw, 10px);
       --padY: 6px;
-
       --btnW: clamp(38px, calc((100% - (2 * var(--padX)) - (6 * var(--gapX))) / 7), 56px);
       --btnH: clamp(40px, calc(var(--btnW) * 0.92), 50px);
 
@@ -219,16 +211,18 @@
       -webkit-tap-highlight-color: transparent;
       overflow:hidden;
     }
+
     .btn.pm{font-size:clamp(20px, calc(var(--btnW) * 0.48), 26px); font-weight:700; line-height:1;}
     .btn.close{font-size:clamp(18px, calc(var(--btnW) * 0.40), 22px); font-weight:800; line-height:1;}
 
+    /* ✅ Farbkugel halb rot/halb blau */
     .rbBall{
       width: clamp(20px, calc(var(--btnW) * 0.50), 26px);
       height: clamp(20px, calc(var(--btnW) * 0.50), 26px);
       border-radius:50%;
       background:
         radial-gradient(circle at 30% 28%, rgba(255,255,255,.55), transparent 35%),
-        linear-gradient(135deg, #c00000 0 50%, #111111 50% 100%);
+        linear-gradient(90deg, #c00000 0 50%, #0047ff 50% 100%);
     }
 
     .iconSvg{width:30px;height:30px;display:block;color:var(--iconDark);}
@@ -242,242 +236,265 @@
 </head>
 
 <body>
-  <div class="phone">
-    <div class="topbar">
-      <div class="statusPill">ETS Tisch – 4 Spieler</div>
-    </div>
+<div class="phone">
+  <div class="topbar">
+    <div class="statusPill">ETS Tisch – 4 Spieler</div>
+  </div>
 
-    <div class="content">
-      <div class="zone-top">
-        <div class="panelWrap rot-top">
-          <div class="rowTB playerPanel" data-seat="TOP">
-            <div id="name_TOP" class="name">—</div>
-            <div class="scoreBig" data-role="total">0</div>
-            <div class="scoreSmall" data-role="delta">(0)</div>
-          </div>
+  <div class="content">
+    <div class="zone-top">
+      <div class="panelWrap rot-top">
+        <div class="rowTB playerPanel" data-seat="TOP">
+          <div id="name_TOP" class="name">—</div>
+          <div class="scoreBig" data-role="total">0</div>
+          <div class="scoreSmall" data-role="delta">(0)</div>
         </div>
       </div>
+    </div>
 
-      <div class="zone-mid">
-        <div class="mid-left">
-          <div class="panelWrap rot-left">
-            <div class="colSide playerPanel" data-seat="LEFT">
-              <div id="name_LEFT" class="sideName">—</div>
-              <div class="sideScoreRow">
-                <div class="scoreBig" data-role="total" style="margin-left:0;">0</div>
-                <div class="scoreSmall" data-role="delta" style="margin-left:0;">(0)</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="centerLine"></div>
-
-        <div class="mid-right">
-          <div class="panelWrap rot-right">
-            <div class="colSide playerPanel" data-seat="RIGHT">
-              <div id="name_RIGHT" class="sideName">—</div>
-              <div class="sideScoreRow">
-                <div class="scoreBig" data-role="total" style="margin-left:0;">0</div>
-                <div class="scoreSmall" data-role="delta" style="margin-left:0;">(0)</div>
-              </div>
+    <div class="zone-mid">
+      <div class="mid-left">
+        <div class="panelWrap rot-left">
+          <div class="colSide playerPanel" data-seat="LEFT">
+            <div id="name_LEFT" class="sideName">—</div>
+            <div class="sideScoreRow">
+              <div class="scoreBig" data-role="total" style="margin-left:0;">0</div>
+              <div class="scoreSmall" data-role="delta" style="margin-left:0;">(0)</div>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="zone-bottom">
-        <div class="panelWrap">
-          <div class="rowTB playerPanel" data-seat="BOTTOM">
-            <div id="name_BOTTOM" class="name">—</div>
-            <div class="scoreBig" data-role="total">0</div>
-            <div class="scoreSmall" data-role="delta">(0)</div>
+      <div class="centerLine"></div>
+
+      <div class="mid-right">
+        <div class="panelWrap rot-right">
+          <div class="colSide playerPanel" data-seat="RIGHT">
+            <div id="name_RIGHT" class="sideName">—</div>
+            <div class="sideScoreRow">
+              <div class="scoreBig" data-role="total" style="margin-left:0;">0</div>
+              <div class="scoreSmall" data-role="delta" style="margin-left:0;">(0)</div>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="bottombar">
-      <div class="btn" title="Statistik" aria-label="Statistik">
-        <svg class="iconSvg" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M4 19.5H20"></path><path d="M7 19.5V11"></path><path d="M12 19.5V6.5"></path><path d="M17 19.5V14"></path>
-        </svg>
+    <div class="zone-bottom">
+      <div class="panelWrap">
+        <div class="rowTB playerPanel" data-seat="BOTTOM">
+          <div id="name_BOTTOM" class="name">—</div>
+          <div class="scoreBig" data-role="total">0</div>
+          <div class="scoreSmall" data-role="delta">(0)</div>
+        </div>
       </div>
-      <div class="btn" title="Liste" aria-label="Liste">
-        <svg class="iconSvg" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M7 7H20"></path><path d="M7 12H20"></path><path d="M7 17H20"></path>
-          <circle class="fillDot" cx="4" cy="7" r="1"></circle><circle class="fillDot" cx="4" cy="12" r="1"></circle><circle class="fillDot" cx="4" cy="17" r="1"></circle>
-        </svg>
-      </div>
-      <div class="btn pm" title="Positivspiel (+)" aria-label="Positivspiel">+</div>
-      <div class="btn pm" title="Negativspiel (−)" aria-label="Negativspiel">−</div>
-      <div class="btn" title="Farbenspiel" aria-label="Farbenspiel"><div class="rbBall"></div></div>
-      <div class="btn" title="Korrigieren" aria-label="Korrigieren">
-        <svg class="iconSvg" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M20 12a8 8 0 1 1-2.3-5.7"></path><path d="M20 5v4h-4"></path>
-        </svg>
-      </div>
-      <div class="btn close" title="Schließen" aria-label="Schließen">✕</div>
     </div>
   </div>
 
-  <!-- Close Confirm -->
-  <script>
-    (function(){
-      const btn = document.querySelector('.btn.close');
-      if(!btn) return;
-      btn.addEventListener('click', function(ev){
-        ev.preventDefault();
-        ev.stopPropagation();
-        if (confirm('Tisch wirklich beenden?')) {
-          window.location.href = 'index.html';
-        }
-      }, {passive:false});
-    })();
-  </script>
+  <div class="bottombar">
+    <div class="btn" title="Statistik" aria-label="Statistik">
+      <svg class="iconSvg" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 19.5H20"></path><path d="M7 19.5V11"></path><path d="M12 19.5V6.5"></path><path d="M17 19.5V14"></path>
+      </svg>
+    </div>
 
-  <!-- Loader: names (2-line), scores, Vorhand (yellow), paused (gray) -->
-  <script>
-  (function(){
-    const DB_NAME = 'ets_db';
-    const DB_VERSION = 2;
-    const STORE_PLAYERS = 'players';
-    const STORE_CURR_SESSION = 'current_session';
-    const STORE_CURR_STATE = 'current_state';
-    const CURR_KEY = 'current';
-    const TABLE_TYPE_EXPECTED = 4;
+    <div class="btn" title="Liste" aria-label="Liste">
+      <svg class="iconSvg" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M7 7H20"></path><path d="M7 12H20"></path><path d="M7 17H20"></path>
+        <circle class="fillDot" cx="4" cy="7" r="1"></circle><circle class="fillDot" cx="4" cy="12" r="1"></circle><circle class="fillDot" cx="4" cy="17" r="1"></circle>
+      </svg>
+    </div>
 
-    const seatKeys = ["TOP","LEFT","RIGHT","BOTTOM"];
-    const ccwOrder = ["BOTTOM","RIGHT","TOP","LEFT"];
+    <!-- ✅ Verdrahtung via data-nav -->
+    <div class="btn pm" title="Positivspiel (+)" aria-label="Positivspiel" data-nav="positiv">+</div>
+    <div class="btn pm" title="Negativspiel (−)" aria-label="Negativspiel" data-nav="negativ">−</div>
+    <div class="btn" title="Farbenspiel" aria-label="Farbenspiel" data-nav="farbe"><div class="rbBall"></div></div>
 
-    function openDb(){
-      return new Promise((resolve, reject) => {
-        const req = indexedDB.open(DB_NAME, DB_VERSION);
-        req.onupgradeneeded = () => {};
-        req.onsuccess = () => resolve(req.result);
-        req.onerror = () => reject(req.error);
-      });
-    }
+    <div class="btn" title="Korrigieren" aria-label="Korrigieren">
+      <svg class="iconSvg" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M20 12a8 8 0 1 1-2.3-5.7"></path><path d="M20 5v4h-4"></path>
+      </svg>
+    </div>
 
-    function get(db, store, key){
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction(store, 'readonly');
-        const st = tx.objectStore(store);
-        const rq = st.get(key);
-        rq.onsuccess = () => resolve(rq.result);
-        rq.onerror = () => reject(rq.error);
-      });
-    }
+    <div class="btn close" title="Schließen" aria-label="Schließen">✕</div>
+  </div>
 
-    function getPlayer(db, id){
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction(STORE_PLAYERS, 'readonly');
-        const st = tx.objectStore(STORE_PLAYERS);
-        const rq = st.get(Number(id));
-        rq.onsuccess = () => resolve(rq.result);
-        rq.onerror = () => reject(rq.error);
-      });
-    }
+</div>
 
-    function escapeHtml(s){
-      return String(s)
-        .replaceAll('&','&amp;')
-        .replaceAll('<','&lt;')
-        .replaceAll('>','&gt;')
-        .replaceAll('"','&quot;')
-        .replaceAll("'",'&#39;');
-    }
-
-    function setNum(el, n){
-      if (!el) return;
-      const v = Number(n) || 0;
-      el.textContent = String(v);
-      el.classList.remove('numRed','numBlack');
-      if (v < 0) el.classList.add('numRed'); else el.classList.add('numBlack');
-    }
-
-    function setDelta(el, n){
-      if (!el) return;
-      const v = Number(n) || 0;
-      el.textContent = '(' + String(v) + ')';
-      el.classList.remove('numRed','numBlack');
-      if (v < 0) el.classList.add('numRed'); else el.classList.add('numBlack');
-    }
-
-    function computeDealerSeat(nextGabeNr){
-      const idx = (nextGabeNr - 1) % ccwOrder.length;
-      return ccwOrder[idx];
-    }
-
-    function nextCcwSeat(seat){
-      const i = ccwOrder.indexOf(seat);
-      if (i < 0) return ccwOrder[0];
-      return ccwOrder[(i + 1) % ccwOrder.length];
-    }
-
-    function clearMarkers(){
-      document.querySelectorAll('.playerPanel').forEach(p => p.classList.remove('isVorhand','isPaused'));
-    }
-
-    function markSeat(seat, cls){
-      const el = document.querySelector(`.playerPanel[data-seat="${seat}"]`);
-      if (el) el.classList.add(cls);
-    }
-
-    openDb().then(async db => {
-      const sess = await get(db, STORE_CURR_SESSION, CURR_KEY);
-      const state = await get(db, STORE_CURR_STATE, CURR_KEY);
-
-      if (!sess || !sess.tableType || Number(sess.tableType) !== TABLE_TYPE_EXPECTED) {
-        db.close();
-        window.location.href = 'index.html';
-        return;
-      }
-
-      const seats  = sess.seats || {};
-      const totals = (state && state.totalByPlayerId) ? state.totalByPlayerId : {};
-      const lastD  = (state && state.lastDeltaByPlayerId) ? state.lastDeltaByPlayerId : {};
-      const nextGabeNr = (state && Number.isFinite(state.lastGabeNr)) ? (Number(state.lastGabeNr) + 1) : 1;
-
-      for (const seat of seatKeys) {
-        const pid = seats[seat];
-        const nameEl = document.getElementById('name_' + seat);
-        const totEl  = document.querySelector(`.playerPanel[data-seat="${seat}"] [data-role="total"]`);
-        const delEl  = document.querySelector(`.playerPanel[data-seat="${seat}"] [data-role="delta"]`);
-
-        if (pid == null) {
-          if (nameEl) nameEl.textContent = '—';
-          setNum(totEl, 0);
-          setDelta(delEl, 0);
-          continue;
-        }
-
-        const p = await getPlayer(db, pid).catch(() => null);
-        if (nameEl) {
-          if (p) {
-            const nach = String(p.nachname || '');
-            const vor  = String(p.vorname  || '');
-            nameEl.innerHTML = escapeHtml(nach || String(pid)) + '<br>' + escapeHtml(vor);
-          } else {
-            nameEl.textContent = String(pid);
-          }
-        }
-
-        setNum(totEl, Number(totals[String(pid)] ?? 0));
-        setDelta(delEl, Number(lastD[String(pid)] ?? 0));
-      }
-
-      // 4er: niemand pausiert
-      clearMarkers();
-      const dealerSeat = computeDealerSeat(nextGabeNr);
-      const vorhandSeat = nextCcwSeat(dealerSeat);
-      markSeat(vorhandSeat, 'isVorhand');
-
-      db.close();
-    }).catch(() => {
+<!-- Close Confirm -->
+<script>
+(function(){
+  const btn = document.querySelector('.btn.close');
+  if(!btn) return;
+  btn.addEventListener('click', function(ev){
+    ev.preventDefault();
+    ev.stopPropagation();
+    if (confirm('Tisch wirklich beenden?')) {
       window.location.href = 'index.html';
+    }
+  }, {passive:false});
+})();
+</script>
+
+<!-- ETS_NAV_WIRING: PLUS/MINUS/FARBKUGEL → Spielauswahl-Screens -->
+<script>
+(function(){
+  function go(href){ window.location.href = href; }
+
+  var btnPos = document.querySelector('[data-nav="positiv"]');
+  var btnNeg = document.querySelector('[data-nav="negativ"]');
+  var btnCol = document.querySelector('[data-nav="farbe"]');
+
+  if(btnPos) btnPos.addEventListener('click', function(ev){ ev.preventDefault(); ev.stopPropagation(); go('spiel-auswahl-positiv.html'); }, {passive:false});
+  if(btnNeg) btnNeg.addEventListener('click', function(ev){ ev.preventDefault(); ev.stopPropagation(); go('spiel-auswahl-negativ.html'); }, {passive:false});
+  if(btnCol) btnCol.addEventListener('click', function(ev){ ev.preventDefault(); ev.stopPropagation(); go('spiel-auswahl-farbspiele.html'); }, {passive:false});
+})();
+</script>
+
+<!-- Loader: names (2-line), scores, Vorhand (yellow), paused (gray) -->
+<script>
+(function(){
+  const DB_NAME = 'ets_db';
+  const DB_VERSION = 2;
+  const STORE_PLAYERS = 'players';
+  const STORE_CURR_SESSION = 'current_session';
+  const STORE_CURR_STATE = 'current_state';
+  const CURR_KEY = 'current';
+
+  const TABLE_TYPE_EXPECTED = 4;
+
+  const seatKeys = ["TOP","LEFT","RIGHT","BOTTOM"];
+  const ccwOrder = ["BOTTOM","RIGHT","TOP","LEFT"];
+
+  function openDb(){
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(DB_NAME, DB_VERSION);
+      req.onupgradeneeded = () => {};
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
     });
-  })();
-  </script>
+  }
+
+  function get(db, store, key){
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(store, 'readonly');
+      const st = tx.objectStore(store);
+      const rq = st.get(key);
+      rq.onsuccess = () => resolve(rq.result);
+      rq.onerror = () => reject(rq.error);
+    });
+  }
+
+  function getPlayer(db, id){
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_PLAYERS, 'readonly');
+      const st = tx.objectStore(STORE_PLAYERS);
+      const rq = st.get(Number(id));
+      rq.onsuccess = () => resolve(rq.result);
+      rq.onerror = () => reject(rq.error);
+    });
+  }
+
+  function escapeHtml(s){
+    return String(s)
+      .replaceAll('&','&amp;')
+      .replaceAll('<','&lt;')
+      .replaceAll('>','&gt;')
+      .replaceAll('"','&quot;')
+      .replaceAll("'",'&#39;');
+  }
+
+  function setNum(el, n){
+    if (!el) return;
+    const v = Number(n) || 0;
+    el.textContent = String(v);
+    el.classList.remove('numRed','numBlack');
+    if (v < 0) el.classList.add('numRed'); else el.classList.add('numBlack');
+  }
+
+  function setDelta(el, n){
+    if (!el) return;
+    const v = Number(n) || 0;
+    el.textContent = '(' + String(v) + ')';
+    el.classList.remove('numRed','numBlack');
+    if (v < 0) el.classList.add('numRed'); else el.classList.add('numBlack');
+  }
+
+  function computeDealerSeat(nextGabeNr){
+    const idx = (nextGabeNr - 1) % ccwOrder.length;
+    return ccwOrder[idx];
+  }
+
+  function nextCcwSeat(seat){
+    const i = ccwOrder.indexOf(seat);
+    if (i < 0) return ccwOrder[0];
+    return ccwOrder[(i + 1) % ccwOrder.length];
+  }
+
+  function clearMarkers(){
+    document.querySelectorAll('.playerPanel').forEach(p => p.classList.remove('isVorhand','isPaused'));
+  }
+
+  function markSeat(seat, cls){
+    const el = document.querySelector(`.playerPanel[data-seat="${seat}"]`);
+    if (el) el.classList.add(cls);
+  }
+
+  openDb().then(async db => {
+    const sess = await get(db, STORE_CURR_SESSION, CURR_KEY);
+    const state = await get(db, STORE_CURR_STATE, CURR_KEY);
+
+    if (!sess || !sess.tableType || Number(sess.tableType) !== TABLE_TYPE_EXPECTED) {
+      db.close();
+      window.location.href = 'index.html';
+      return;
+    }
+
+    const seats = sess.seats || {};
+    const totals = (state && state.totalByPlayerId) ? state.totalByPlayerId : {};
+    const lastD = (state && state.lastDeltaByPlayerId) ? state.lastDeltaByPlayerId : {};
+    const nextGabeNr = (state && Number.isFinite(state.lastGabeNr)) ? (Number(state.lastGabeNr) + 1) : 1;
+
+    for (const seat of seatKeys) {
+      const pid = seats[seat];
+      const nameEl = document.getElementById('name_' + seat);
+      const totEl = document.querySelector(`.playerPanel[data-seat="${seat}"] [data-role="total"]`);
+      const delEl = document.querySelector(`.playerPanel[data-seat="${seat}"] [data-role="delta"]`);
+
+      if (pid == null) {
+        if (nameEl) nameEl.textContent = '—';
+        setNum(totEl, 0);
+        setDelta(delEl, 0);
+        continue;
+      }
+
+      const p = await getPlayer(db, pid).catch(() => null);
+      if (nameEl) {
+        if (p) {
+          const nach = String(p.nachname || '');
+          const vor = String(p.vorname || '');
+          nameEl.innerHTML = escapeHtml(nach || String(pid)) + '<br>' + escapeHtml(vor);
+        } else {
+          nameEl.textContent = String(pid);
+        }
+      }
+
+      setNum(totEl, Number(totals[String(pid)] ?? 0));
+      setDelta(delEl, Number(lastD[String(pid)] ?? 0));
+    }
+
+    // 4er: niemand pausiert
+    clearMarkers();
+    const dealerSeat = computeDealerSeat(nextGabeNr);
+    const vorhandSeat = nextCcwSeat(dealerSeat);
+    markSeat(vorhandSeat, 'isVorhand');
+
+    db.close();
+  }).catch(() => {
+    window.location.href = 'index.html';
+  });
+})();
+</script>
+
 </body>
 </html>
