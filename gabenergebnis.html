@@ -453,15 +453,6 @@
     .actionBtn.primary{ background:rgba(255,255,255,.26); }
     .actionBtn:disabled{opacity:.45;cursor:default;}
     .actionBtn:active:not(:disabled){transform:translateY(1px);}
-
-    @media (max-height: 680px){
-      .pTile{ padding:7px 7px; }
-      .premRow{ padding:6px 8px; }
-      .gameLine{ padding:7px 9px; }
-      .gameValue{ font-size:17px; }
-      .premVal{ padding:5px 8px; min-width:64px; }
-      .sumText{ font-size:13px; }
-    }
   </style>
 </head>
 
@@ -475,7 +466,7 @@
       <div class="pill"><span id="gabeInfo">Gabe …</span></div>
     </div>
 
-    <div class="main" id="main">
+    <div class="main">
       <div class="playersBlock">
         <div class="playersGrid" id="playersGrid"></div>
         <div class="miniInfoRow">
@@ -490,7 +481,6 @@
             <div class="gameName" id="gameName">—</div>
             <div class="gameMeta" id="gameMeta">—</div>
           </div>
-
           <div class="gameValue" id="gameValue">
             <span class="pKBadge" id="kbadge_game" style="display:none;"></span>
             <span id="gameValueText">0</span>
@@ -501,7 +491,6 @@
           <button class="btnKontra" id="btnKontra" type="button">Kontra-Modus: AUS</button>
           <div class="kontraBadge" id="kontraHint">Spiel-Kontra: AUS</div>
         </div>
-
         <div class="kontraList" id="kontraList"></div>
       </div>
 
@@ -514,8 +503,8 @@
 
       <div class="premRow sumRow" id="sumRow">
         <div class="sumText">
-          <div class="sumLeftTxt" id="sumLeft">—</div>
-          <div class="sumRightTxt" id="sumRight">—</div>
+          <div class="sumLeftTxt" id="sumLeft">Wähle Spieler 1</div>
+          <div class="sumRightTxt" id="sumRight"></div>
         </div>
       </div>
     </div>
@@ -536,7 +525,7 @@
     const STORE_GABEN = 'gaben';
     const CURR_KEY = 'current';
 
-    // Game labels
+    // Games
     const GAME_LABELS = {
       KOENIG_RUFER: '(König)Rufer (V)',
       SOLO_RUFER: 'Solorufer',
@@ -558,25 +547,25 @@
       FARBENSOLO: 'Farbensolo'
     };
 
-    // Partner optional games (FIX: SOLO_RUFER is optional 1:3 or 2:2)
+    // Partner optional: Rufer-Spiele + SOLO_RUFER (fix)
     const PARTNER_OPTIONAL_GAMES = new Set([
       'KOENIG_RUFER','PAGATRUFER','UHU_RUFER','KAKADU_RUFER','QUAPIL_RUFER','SOLO_RUFER'
     ]);
 
-    // Solo games (premiums x2)
+    // Solo games => premiums x2
     const SOLO_GAMES = new Set(['SOLO_RUFER','SOLO_DREIER','FARBENSOLO']);
 
-    // Negative games (no premiums, no partner)
+    // Negative games => no premiums, no partner
     const NEGATIVE_GAMES = new Set(['TRISCHAKEN','PICCOLO','ZWICCOLO','BETTLER','PICCOLO_OUVERT','ZWICCOLO_OUVERT','BETTLER_OUVERT']);
 
-    // (V)-games (primary is Vorhand)
+    // (V)-games => primary = Vorhand
     const V_GAMES = new Set(['KOENIG_RUFER','SECHSERDREIER','TRISCHAKEN']);
 
-    // Color games (only two premiums)
+    // Color games => only 4 kings + valat
     const COLOR_GAMES = new Set(['FARBENDREIER','FARBENSOLO']);
     const COLOR_PREM_ALLOWED = new Set(['VIER_KOENIGE','VALAT']);
 
-    // Split rufer (game part = 1 + auto fix premium initial +2xBase)
+    // Split rufer (game part = 1 + fix premium initial)
     const SPLIT_RUFER = new Map([
       ['PAGATRUFER','PAGAT_ULTIMO'],
       ['UHU_RUFER','UHU'],
@@ -584,7 +573,7 @@
       ['QUAPIL_RUFER','QUAPIL']
     ]);
 
-    // Premium catalog
+    // Premiums
     const PREMIUMS = [
       { key:'PAGAT_ULTIMO', displayLabel:'Pagat', base:1, column:'LEFT' },
       { key:'UHU',          displayLabel:'Uhu',   base:2, column:'LEFT' },
@@ -596,64 +585,8 @@
       { key:'VALAT',        displayLabel:'Valat',        base:10, column:'RIGHT' }
     ];
 
-    // helpers: type checks
+    // state
     let selectedGame = null;
-    function isColorGame(){ return !!(selectedGame && COLOR_GAMES.has(selectedGame.code)); }
-    function isNegativeGame(){ return !!(selectedGame && NEGATIVE_GAMES.has(selectedGame.code)); }
-    function isSoloGame(){ return !!(selectedGame && SOLO_GAMES.has(selectedGame.code)); }
-    function isVGame(){ return !!(selectedGame && V_GAMES.has(selectedGame.code)); }
-    function isSplitRuferGame(){ return !!(selectedGame && SPLIT_RUFER.has(selectedGame.code)); }
-
-    function allowsPartner(){
-      if(!selectedGame) return false;
-      if(isNegativeGame()) return false;
-      if(selectedGame.code === 'SECHSERDREIER') return false;
-      return PARTNER_OPTIONAL_GAMES.has(selectedGame.code);
-    }
-
-    function premiumAllowed(gameCode, premKey){
-      if(COLOR_GAMES.has(gameCode)) return COLOR_PREM_ALLOWED.has(premKey);
-      if(gameCode === 'SECHSERDREIER') return true;
-      const isUltimo = (premKey === 'PAGAT_ULTIMO' || premKey === 'KOENIG_ULT');
-      if(!isUltimo) return true;
-      return ['KOENIG_RUFER','PAGATRUFER','UHU_RUFER','KAKADU_RUFER','QUAPIL_RUFER','SOLO_RUFER'].includes(gameCode);
-    }
-
-    function getActivePremiums(){
-      if(!premiumsEnabled) return [];
-      if(isColorGame()) return PREMIUMS.filter(p => COLOR_PREM_ALLOWED.has(p.key));
-      return PREMIUMS.slice();
-    }
-
-    function kontraFactor(level){
-      if(level === 1) return 2;
-      if(level === 2) return 4;
-      if(level === 3) return 8;
-      return 1;
-    }
-    function kontraLabel(level){
-      if(level === 1) return 'Kontra';
-      if(level === 2) return 'Re';
-      if(level === 3) return 'Sub';
-      return 'AUS';
-    }
-    function cycleKontraLevel(curr){ return (Number(curr) + 1) % 4; }
-
-    function fmtPlus(n){
-      const v = Number(n) || 0;
-      return (v > 0) ? ('+' + v) : String(v);
-    }
-
-    function esc(s){
-      return String(s)
-        .replaceAll('&','&amp;')
-        .replaceAll('<','&lt;')
-        .replaceAll('>','&gt;')
-        .replaceAll('"','&quot;')
-        .replaceAll("'","&#39;");
-    }
-
-    // State
     let sess = null;
     let currState = null;
 
@@ -682,7 +615,6 @@
     let vorhandSeat = null;
     let vorhandPlayerId = null;
 
-    let gameCatalogValue = 0;
     let gameEffectiveBase = 0;
     let splitPremKey = null;
 
@@ -697,8 +629,8 @@
 
     const gameNameEl = document.getElementById('gameName');
     const gameMetaEl = document.getElementById('gameMeta');
-
     const gameTarget = document.getElementById('gameTarget');
+
     const gameValueEl = document.getElementById('gameValue');
     const gameValueText = document.getElementById('gameValueText');
     const gameKBadge = document.getElementById('kbadge_game');
@@ -717,14 +649,76 @@
     const btnCancel = document.getElementById('btnCancel');
     const btnSave = document.getElementById('btnSave');
 
-    // seat helpers
+    // helpers
+    function esc(s){
+      return String(s)
+        .replaceAll('&','&amp;')
+        .replaceAll('<','&lt;')
+        .replaceAll('>','&gt;')
+        .replaceAll('"','&quot;')
+        .replaceAll("'","&#39;");
+    }
+
+    function playerNameById(id){
+      const p = seatPlayers.find(x => x.playerId === id);
+      return p ? p.displayName : String(id);
+    }
+
+    function isColorGame(){ return !!(selectedGame && COLOR_GAMES.has(selectedGame.code)); }
+    function isNegativeGame(){ return !!(selectedGame && NEGATIVE_GAMES.has(selectedGame.code)); }
+    function isSoloGame(){ return !!(selectedGame && SOLO_GAMES.has(selectedGame.code)); }
+    function isVGame(){ return !!(selectedGame && V_GAMES.has(selectedGame.code)); }
+    function isSplitRuferGame(){ return !!(selectedGame && SPLIT_RUFER.has(selectedGame.code)); }
+
+    function allowsPartner(){
+      if(!selectedGame) return false;
+      if(isNegativeGame()) return false;
+      if(selectedGame.code === 'SECHSERDREIER') return false;
+      return PARTNER_OPTIONAL_GAMES.has(selectedGame.code);
+    }
+
+    function kontraFactor(level){
+      if(level === 1) return 2;
+      if(level === 2) return 4;
+      if(level === 3) return 8;
+      return 1;
+    }
+    function kontraLabel(level){
+      if(level === 1) return 'Kontra';
+      if(level === 2) return 'Re';
+      if(level === 3) return 'Sub';
+      return 'AUS';
+    }
+    function cycleKontraLevel(curr){ return (Number(curr) + 1) % 4; }
+
+    function fmtPlus(n){
+      const v = Number(n) || 0;
+      return (v > 0) ? ('+' + v) : String(v);
+    }
+
+    function premiumAllowed(gameCode, premKey){
+      if(COLOR_GAMES.has(gameCode)) return COLOR_PREM_ALLOWED.has(premKey);
+      if(gameCode === 'SECHSERDREIER') return true;
+
+      const isUltimo = (premKey === 'PAGAT_ULTIMO' || premKey === 'KOENIG_ULT');
+      if(!isUltimo) return true;
+
+      return ['KOENIG_RUFER','PAGATRUFER','UHU_RUFER','KAKADU_RUFER','QUAPIL_RUFER','SOLO_RUFER'].includes(gameCode);
+    }
+
+    function getActivePremiums(){
+      if(!premiumsEnabled) return [];
+      if(isColorGame()) return PREMIUMS.filter(p => COLOR_PREM_ALLOWED.has(p.key));
+      return PREMIUMS.slice();
+    }
+
+    // seat order helpers
     function preferredSeatOrderByTableType(t){
       if(t === 4) return ['TOP','LEFT','RIGHT','BOTTOM'];
       if(t === 5) return ['LEFT_TOP','RIGHT_TOP','LEFT_BOTTOM','RIGHT_BOTTOM','BOTTOM'];
       if(t === 6) return ['TOP','LEFT_TOP','RIGHT_TOP','LEFT_BOTTOM','RIGHT_BOTTOM','BOTTOM'];
       return ['TOP','LEFT','RIGHT','BOTTOM','LEFT_TOP','RIGHT_TOP','LEFT_BOTTOM','RIGHT_BOTTOM','BOTTOM'];
     }
-
     function seatOrderFromSession(){
       const seatsObj = (sess && sess.seats) ? sess.seats : {};
       const keys = Object.keys(seatsObj);
@@ -740,7 +734,6 @@
       });
       return keys;
     }
-
     function getCcwOrder(){
       if(sess && Array.isArray(sess.ccwOrder) && sess.ccwOrder.length) return sess.ccwOrder.slice();
       const t = Number(sess && sess.tableType) || 4;
@@ -748,29 +741,24 @@
       if(t === 6) return ['BOTTOM','RIGHT_BOTTOM','RIGHT_TOP','TOP','LEFT_TOP','LEFT_BOTTOM'];
       return ['BOTTOM','RIGHT','TOP','LEFT'];
     }
-
     function computeDealerSeat(nextGabeNr){
       const ccw = getCcwOrder();
       return ccw[(nextGabeNr - 1) % ccw.length];
     }
-
     function nextCcwSeat(seat){
       const ccw = getCcwOrder();
       const i = ccw.indexOf(seat);
       if(i < 0) return ccw[0];
       return ccw[(i + 1) % ccw.length];
     }
-
     function computeVorhandSeat(nextGabeNr){
       const dealer = computeDealerSeat(nextGabeNr);
       return nextCcwSeat(dealer);
     }
-
     function computePausedSeats(nextGabeNr){
       const t = Number(sess && sess.tableType) || 4;
       const dealer = computeDealerSeat(nextGabeNr);
       const paused = new Set();
-
       if(t === 5){
         paused.add(dealer);
       } else if(t === 6){
@@ -785,7 +773,6 @@
       }
       return paused;
     }
-
     function refreshActivePlayers(){
       pausedSeatSet = computePausedSeats(gabeNr);
       pausedPlayerIdSet = new Set();
@@ -794,7 +781,6 @@
       }
       activeSeatPlayers = seatPlayers.filter(sp => !pausedSeatSet.has(sp.seat));
     }
-
     function activePlayerIds(){ return activeSeatPlayers.map(p => p.playerId); }
 
     function enforceVorhandIfVGame(){
@@ -838,16 +824,14 @@
       return out;
     }
 
-    // Premium helpers
+    // Premium value logic
     function getPremAbsBase(premKey){
       const p = PREMIUMS.find(x => x.key === premKey);
       return p ? p.base : 0;
     }
-
     function isPremiumAnnounced(premKey){
       return (Number(premMag[premKey]) || 0) === 2;
     }
-
     function premValueSignedRaw(premKey){
       const mag = Number(premMag[premKey]) || 0;
       if(mag === 0) return 0;
@@ -856,7 +840,6 @@
       const s = (premSign[premKey] === -1) ? -1 : 1;
       return s * absVal;
     }
-
     function premValueSignedDisplay(premKey){
       const raw = premValueSignedRaw(premKey);
       if(raw === 0) return 0;
@@ -864,32 +847,25 @@
       const kf = kontraFactor(Number(premKontra[premKey]) || 0);
       return raw * soloFactor * kf;
     }
-
     function premEffectiveValue(premKey){
       return premValueSignedDisplay(premKey);
     }
-
     function cyclePremByName(premKey){
       const mag = Number(premMag[premKey]) || 0;
-      const next = (mag + 1) % 3;   // 0->1->2->0
+      const next = (mag + 1) % 3; // 0->1->2->0
       premMag[premKey] = next;
       premSign[premKey] = +1;
-      if(next !== 2){
-        premKontra[premKey] = 0;
-      }
+      if(next !== 2) premKontra[premKey] = 0;
     }
-
     function togglePremSignByNumber(premKey){
       const mag = Number(premMag[premKey]) || 0;
       if(mag === 0) return;
       premSign[premKey] = (premSign[premKey] === -1) ? +1 : -1;
     }
 
-    // Split rufer
+    // Game base: split-rufer => 1
     function computeEffectiveGameBase(){
-      gameCatalogValue = Number(selectedGame.value) || 0;
       splitPremKey = null;
-
       if(isSplitRuferGame()){
         gameEffectiveBase = 1;
         splitPremKey = SPLIT_RUFER.get(selectedGame.code) || null;
@@ -897,7 +873,6 @@
         gameEffectiveBase = Number(selectedGame.value) || 0;
       }
     }
-
     function applyInitialSplitPremiumIfNeeded(){
       if(!isSplitRuferGame()) return;
       if(!splitPremKey) return;
@@ -905,23 +880,19 @@
       premSign[splitPremKey] = +1;
     }
 
-    // Game display
     function gameRawValueForDisplay(){
       if(selectedGame.code === 'SECHSERDREIER'){
         return (sechserMode === 'WIN') ? 4 : -8;
-      } else {
-        const base = Number(gameEffectiveBase) || 0;
-        return (gameSign === 1) ? base : -base;
       }
+      const base = Number(gameEffectiveBase) || 0;
+      return (gameSign === 1) ? base : -base;
     }
-
     function gameValueForDisplay(){
       const raw = gameRawValueForDisplay();
-      const kf = kontraFactor(gameKontraLevel);
-      return raw * kf;
+      return raw * kontraFactor(gameKontraLevel);
     }
 
-    // Kontra mode
+    // Kontra UI
     function setKontraMode(on){
       kontraMode = !!on;
       if(kontraMode) root.classList.add('kontraMode');
@@ -930,18 +901,15 @@
       updateKontraTargetability();
       renderKontraList();
     }
-
     function updateKontraUi(){
       btnKontra.textContent = kontraMode ? 'Kontra-Modus: AN' : 'Kontra-Modus: AUS';
       kontraHint.textContent = 'Spiel-Kontra: ' + kontraLabel(gameKontraLevel);
     }
-
     function updateKontraTargetability(){
       gameTarget.classList.remove('kontraTarget');
       if(kontraMode) gameTarget.classList.add('kontraTarget');
 
       if(!premiumsEnabled) return;
-
       const activePrems = getActivePremiums();
       for(const prem of activePrems){
         const row = document.getElementById('row_' + prem.key);
@@ -952,60 +920,54 @@
         }
       }
     }
-
     function renderKontraList(){
       kontraList.innerHTML = '';
       const items = [];
-
-      if(gameKontraLevel > 0) items.push({label: 'Spiel=' + kontraLabel(gameKontraLevel)});
-
+      if(gameKontraLevel > 0) items.push('Spiel=' + kontraLabel(gameKontraLevel));
       if(premiumsEnabled){
         const activePrems = getActivePremiums();
         for(const prem of activePrems){
           const lvl = Number(premKontra[prem.key]) || 0;
-          if(lvl > 0) items.push({label: prem.displayLabel + '=' + kontraLabel(lvl)});
+          if(lvl > 0) items.push(prem.displayLabel + '=' + kontraLabel(lvl));
         }
       }
-
-      for(const it of items){
+      for(const s of items){
         const d = document.createElement('div');
         d.className = 'kchip';
-        d.textContent = it.label;
+        d.textContent = s;
         kontraList.appendChild(d);
       }
     }
 
-    // IndexedDB
+    // IndexedDB helpers
     function openDb(){
-      return new Promise((resolve,reject) => {
-        const req = indexedDB.open(DB_NAME, DB_VERSION);
-        req.onupgradeneeded = () => {};
-        req.onsuccess = () => resolve(req.result);
-        req.onerror = () => reject(req.error);
+      return new Promise((resolve,reject)=>{
+        const req=indexedDB.open(DB_NAME, DB_VERSION);
+        req.onupgradeneeded=()=>{};
+        req.onsuccess=()=>resolve(req.result);
+        req.onerror=()=>reject(req.error);
       });
     }
-
     function idbGet(db, store, key){
-      return new Promise((resolve,reject) => {
-        const tx = db.transaction(store,'readonly');
-        const st = tx.objectStore(store);
-        const rq = st.get(key);
-        rq.onsuccess = () => resolve(rq.result);
-        rq.onerror = () => reject(rq.error);
+      return new Promise((resolve,reject)=>{
+        const tx=db.transaction(store,'readonly');
+        const st=tx.objectStore(store);
+        const rq=st.get(key);
+        rq.onsuccess=()=>resolve(rq.result);
+        rq.onerror=()=>reject(rq.error);
       });
     }
-
     function idbGetPlayer(db, id){
-      return new Promise((resolve,reject) => {
-        const tx = db.transaction(STORE_PLAYERS,'readonly');
-        const st = tx.objectStore(STORE_PLAYERS);
-        const rq = st.get(Number(id));
-        rq.onsuccess = () => resolve(rq.result);
-        rq.onerror = () => reject(rq.error);
+      return new Promise((resolve,reject)=>{
+        const tx=db.transaction(STORE_PLAYERS,'readonly');
+        const st=tx.objectStore(STORE_PLAYERS);
+        const rq=st.get(Number(id));
+        rq.onsuccess=()=>resolve(rq.result);
+        rq.onerror=()=>reject(req.error);
       });
     }
 
-    // UI render
+    // UI rendering
     function renderPlayers(){
       playersGrid.innerHTML = '';
 
@@ -1029,17 +991,15 @@
 
       for(const sp of seatPlayers){
         const isPaused = pausedSeatSet.has(sp.seat) || pausedPlayerIdSet.has(sp.playerId);
-
         const tile = document.createElement('div');
         tile.className = 'pTile' + (isPaused ? ' paused' : '');
         tile.dataset.pid = String(sp.playerId);
         tile.dataset.paused = isPaused ? '1' : '0';
 
         const seatTag = isPaused ? (sp.seat + ' · PAUSE') : sp.seat;
-
         tile.innerHTML = `<div class="pName">${esc(sp.displayName)}</div><div class="pSeat">${esc(seatTag)}</div>`;
 
-        tile.addEventListener('click', () => {
+        tile.addEventListener('click', ()=>{
           if(tile.dataset.paused === '1') return;
           const pid = Number(tile.dataset.pid);
 
@@ -1077,7 +1037,8 @@
         playersGrid.appendChild(tile);
       }
 
-      [...playersGrid.querySelectorAll('.pTile')].forEach(el => {
+      // update selection classes
+      [...playersGrid.querySelectorAll('.pTile')].forEach(el=>{
         const pid = Number(el.dataset.pid);
         el.classList.remove('selectedPrimary','selectedSecondary','lockedPrimary');
         if(primaryId === pid){
@@ -1121,8 +1082,8 @@
       const nameEl = row.querySelector('[data-part="name"]');
       const valEl  = row.querySelector('[data-part="val"]');
 
-      // Kontra via PRÄMIE, nicht Wert:
-      nameEl.addEventListener('click', (ev) => {
+      // name click: cycles value OR cycles premium-kontra in kontra mode (if announced)
+      nameEl.addEventListener('click', (ev)=>{
         ev.preventDefault(); ev.stopPropagation();
         if(row.classList.contains('disabled')) return;
 
@@ -1136,16 +1097,16 @@
         recomputeAndRender();
       });
 
-      // value toggles sign only
-      valEl.addEventListener('click', (ev) => {
+      // value click: toggles sign only
+      valEl.addEventListener('click', (ev)=>{
         ev.preventDefault(); ev.stopPropagation();
         if(row.classList.contains('disabled')) return;
         togglePremSignByNumber(p.key);
         recomputeAndRender();
       });
 
-      // row click convenience for kontra
-      row.addEventListener('click', () => {
+      // row click: convenience for kontra cycle
+      row.addEventListener('click', ()=>{
         if(row.classList.contains('disabled')) return;
         if(!kontraMode) return;
         if(!isPremiumAnnounced(p.key)) return;
@@ -1181,7 +1142,7 @@
 
       if(primary == null || pausedPlayerIdSet.has(primary)) return delta;
 
-      const v = gameValueForDisplay(); // includes game kontra
+      const v = gameValueForDisplay();
 
       if(selectedGame.code === 'SECHSERDREIER'){
         const opp = activeIds.filter(id => id !== primary);
@@ -1239,7 +1200,6 @@
           for(const id of opp) delta[String(id)] -= ev;
         }
       }
-
       return delta;
     }
 
@@ -1262,11 +1222,9 @@
         if(!premiumAllowed(selectedGame.code, prem.key)) continue;
         const ev = premEffectiveValue(prem.key);
         if(ev === 0) continue;
-
         const part = (teamSize === 2) ? ev : (ev * opp.length);
         if(part !== 0) parts.push(part);
       }
-
       return parts;
     }
 
@@ -1281,7 +1239,6 @@
       if(kontraMode) root.classList.add('kontraMode'); else root.classList.remove('kontraMode');
       updateKontraUi();
 
-      // game value + badge
       const gv = gameValueForDisplay();
       gameValueText.textContent = String(gv);
       gameValueEl.classList.remove('numRed','numBlack');
@@ -1294,7 +1251,7 @@
         gameKBadge.style.display = 'none';
       }
 
-      // save enable
+      // enable save
       let canSave = (primaryId != null && !pausedPlayerIdSet.has(primaryId));
       if(secondaryId != null){
         if(pausedPlayerIdSet.has(secondaryId)) canSave = false;
@@ -1308,19 +1265,13 @@
       const dPrem = calcPremiumsComponent(team);
       const dAll = mergeDelta(dGame, dPrem);
 
-      // premium display
+      // render premiums
       if(premiumsEnabled){
         const activePrems = getActivePremiums();
         for(const prem of activePrems){
           const txt = document.getElementById('vtxt_' + prem.key);
           const kb = document.getElementById('kbadge_' + prem.key);
           if(!txt || !kb) continue;
-
-          if(!premiumAllowed(selectedGame.code, prem.key)){
-            txt.textContent = '0';
-            kb.style.display = 'none';
-            continue;
-          }
 
           const val = premValueSignedDisplay(prem.key);
           txt.textContent = String(val);
@@ -1365,24 +1316,6 @@
 
       sumLeft.textContent = names;
       sumRight.textContent = right;
-    }
-
-    function updateKontraTargetability(){
-      gameTarget.classList.remove('kontraTarget');
-      if(kontraMode) gameTarget.classList.add('kontraTarget');
-
-      if(!premiumsEnabled) return;
-
-      const activePrems = getActivePremiums();
-      for(const prem of activePrems){
-        const row = document.getElementById('row_' + prem.key);
-        if(row) row.classList.remove('kontraTarget');
-
-        if(!premiumAllowed(selectedGame.code, prem.key)) continue;
-        if(kontraMode && isPremiumAnnounced(prem.key)){
-          if(row) row.classList.add('kontraTarget');
-        }
-      }
     }
 
     async function onSave(){
@@ -1451,13 +1384,13 @@
       };
 
       const db = await openDb();
-      await new Promise((resolve,reject) => {
+      await new Promise((resolve,reject)=>{
         const tx = db.transaction([STORE_GABEN, STORE_CURR_STATE], 'readwrite');
         tx.objectStore(STORE_GABEN).put(gabe);
         tx.objectStore(STORE_CURR_STATE).put(newState);
-        tx.oncomplete = () => resolve();
-        tx.onerror = () => reject(tx.error);
-        tx.onabort = () => reject(tx.error);
+        tx.oncomplete=()=>resolve();
+        tx.onerror=()=>reject(tx.error);
+        tx.onabort=()=>reject(tx.error);
       });
       db.close();
 
@@ -1466,25 +1399,25 @@
       window.location.href = target;
     }
 
-    // Boot
-    btnCancel.addEventListener('click', () => {
+    // init + navigation
+    btnCancel.addEventListener('click', ()=>{
       if(history.length > 1) history.back();
       else window.location.href = 'index.html';
     });
 
-    window.addEventListener('load', async () => {
+    window.addEventListener('load', async ()=>{
       try{
         selectedGame = JSON.parse(sessionStorage.getItem('selectedGame') || 'null');
       } catch {
         selectedGame = null;
       }
-
       if(!selectedGame || !selectedGame.code){
         if(history.length > 1) history.back();
         else window.location.href = 'index.html';
         return;
       }
 
+      // defaults
       gameSign = +1;
       sechserMode = 'WIN';
       gameKontraLevel = 0;
@@ -1492,12 +1425,14 @@
 
       premiumsEnabled = !isNegativeGame();
 
+      // init premium state
       for(const p of PREMIUMS){
         premMag[p.key] = 0;
         premSign[p.key] = +1;
         premKontra[p.key] = 0;
       }
 
+      // load session/state
       const db = await openDb();
       sess = await idbGet(db, STORE_CURR_SESSION, CURR_KEY);
       currState = await idbGet(db, STORE_CURR_STATE, CURR_KEY);
@@ -1518,13 +1453,14 @@
       const gameLabel = GAME_LABELS[selectedGame.code] || selectedGame.code;
       sub.textContent = 'Spiel: ' + gameLabel + ' (' + String(selectedGame.category || '') + ')';
 
+      // load seat players
       seatPlayers = [];
       const seatKeys = seatOrderFromSession();
       for(const seat of seatKeys){
         const pid = sess.seats[seat];
         if(pid == null) continue;
 
-        const pl = await idbGetPlayer(db, pid).catch(() => null);
+        const pl = await idbGetPlayer(db, pid).catch(()=>null);
         let disp = String(pid);
         if(pl){
           const nach = String(pl.nachname || '').trim();
@@ -1538,15 +1474,17 @@
       refreshActivePlayers();
       computeEffectiveGameBase();
 
+      // V-games: auto primary
       if(isVGame()) enforceVorhandIfVGame();
 
-      // Split initial premium (but not for color games)
+      // split-rufer: init fix premium (not on color games)
       if(premiumsEnabled && !isColorGame()){
         applyInitialSplitPremiumIfNeeded();
       }
 
       ensureSelectionsValid();
 
+      // negative games => hide premiums
       if(!premiumsEnabled){
         premBlock.style.display = 'none';
       } else {
@@ -1559,20 +1497,20 @@
 
       recomputeAndRender();
 
-      btnKontra.addEventListener('click', () => setKontraMode(!kontraMode));
+      // interactions
+      btnKontra.addEventListener('click', ()=>setKontraMode(!kontraMode));
 
-      // Spiel-Kontra via ZEILE (nicht Wert) im Kontra-Modus
-      gameTarget.addEventListener('click', (ev) => {
+      // game kontra via LINE (not value)
+      gameTarget.addEventListener('click', (ev)=>{
         if(!kontraMode) return;
         if(gameValueEl.contains(ev.target)) return;
         gameKontraLevel = cycleKontraLevel(gameKontraLevel);
         recomputeAndRender();
       });
 
-      // Spielwert toggelt Gewinn/Verlust
-      gameValueEl.addEventListener('click', (ev) => {
-        ev.preventDefault();
-        ev.stopPropagation();
+      // game value toggles win/loss
+      gameValueEl.addEventListener('click', (ev)=>{
+        ev.preventDefault(); ev.stopPropagation();
         if(selectedGame.code === 'SECHSERDREIER'){
           sechserMode = (sechserMode === 'WIN') ? 'LOSS' : 'WIN';
         } else {
