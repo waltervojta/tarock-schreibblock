@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ETS – Spiel auswählen</title>
+
+<style>
+:root{
+  --bg:#cfe9ff;
+  --bar:#3b6fa8;
+  --panel:#d9efff;
+  --line:#000;
+  --radius:12px;
+  --font:Arial, sans-serif;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  background:var(--bg);
+  font-family:var(--font);
+  display:flex;
+  justify-content:center;
+}
+
+.app{
+  width:min(480px,100%);
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+}
+
+/* ===== TOP ===== */
+.topbar{
+  background:var(--bar);
+  border-bottom:3px solid var(--line);
+  padding:14px;
+  text-align:center;
+  font-weight:900;
+  color:#ffffff;
+}
+
+/* ===== CONTENT ===== */
+.content{
+  flex:1;
+  padding:12px;
+  padding-bottom:120px; /* Platz für Footer */
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+
+/* ===== GRID ===== */
+.grid-2{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+
+.section{
+  background:var(--panel);
+  border:2px solid var(--line);
+  border-radius:var(--radius);
+  padding:10px;
+}
+
+.section h3{
+  margin:4px 0 10px;
+  text-align:center;
+  font-size:15px;
+  font-weight:900;
+}
+
+.game{
+  background:#fff;
+  border:1px solid rgba(0,0,0,.7);
+  border-radius:10px;
+  padding:12px;
+  display:flex;
+  justify-content:space-between;
+  font-weight:900;
+  margin-bottom:8px;
+}
+
+.game.negative{
+  color:#b00000;
+}
+
+/* ===== FOOTER – JETZT RICHTIG ===== */
+.footer{
+  position:fixed;
+  bottom:0;
+  left:50%;
+  transform:translateX(-50%);
+  width:min(480px,100%);
+  height:100px;                 /* FIXE HÖHE */
+  background:var(--bar);
+  border-top:3px solid var(--line);
+  display:flex;
+  align-items:center;           /* VERTIKAL ZENTRIERT */
+  justify-content:center;
+}
+
+/* ✅ DER BUTTON */
+.footer button{
+  width:90%;
+  height:56px;
+  font-size:18px;
+  font-weight:900;
+  border-radius:14px;
+  border:2px solid #000;
+  background:#ffffff;
+  color:#000000;
+  cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+  <div class="topbar">Spiel auswählen</div>
+
+  <div class="content">
+
+    <div class="grid-2">
+
+      <div class="section">
+        <h3>Positive Spiele</h3>
+        <div class="game"><span>(König)Rufer (V)</span><span>1</span></div>
+        <div class="game"><span>Solorufer</span><span>2</span></div>
+        <div class="game"><span>Pagatrufer</span><span>3</span></div>
+        <div class="game"><span>Sechserdreier (V)</span><span>4</span></div>
+        <div class="game"><span>Uhurufer</span><span>5</span></div>
+        <div class="game"><span>Dreier</span><span>5</span></div>
+        <div class="game"><span>Kakadurufer</span><span>7</span></div>
+        <div class="game"><span>Quapilrufer</span><span>9</span></div>
+        <div class="game"><span>Solodreier</span><span>10</span></div>
+      </div>
+
+      <div class="section">
+        <h3>Negative Spiele</h3>
+        <div class="game negative"><span>Trischaken (V)</span><span>2</span></div>
+        <div class="game negative"><span>Piccolo</span><span>2</span></div>
+        <div class="game negative"><span>Zwiccolo</span><span>2</span></div>
+        <div class="game negative"><span>Bettler</span><span>4</span></div>
+        <div class="game negative"><span>Piccolo ouvert</span><span>6</span></div>
+        <div class="game negative"><span>Zwiccolo ouvert</span><span>6</span></div>
+        <div class="game negative"><span>Bettler ouvert</span><span>8</span></div>
+      </div>
+
+    </div>
+
+    <div class="section">
+      <h3>Farbenspiele</h3>
+      <div class="game"><span>Farbendreier</span><span>5</span></div>
+      <div class="game"><span>Farbensolo</span><span>8</span></div>
+    </div>
+
+  </div>
+
+  <!-- ✅ HIER IST ER. SICHTBAR. -->
+  <div class="footer">
+    <button onclick="location.href='index.html'</body>
+</html>
