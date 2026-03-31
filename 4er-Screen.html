@@ -22,9 +22,16 @@
       --scoreSmallScale:0.5;
       --gapNameToBig:1ch;
       --gapBigToSmall:1ch;
-      --markVorhand:#ffe65a;
+
+      /* ✅ Vorhand-Markierung: dezent blau statt gelb */
+      --markVorhand:#bfe6ff;
+
+      /* ✅ Rahmenfarbe für Vorhand */
+      --markVorhandBorder:#1f5fa8;
+
       --markPausedOpacity:0.35;
     }
+
     *{box-sizing:border-box;}
     html,body{height:100%; overflow:hidden;}
     body{
@@ -65,7 +72,7 @@
       border:1px solid var(--btnBorder);
       border-radius:var(--btnRadius);
       color:var(--iconDark);
-      font-size:14px; /* was 15 */
+      font-size:14px;
       font-weight:800;
       white-space:nowrap;
       max-width: calc(100% - 120px);
@@ -77,7 +84,7 @@
     .numRed{color:var(--red)!important;}
     .numBlack{color:var(--black)!important;}
 
-    /* Runde pill (fixed small field) */
+    /* Right pill */
     .roundPill{
       flex:0 0 auto;
       display:inline-flex;
@@ -184,8 +191,19 @@
       white-space:nowrap;
     }
 
-    .playerPanel{border-radius:10px; padding:6px 8px;}
-    .playerPanel.isVorhand{background:var(--markVorhand);}
+    /* ✅ Player panels with stable border (no layout shift) */
+    .playerPanel{
+      border-radius:10px;
+      padding:6px 8px;
+      border:2px solid transparent;
+    }
+
+    /* ✅ Vorhand highlight: subtle blue + border */
+    .playerPanel.isVorhand{
+      background:var(--markVorhand);
+      border-color:var(--markVorhandBorder);
+    }
+
     .playerPanel.isPaused{opacity:var(--markPausedOpacity);}
 
     .bottombar{
@@ -242,7 +260,6 @@
 <div class="phone">
   <div class="topbar">
     <div class="statusPill" id="statusPill"><span class="lbl">Letztes Spiel:</span> —</div>
-    <!-- ✅ without colon -->
     <div class="roundPill" id="roundPill">Spiel 0</div>
   </div>
 
@@ -586,7 +603,6 @@
     const lastGabeNr = (state && Number.isFinite(state.lastGabeNr)) ? Number(state.lastGabeNr) : 0;
     const nextGabeNr = lastGabeNr + 1;
 
-    // ✅ Spiel display (played gaben)
     const roundPill = document.getElementById('roundPill');
     if(roundPill){
       roundPill.textContent = 'Spiel ' + String(lastGabeNr);
