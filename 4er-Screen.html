@@ -238,12 +238,12 @@
     }
   </style>
 </head>
-
 <body>
 <div class="phone">
   <div class="topbar">
-    <div class="statusPill" id="statusPill"><span class="lbl">Letztes Spiel:</span>&nbsp;—</div>
-    <div class="roundPill" id="roundPill">Spiel: 0</div>
+    <div class="statusPill" id="statusPill"><span class="lbl">Letztes Spiel:</span> —</div>
+    <!-- ✅ without colon -->
+    <div class="roundPill" id="roundPill">Spiel 0</div>
   </div>
 
   <div class="content">
@@ -348,7 +348,7 @@
 })();
 </script>
 
-<!-- Loader: names, scores, Vorhand, Status "Letztes Spiel", Runde -->
+<!-- Loader: names, scores, Vorhand, Status "Letztes Spiel", Spiel -->
 <script>
 (function(){
   const DB_NAME = 'ets_db';
@@ -435,11 +435,11 @@
 
   function escapeHtml(s){
     return String(s)
-      .replaceAll('&','&amp;')
-      .replaceAll('<','&lt;')
-      .replaceAll('>','&gt;')
-      .replaceAll('"','&quot;')
-      .replaceAll("'","&#39;");
+      .replaceAll('&','&')
+      .replaceAll('<','<')
+      .replaceAll('>','>')
+      .replaceAll('"','"')
+      .replaceAll("'","'");
   }
 
   function setNum(el, n){
@@ -518,7 +518,7 @@
 
   function buildStatusHtml(gabe){
     const gameCode = gabe && gabe.game && gabe.game.code ? String(gabe.game.code) : '';
-    if(!gameCode) return `<span class="lbl">Letztes Spiel:</span>&nbsp;—`;
+    if(!gameCode) return `<span class="lbl">Letztes Spiel:</span> —`;
 
     const isRufer = RUFER_GAMES.has(gameCode);
     const gameSign = getGameSign(gabe);
@@ -528,7 +528,7 @@
       if(pr && pr.key) premMap.set(String(pr.key), pr);
     }
 
-    let html = `<span class="lbl">Letztes Spiel:</span>&nbsp;`;
+    let html = `<span class="lbl">Letztes Spiel:</span> `;
 
     if(isRufer){
       const fixKey = RUFER_FIX_PREM[gameCode] || null;
@@ -586,10 +586,10 @@
     const lastGabeNr = (state && Number.isFinite(state.lastGabeNr)) ? Number(state.lastGabeNr) : 0;
     const nextGabeNr = lastGabeNr + 1;
 
-    // Runde display (played gaben)
+    // ✅ Spiel display (played gaben)
     const roundPill = document.getElementById('roundPill');
     if(roundPill){
-      roundPill.textContent = 'Runde: ' + String(lastGabeNr);
+      roundPill.textContent = 'Spiel ' + String(lastGabeNr);
     }
 
     for (const seat of seatKeys) {
@@ -625,14 +625,13 @@
     const vorhandSeat = nextCcwSeat(dealerSeat);
     markSeat(vorhandSeat, 'isVorhand');
 
-    // Status pill: letztes Spiel
     const pill = document.getElementById('statusPill');
     if(pill){
       if(lastGabeNr > 0){
         const gabe = await get(db, STORE_GABEN, lastGabeNr).catch(() => null);
-        pill.innerHTML = gabe ? buildStatusHtml(gabe) : `<span class="lbl">Letztes Spiel:</span>&nbsp;—`;
-      }else{
-        pill.innerHTML = `<span class="lbl">Letztes Spiel:</span>&nbsp;—`;
+        pill.innerHTML = gabe ? buildStatusHtml(gabe) : `<span class="lbl">Letztes Spiel:</span> —`;
+      } else {
+        pill.innerHTML = `<span class="lbl">Letztes Spiel:</span> —`;
       }
     }
 
@@ -642,6 +641,5 @@
   });
 })();
 </script>
-
 </body>
 </html>
