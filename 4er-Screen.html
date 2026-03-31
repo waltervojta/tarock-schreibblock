@@ -23,10 +23,9 @@
       --gapNameToBig:1ch;
       --gapBigToSmall:1ch;
 
-      /* ✅ Vorhand: dezent blau + Rahmen */
+      /* Vorhand: dezent blau + Rahmen */
       --markVorhand:#bfe6ff;
       --markVorhandBorder:#1f5fa8;
-
       --markPausedOpacity:0.35;
     }
 
@@ -39,6 +38,7 @@
       display:flex;
       justify-content:center;
     }
+
     .phone{
       width:min(480px,100%);
       height:100dvh;
@@ -59,7 +59,6 @@
       gap:10px;
     }
 
-    /* ✅ Nav buttons left/right */
     .navBtn{
       flex:0 0 auto;
       width:36px;
@@ -78,6 +77,8 @@
       cursor:pointer;
     }
     .navBtn:active{transform:translateY(1px);}
+    .navBtn.disabled{opacity:.45; cursor:default;}
+    .navBtn.disabled:active{transform:none;}
 
     .statusPill{
       display:inline-flex;
@@ -119,6 +120,7 @@
     }
 
     .content{flex:1 1 auto; min-height:0; display:flex; flex-direction:column; overflow:hidden;}
+
     .zone-top{
       flex:0 0 30%;
       border-bottom:var(--lineW) solid var(--line);
@@ -128,6 +130,7 @@
       padding:10px;
       min-height:0;
     }
+
     .zone-mid{
       flex:1 1 auto;
       border-bottom:var(--lineW) solid var(--line);
@@ -135,6 +138,7 @@
       position:relative;
       min-height:0;
     }
+
     .mid-left,.mid-right{
       flex:1;
       display:flex;
@@ -142,6 +146,7 @@
       align-items:center;
       min-width:0;
     }
+
     .centerLine{
       position:absolute;
       left:50%;
@@ -151,6 +156,7 @@
       background:var(--line);
       transform:translateX(-50%);
     }
+
     .zone-bottom{
       flex:0 0 24%;
       border-bottom:var(--lineW) solid var(--line);
@@ -160,6 +166,7 @@
       padding:10px 16px;
       min-height:0;
     }
+
     .panelWrap{
       width:100%;
       display:flex;
@@ -192,6 +199,7 @@
       line-height:1.05;
       text-align:center;
     }
+
     .scoreBig{
       font-size:var(--scoreBigSize);
       font-weight:700;
@@ -207,7 +215,7 @@
       white-space:nowrap;
     }
 
-    /* ✅ Stable border (no layout shift) */
+    /* Stable border (no layout shift) */
     .playerPanel{
       border-radius:10px;
       padding:6px 8px;
@@ -219,23 +227,25 @@
     }
     .playerPanel.isPaused{opacity:var(--markPausedOpacity);}
 
+    /* Bottom bar (8 buttons now) */
     .bottombar{
       height: calc(62px + env(safe-area-inset-bottom));
       background:var(--barBg);
       border-top:var(--lineW) solid var(--line);
       --padX: clamp(6px, 2vw, 10px);
-      --gapX: clamp(3px, 1.4vw, 10px);
+      --gapX: clamp(3px, 1.2vw, 9px);
       --padY: 6px;
-      --btnW: clamp(38px, calc((100% - (2 * var(--padX)) - (6 * var(--gapX))) / 7), 56px);
-      --btnH: clamp(40px, calc(var(--btnW) * 0.92), 50px);
+      --btnW: clamp(34px, calc((100% - (2 * var(--padX)) - (7 * var(--gapX))) / 8), 54px);
+      --btnH: clamp(38px, calc(var(--btnW) * 0.92), 50px);
       padding: var(--padY) var(--padX) calc(var(--padY) + env(safe-area-inset-bottom)) var(--padX);
       display:grid;
-      grid-template-columns: repeat(7, 1fr);
+      grid-template-columns: repeat(8, 1fr);
       column-gap: var(--gapX);
       align-items:center;
       justify-items:center;
       min-width:0;
     }
+
     .btn{
       width:var(--btnW);
       height:var(--btnH);
@@ -250,32 +260,36 @@
       -webkit-tap-highlight-color: transparent;
       overflow:hidden;
     }
-    .btn.pm{font-size:clamp(20px, calc(var(--btnW) * 0.48), 26px); font-weight:700; line-height:1;}
+    .btn:active{transform:translateY(1px);}
+    .btn:disabled{opacity:.45;cursor:default;}
+    .btn:disabled:active{transform:none;}
+
+    .btn.pm{font-size:clamp(18px, calc(var(--btnW) * 0.48), 24px); font-weight:700; line-height:1;}
     .btn.close{font-size:clamp(18px, calc(var(--btnW) * 0.40), 22px); font-weight:800; line-height:1;}
+
     .rbBall{
-      width: clamp(20px, calc(var(--btnW) * 0.50), 26px);
-      height: clamp(20px, calc(var(--btnW) * 0.50), 26px);
+      width: clamp(18px, calc(var(--btnW) * 0.50), 26px);
+      height: clamp(18px, calc(var(--btnW) * 0.50), 26px);
       border-radius:50%;
       background:
         radial-gradient(circle at 30% 28%, rgba(255,255,255,.55), transparent 35%),
         linear-gradient(90deg, #c00000 0 50%, #0047ff 50% 100%);
     }
+
     .iconSvg{width:30px;height:30px;display:block;color:var(--iconDark);}
     .iconSvg *{fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke;}
     .iconSvg .fillDot{fill:currentColor;stroke:none;}
-    .btn .iconSvg{
-      width: clamp(22px, calc(var(--btnW) * 0.55), 30px);
-      height: clamp(22px, calc(var(--btnW) * 0.55), 30px);
-    }
+    .btn .iconSvg{width: clamp(20px, calc(var(--btnW) * 0.55), 30px);height: clamp(20px, calc(var(--btnW) * 0.55), 30px);}
   </style>
 </head>
+
 <body>
 <div class="phone">
   <div class="topbar">
-    <div class="navBtn" id="navBack" title="Zurück" aria-label="Zurück">&lt;</div>
+    <div class="navBtn" id="navBack" title="Vorheriges Spiel" aria-label="Vorheriges Spiel">&lt;</div>
     <div class="statusPill" id="statusPill"><span class="lbl">Letztes Spiel:</span> —</div>
     <div class="roundPill" id="roundPill">Spiel 0</div>
-    <div class="navBtn" id="navFwd" title="Vor" aria-label="Vor">&gt;</div>
+    <div class="navBtn" id="navFwd" title="Nächstes Spiel" aria-label="Nächstes Spiel">&gt;</div>
   </div>
 
   <div class="content">
@@ -343,19 +357,31 @@
     <div class="btn pm" title="Positivspiel (+)" aria-label="Positivspiel" data-nav="positiv">+</div>
     <div class="btn pm" title="Negativspiel (−)" aria-label="Negativspiel" data-nav="negativ">−</div>
     <div class="btn" title="Farbenspiel" aria-label="Farbenspiel" data-nav="farbe"><div class="rbBall"></div></div>
-    <div class="btn" title="Korrigieren" aria-label="Korrigieren">
+
+    <div class="btn" title="Korrigieren" aria-label="Korrigieren" id="btnKorrigieren">
       <svg class="iconSvg" viewBox="0 0 24 24" aria-hidden="true">
         <path d="M20 12a8 8 0 1 1-2.3-5.7"></path><path d="M20 5v4h-4"></path>
       </svg>
     </div>
-    <div class="btn close" title="Schließen" aria-label="Schließen">✕</div>
+
+    <div class="btn" title="Letztes Spiel löschen" aria-label="Letztes Spiel löschen" id="btnDeleteLast">
+      <!-- Trash icon -->
+      <svg class="iconSvg" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 7H20"></path>
+        <path d="M9 7V5.5C9 4.7 9.7 4 10.5 4h3C14.3 4 15 4.7 15 5.5V7"></path>
+        <path d="M7 7l1 14h8l1-14"></path>
+        <path d="M10 11v7"></path>
+        <path d="M14 11v7"></path>
+      </svg>
+    </div>
+
+    <div class="btn close" title="Schließen" aria-label="Schließen" id="btnClose">✕</div>
   </div>
 </div>
 
-<!-- Close Confirm -->
 <script>
 (function(){
-  const btn = document.querySelector('.btn.close');
+  const btn = document.getElementById('btnClose');
   if(!btn) return;
   btn.addEventListener('click', function(ev){
     ev.preventDefault();
@@ -367,17 +393,6 @@
 })();
 </script>
 
-<!-- History navigation -->
-<script>
-(function(){
-  const b = document.getElementById('navBack');
-  const f = document.getElementById('navFwd');
-  if(b) b.addEventListener('click', (ev)=>{ ev.preventDefault(); ev.stopPropagation(); history.back(); }, {passive:false});
-  if(f) f.addEventListener('click', (ev)=>{ ev.preventDefault(); ev.stopPropagation(); history.forward(); }, {passive:false});
-})();
-</script>
-
-<!-- ETS_NAV_WIRING -->
 <script>
 (function(){
   function go(href){ window.location.href = href; }
@@ -390,7 +405,6 @@
 })();
 </script>
 
-<!-- Loader: names, scores, Vorhand, Status "Letztes Spiel", Spiel -->
 <script>
 (function(){
   const DB_NAME = 'ets_db';
@@ -403,7 +417,7 @@
   const TABLE_TYPE_EXPECTED = 4;
 
   const seatKeys = ["TOP","LEFT","RIGHT","BOTTOM"];
-  const ccwOrder = ["BOTTOM","RIGHT","TOP","LEFT"];
+  const ccwOrder = ["BOTTOM","RIGHT","TOP","LEFT"]; // 4er CCW
 
   const RUFER_GAMES = new Set(['KOENIG_RUFER','PAGATRUFER','UHU_RUFER','KAKADU_RUFER','QUAPIL_RUFER']);
   const RUFER_FIX_PREM = {
@@ -446,7 +460,16 @@
     VALAT: 'Valat'
   };
 
-  function openDb(){
+  let db = null;
+  let sess = null;
+  let state = null;
+  let lastGabeNr = 0;      // gespeicherte Spiele
+  let viewGabeNr = 0;      // aktuell angezeigtes Spiel
+
+  let gabeByNr = new Map(); // gabeNr -> gabe
+  let prefixTotals = [];    // i -> {pid: total}
+
+  async function openDb(){
     return new Promise((resolve, reject) => {
       const req = indexedDB.open(DB_NAME, DB_VERSION);
       req.onupgradeneeded = () => {};
@@ -455,7 +478,7 @@
     });
   }
 
-  function get(db, store, key){
+  function txGet(db, store, key){
     return new Promise((resolve, reject) => {
       const tx = db.transaction(store, 'readonly');
       const st = tx.objectStore(store);
@@ -465,39 +488,29 @@
     });
   }
 
-  function getPlayer(db, id){
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(STORE_PLAYERS, 'readonly');
-      const st = tx.objectStore(STORE_PLAYERS);
-      const rq = st.get(Number(id));
-      rq.onsuccess = () => resolve(rq.result);
-      rq.onerror = () => reject(rq.error);
-    });
-  }
-
   function escapeHtml(s){
     return String(s)
-      .replaceAll('&','&')
-      .replaceAll('<','<')
-      .replaceAll('>','>')
-      .replaceAll('"','"')
-      .replaceAll("'","'");
+      .replaceAll('&','&amp;')
+      .replaceAll('<','&lt;')
+      .replaceAll('>','&gt;')
+      .replaceAll('"','&quot;')
+      .replaceAll("'","&#39;");
   }
 
   function setNum(el, n){
-    if (!el) return;
+    if(!el) return;
     const v = Number(n) || 0;
     el.textContent = String(v);
     el.classList.remove('numRed','numBlack');
-    if (v < 0) el.classList.add('numRed'); else el.classList.add('numBlack');
+    if(v < 0) el.classList.add('numRed'); else el.classList.add('numBlack');
   }
 
   function setDelta(el, n){
-    if (!el) return;
+    if(!el) return;
     const v = Number(n) || 0;
     el.textContent = '(' + String(v) + ')';
     el.classList.remove('numRed','numBlack');
-    if (v < 0) el.classList.add('numRed'); else el.classList.add('numBlack');
+    if(v < 0) el.classList.add('numRed'); else el.classList.add('numBlack');
   }
 
   function computeDealerSeat(nextGabeNr){
@@ -506,7 +519,7 @@
 
   function nextCcwSeat(seat){
     const i = ccwOrder.indexOf(seat);
-    if (i < 0) return ccwOrder[0];
+    if(i < 0) return ccwOrder[0];
     return ccwOrder[(i + 1) % ccwOrder.length];
   }
 
@@ -516,7 +529,7 @@
 
   function markSeat(seat, cls){
     const el = document.querySelector(`.playerPanel[data-seat="${seat}"]`);
-    if (el) el.classList.add(cls);
+    if(el) el.classList.add(cls);
   }
 
   function normalizePremiumEntry(p){
@@ -558,19 +571,25 @@
     return `<span class="tok ${cls}">${escapeHtml(text)}</span>`;
   }
 
-  function buildStatusHtml(gabe){
-    const gameCode = gabe && gabe.game && gabe.game.code ? String(gabe.game.code) : '';
-    if(!gameCode) return `<span class="lbl">Letztes Spiel:</span> —`;
+  function buildStatusHtml(gabe, labelText){
+    if(!gabe){
+      return `<span class="lbl">${escapeHtml(labelText)}</span> —`;
+    }
+
+    const gameCode = gabe.game && gabe.game.code ? String(gabe.game.code) : '';
+    if(!gameCode){
+      return `<span class="lbl">${escapeHtml(labelText)}</span> —`;
+    }
 
     const isRufer = RUFER_GAMES.has(gameCode);
     const gameSign = getGameSign(gabe);
-    const premArr = (gabe && Array.isArray(gabe.premiums)) ? gabe.premiums : [];
+    const premArr = Array.isArray(gabe.premiums) ? gabe.premiums : [];
     const premMap = new Map();
     for(const pr of premArr){
       if(pr && pr.key) premMap.set(String(pr.key), pr);
     }
 
-    let html = `<span class="lbl">Letztes Spiel:</span> `;
+    let html = `<span class="lbl">${escapeHtml(labelText)}</span> `;
 
     if(isRufer){
       const fixKey = RUFER_FIX_PREM[gameCode] || null;
@@ -611,78 +630,286 @@
     return html;
   }
 
-  openDb().then(async db => {
-    const sess = await get(db, STORE_CURR_SESSION, CURR_KEY);
-    const state = await get(db, STORE_CURR_STATE, CURR_KEY);
+  async function loadAllGaben(){
+    gabeByNr.clear();
+    prefixTotals = [];
+    prefixTotals[0] = {};
 
-    if (!sess || !sess.tableType || Number(sess.tableType) !== TABLE_TYPE_EXPECTED) {
-      db.close();
-      window.location.href = 'index.html';
-      return;
+    if(lastGabeNr <= 0) return;
+
+    for(let i=1;i<=lastGabeNr;i++){
+      const g = await txGet(db, STORE_GABEN, i).catch(()=>null);
+      if(g) gabeByNr.set(i, g);
     }
 
     const seats = sess.seats || {};
-    const totals = (state && state.totalByPlayerId) ? state.totalByPlayerId : {};
-    const lastD = (state && state.lastDeltaByPlayerId) ? state.lastDeltaByPlayerId : {};
+    const pids = seatKeys.map(seat => seats[seat]).filter(x => x!=null).map(x => String(x));
 
-    const lastGabeNr = (state && Number.isFinite(state.lastGabeNr)) ? Number(state.lastGabeNr) : 0;
-    const nextGabeNr = lastGabeNr + 1;
+    let running = {};
+    for(const pid of pids) running[pid] = 0;
+    prefixTotals[0] = {...running};
 
-    // ✅ Spiel (ohne Doppelpunkt)
-    const roundPill = document.getElementById('roundPill');
-    if(roundPill){
-      roundPill.textContent = 'Spiel ' + String(lastGabeNr);
+    for(let i=1;i<=lastGabeNr;i++){
+      const g = gabeByNr.get(i);
+      const d = g && g.deltaByPlayerId ? g.deltaByPlayerId : {};
+      running = {...running};
+      for(const pid of pids){
+        running[pid] = (Number(running[pid]) || 0) + (Number(d[pid]) || 0);
+      }
+      prefixTotals[i] = running;
     }
+  }
 
-    for (const seat of seatKeys) {
+  function setNavEnabled(){
+    const b = document.getElementById('navBack');
+    const f = document.getElementById('navFwd');
+
+    const canBack = (lastGabeNr >= 1 && viewGabeNr > 1);
+    const canFwd  = (lastGabeNr >= 1 && viewGabeNr < lastGabeNr);
+
+    if(b){
+      b.classList.toggle('disabled', !canBack);
+      b.setAttribute('aria-disabled', (!canBack).toString());
+    }
+    if(f){
+      f.classList.toggle('disabled', !canFwd);
+      f.setAttribute('aria-disabled', (!canFwd).toString());
+    }
+  }
+
+  function renderView(){
+    const seats = sess.seats || {};
+
+    const rp = document.getElementById('roundPill');
+    if(rp) rp.textContent = 'Spiel ' + String(lastGabeNr);
+
+    for(const seat of seatKeys){
       const pid = seats[seat];
       const nameEl = document.getElementById('name_' + seat);
       const totEl = document.querySelector(`.playerPanel[data-seat="${seat}"] [data-role="total"]`);
       const delEl = document.querySelector(`.playerPanel[data-seat="${seat}"] [data-role="delta"]`);
 
-      if (pid == null) {
-        if (nameEl) nameEl.textContent = '—';
+      if(pid == null){
+        if(nameEl) nameEl.textContent = '—';
         setNum(totEl, 0);
         setDelta(delEl, 0);
         continue;
       }
 
-      const p = await getPlayer(db, pid).catch(() => null);
-      if (nameEl) {
-        if (p) {
+      const pidStr = String(pid);
+      const tot = (prefixTotals[viewGabeNr] && prefixTotals[viewGabeNr][pidStr] != null) ? prefixTotals[viewGabeNr][pidStr] : 0;
+      let del = 0;
+      if(viewGabeNr >= 1){
+        const g = gabeByNr.get(viewGabeNr);
+        const d = g && g.deltaByPlayerId ? g.deltaByPlayerId : {};
+        del = Number(d[pidStr]) || 0;
+      }
+
+      setNum(totEl, tot);
+      setDelta(delEl, del);
+    }
+
+    const pill = document.getElementById('statusPill');
+    if(pill){
+      if(viewGabeNr <= 0){
+        pill.innerHTML = `<span class="lbl">Letztes Spiel:</span> —`;
+      } else {
+        const label = (viewGabeNr === lastGabeNr) ? 'Letztes Spiel:' : ('Spiel ' + viewGabeNr + ':');
+        pill.innerHTML = buildStatusHtml(gabeByNr.get(viewGabeNr) || null, label);
+      }
+    }
+
+    clearMarkers();
+    const nextNr = Math.max(1, viewGabeNr + 1);
+    const dealerSeat = computeDealerSeat(nextNr);
+    const vorhandSeat = nextCcwSeat(dealerSeat);
+    markSeat(vorhandSeat, 'isVorhand');
+
+    setNavEnabled();
+  }
+
+  async function rebuildStateAfterDelete(){
+    const seats = sess.seats || {};
+    const pids = seatKeys.map(seat => seats[seat]).filter(x => x!=null).map(x => String(x));
+
+    const totals = {};
+    const lastDelta = {};
+    for(const pid of pids){
+      totals[pid] = 0;
+      lastDelta[pid] = 0;
+    }
+
+    let maxNr = 0;
+    const all = [];
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_GABEN, 'readonly');
+      const st = tx.objectStore(STORE_GABEN);
+      const rq = st.openCursor();
+      rq.onsuccess = (ev) => {
+        const cur = ev.target.result;
+        if(cur){
+          const g = cur.value;
+          const nr = Number(g && g.gabeNr);
+          if(Number.isFinite(nr)){
+            all.push(g);
+            if(nr > maxNr) maxNr = nr;
+          }
+          cur.continue();
+        } else {
+          resolve();
+        }
+      };
+      rq.onerror = () => reject(rq.error);
+    });
+
+    all.sort((a,b) => (Number(a.gabeNr)||0) - (Number(b.gabeNr)||0));
+
+    for(const g of all){
+      const d = g && g.deltaByPlayerId ? g.deltaByPlayerId : {};
+      for(const pid of pids){
+        totals[pid] = (Number(totals[pid]) || 0) + (Number(d[pid]) || 0);
+      }
+    }
+
+    if(maxNr > 0){
+      const lastG = all.find(x => Number(x.gabeNr) === maxNr);
+      const d = lastG && lastG.deltaByPlayerId ? lastG.deltaByPlayerId : {};
+      for(const pid of pids){
+        lastDelta[pid] = Number(d[pid]) || 0;
+      }
+    }
+
+    const newState = {
+      key: CURR_KEY,
+      totalByPlayerId: totals,
+      lastDeltaByPlayerId: lastDelta,
+      lastGabeNr: maxNr,
+      updatedUtc: new Date().toISOString()
+    };
+
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_CURR_STATE, 'readwrite');
+      tx.objectStore(STORE_CURR_STATE).put(newState);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error);
+    });
+
+    state = newState;
+    lastGabeNr = maxNr;
+  }
+
+  async function deleteLastGame(){
+    if(lastGabeNr <= 0) return;
+    if(!confirm('Letztes Spiel wirklich löschen?')) return;
+
+    const delNr = lastGabeNr;
+
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction([STORE_GABEN], 'readwrite');
+      tx.objectStore(STORE_GABEN).delete(delNr);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error);
+    });
+
+    await rebuildStateAfterDelete();
+
+    viewGabeNr = Math.min(viewGabeNr, lastGabeNr);
+    if(lastGabeNr > 0 && viewGabeNr === 0) viewGabeNr = lastGabeNr;
+
+    await loadAllGaben();
+    renderView();
+  }
+
+  function wireButtons(){
+    const back = document.getElementById('navBack');
+    const fwd  = document.getElementById('navFwd');
+
+    if(back) back.addEventListener('click', (ev)=>{
+      ev.preventDefault(); ev.stopPropagation();
+      if(lastGabeNr < 1) return;
+      if(viewGabeNr <= 1) return;
+      viewGabeNr -= 1;
+      renderView();
+    }, {passive:false});
+
+    if(fwd) fwd.addEventListener('click', (ev)=>{
+      ev.preventDefault(); ev.stopPropagation();
+      if(lastGabeNr < 1) return;
+      if(viewGabeNr >= lastGabeNr) return;
+      viewGabeNr += 1;
+      renderView();
+    }, {passive:false});
+
+    const korr = document.getElementById('btnKorrigieren');
+    if(korr) korr.addEventListener('click', (ev)=>{
+      ev.preventDefault(); ev.stopPropagation();
+      if(viewGabeNr <= 0) return;
+      sessionStorage.setItem('editMode', 'edit');
+      sessionStorage.setItem('editGabeNr', String(viewGabeNr));
+      window.location.href = 'gabenergebnis.html';
+    }, {passive:false});
+
+    const del = document.getElementById('btnDeleteLast');
+    if(del) del.addEventListener('click', async (ev)=>{
+      ev.preventDefault(); ev.stopPropagation();
+      if(lastGabeNr <= 0) return;
+      try{ await deleteLastGame(); } catch(e){ alert('Löschen fehlgeschlagen'); }
+    }, {passive:false});
+  }
+
+  async function init(){
+    db = await openDb();
+    sess = await txGet(db, STORE_CURR_SESSION, CURR_KEY);
+    state = await txGet(db, STORE_CURR_STATE, CURR_KEY);
+
+    if(!sess || !sess.tableType || Number(sess.tableType) !== TABLE_TYPE_EXPECTED){
+      db.close();
+      window.location.href = 'index.html';
+      return;
+    }
+
+    lastGabeNr = (state && Number.isFinite(state.lastGabeNr)) ? Number(state.lastGabeNr) : 0;
+    viewGabeNr = lastGabeNr;
+
+    const seats = sess.seats || {};
+    for(const seat of seatKeys){
+      const pid = seats[seat];
+      const nameEl = document.getElementById('name_' + seat);
+      if(pid == null){
+        if(nameEl) nameEl.textContent = '—';
+        continue;
+      }
+
+      const p = await new Promise((resolve) => {
+        const tx = db.transaction(STORE_PLAYERS, 'readonly');
+        const st = tx.objectStore(STORE_PLAYERS);
+        const rq = st.get(Number(pid));
+        rq.onsuccess = () => resolve(rq.result);
+        rq.onerror = () => resolve(null);
+      });
+
+      if(nameEl){
+        if(p){
           const nach = String(p.nachname || '');
-          const vor = String(p.vorname || '');
+          const vor  = String(p.vorname || '');
           nameEl.innerHTML = escapeHtml(nach || String(pid)) + '<br>' + escapeHtml(vor);
         } else {
           nameEl.textContent = String(pid);
         }
       }
-
-      setNum(totEl, Number(totals[String(pid)] ?? 0));
-      setDelta(delEl, Number(lastD[String(pid)] ?? 0));
     }
 
-    clearMarkers();
-    const dealerSeat = computeDealerSeat(nextGabeNr);
-    const vorhandSeat = nextCcwSeat(dealerSeat);
-    markSeat(vorhandSeat, 'isVorhand');
+    await loadAllGaben();
+    wireButtons();
+    renderView();
+  }
 
-    const pill = document.getElementById('statusPill');
-    if(pill){
-      if(lastGabeNr > 0){
-        const gabe = await get(db, STORE_GABEN, lastGabeNr).catch(() => null);
-        pill.innerHTML = gabe ? buildStatusHtml(gabe) : `<span class="lbl">Letztes Spiel:</span> —`;
-      } else {
-        pill.innerHTML = `<span class="lbl">Letztes Spiel:</span> —`;
-      }
-    }
-
-    db.close();
-  }).catch(() => {
-    window.location.href = 'index.html';
+  window.addEventListener('load', ()=>{
+    init().catch(()=>{ window.location.href='index.html'; });
   });
 })();
 </script>
-
 </body>
 </html>
