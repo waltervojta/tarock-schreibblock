@@ -592,7 +592,15 @@
       { key:'VALAT',        displayLabel:'Valat',        base:10, column:'RIGHT' }
     ];
 
-    let selectedGame = null;
+    
+    // -----------------------------------------------------------------------------
+    // Future-proof Premium Model (Single Source of Truth)
+    // - allowedPremiumSetForGame(gameCode): defines which premiums are allowed
+    // - getEffectivePremiums(): used for calculation + persistence
+    // - premiumAllowed(): used for UI disabled state (grey-out)
+    // Special rule: SECHSERDREIER => KOENIG_ULT is NOT allowed (greyed out)
+    // -----------------------------------------------------------------------------
+let selectedGame = null;
     let sess = null;
     let currState = null;
 
@@ -655,15 +663,16 @@
     const btnSave = document.getElementById('btnSave');
 
     function esc(s){
-      return String(s)
-        .replaceAll('&','&amp;')
-        .replaceAll('<','&lt;')
-        .replaceAll('>','&gt;')
-        .replaceAll('\"','&quot;')
-        .replaceAll("'","&#39;");
-    }
+  return String(s)
+    .replaceAll('&','&amp;')
+    .replaceAll('<','&lt;')
+    .replaceAll('>','&gt;')
+    .replaceAll('"','&quot;')
+    .replaceAll("'",'&#39;');
+}
 
-    function playerNameById(id){
+// NOTE: esc() expects raw text and produces safe HTML; do not pass already-escaped entities.
+function playerNameById(id){
       const p = seatPlayers.find(x => x.playerId === id);
       return p ? p.displayName : String(id);
     }
@@ -700,21 +709,44 @@
       return (v > 0) ? ('+' + v) : String(v);
     }
 
-    function premiumAllowed(gameCode, premKey){
-      if(COLOR_GAMES.has(gameCode)) return COLOR_PREM_ALLOWED.has(premKey);
-      if(gameCode === 'SECHSERDREIER') return true;
-      const isUltimo = (premKey === 'PAGAT_ULTIMO' || premKey === 'KOENIG_ULT');
-      if(!isUltimo) return true;
-      return ['KOENIG_RUFER','PAGATRUFER','UHU_RUFER','KAKADU_RUFER','QUAPIL_RUFER','SOLO_RUFER'].includes(gameCode);
-    }
+    function allowedPremiumSetForGame(gameCode){
+  // Returns the set of premiums that are logically allowed for the given game.
+  // This is the single source of truth for calculation + persistence.
+  if(COLOR_GAMES.has(gameCode)) return new Set(Array.from(COLOR_PREM_ALLOWED));
 
-    function getActivePremiums(){
+  const set = new Set(PREMIUMS.map(p => p.key));
+
+  // Sechserdreier: König ultimo ist nicht erlaubt (muss ausgegraut bleiben)
+  if(gameCode === 'SECHSERDREIER') set.delete('KOENIG_ULT');
+
+  // Ultimo konservativ: Ultimos nur bei Rufer-Spielen (inkl. Solorufer)
+  const ultimoAllowedGames = new Set(['KOENIG_RUFER','PAGATRUFER','UHU_RUFER','KAKADU_RUFER','QUAPIL_RUFER','SOLO_RUFER']);
+  if(!ultimoAllowedGames.has(gameCode)) {
+    set.delete('PAGAT_ULTIMO');
+    set.delete('KOENIG_ULT');
+  }
+
+  return set;
+}
+
+function premiumAllowed(gameCode, premKey){
+  // Used for UI disable state. Must stay in sync with allowedPremiumSetForGame().
+  return allowedPremiumSetForGame(gameCode).has(premKey);
+}
+function getActivePremiums(){
       if(!premiumsEnabled) return [];
       if(isColorGame()) return PREMIUMS.filter(p => COLOR_PREM_ALLOWED.has(p.key));
       return PREMIUMS.slice();
     }
 
-    function preferredSeatOrderByTableType(t){
+    
+function getEffectivePremiums(){
+  // Premiums that are allowed for the current game (calculation + persistence).
+  if(!premiumsEnabled) return [];
+  const set = allowedPremiumSetForGame(selectedGame.code);
+  return PREMIUMS.filter(p => set.has(p.key));
+}
+function preferredSeatOrderByTableType(t){
       if(t === 4) return ['TOP','LEFT','RIGHT','BOTTOM'];
       if(t === 5) return ['LEFT_TOP','RIGHT_TOP','LEFT_BOTTOM','RIGHT_BOTTOM','BOTTOM'];
       if(t === 6) return ['TOP','LEFT_TOP','RIGHT_TOP','LEFT_BOTTOM','RIGHT_BOTTOM','BOTTOM'];
@@ -890,6 +922,7 @@
     function applyInitialSplitPremiumIfNeeded(){
       if(!isSplitRuferGame()) return;
       if(!splitPremKey) return;
+      if(!(splitPremKey in premMag)) return;
       premMag[splitPremKey] = 2;
       premSign[splitPremKey] = +1;
     }
@@ -928,7 +961,7 @@
       if(kontraMode) gameTarget.classList.add('kontraTarget');
 
       if(!premiumsEnabled) return;
-      const activePrems = getActivePremiums();
+      const activePrems = getEffectivePremiums();
       for(const prem of activePrems){
         const row = document.getElementById('row_' + prem.key);
         if(row) row.classList.remove('kontraTarget');
@@ -946,7 +979,7 @@
         items.push('Spiel=' + kontraLabel(gameKontraLevel));
       }
       if(premiumsEnabled){
-        const activePrems = getActivePremiums();
+        const activePrems = getEffectivePremiums();
         for(const prem of activePrems){
           const lvl = Number(premKontra[prem.key]) || 0;
           if(lvl > 0) items.push(prem.displayLabel + '=' + kontraLabel(lvl));
@@ -1200,7 +1233,7 @@
       const teamSet = new Set(teamSize === 2 ? [primary, partner] : [primary]);
       const opp = activeIds.filter(id => !teamSet.has(id));
 
-      const activePrems = getActivePremiums();
+      const activePrems = getEffectivePremiums();
       for(const prem of activePrems){
         if(!premiumAllowed(selectedGame.code, prem.key)) continue;
         const ev = premEffectiveValue(prem.key);
@@ -1233,7 +1266,7 @@
       const teamSet = new Set(teamSize === 2 ? [primary, partner] : [primary]);
       const opp = activeIds.filter(id => !teamSet.has(id));
 
-      const activePrems = getActivePremiums();
+      const activePrems = getEffectivePremiums();
       for(const prem of activePrems){
         if(!premiumAllowed(selectedGame.code, prem.key)) continue;
         const ev = premEffectiveValue(prem.key);
@@ -1282,7 +1315,7 @@
       const dAll = mergeDelta(dGame, dPrem);
 
       if(premiumsEnabled){
-        const activePrems = getActivePremiums();
+        const activePrems = getEffectivePremiums();
         for(const prem of activePrems){
           const txt = document.getElementById('vtxt_' + prem.key);
           const kb = document.getElementById('kbadge_' + prem.key);
@@ -1343,7 +1376,7 @@
       const now = new Date().toISOString();
       const nextGabeNr = gabeNr;
 
-      const activePrems = premiumsEnabled ? getActivePremiums() : [];
+      const activePrems = premiumsEnabled ? getEffectivePremiums() : [];
       const premPayload = premiumsEnabled
         ? activePrems.map(p => ({
             key: p.key,
@@ -1438,11 +1471,18 @@
 
       premiumsEnabled = !isNegativeGame();
 
-      for(const p of PREMIUMS){
-        premMag[p.key] = 0;
-        premSign[p.key] = +1;
-        premKontra[p.key] = 0;
-      }
+      premMag = {};
+premSign = {};
+premKontra = {};
+
+// Future-proof premium model: keep state only for premiums that are allowed for this game.
+const _effPremsForInit = premiumsEnabled ? getEffectivePremiums() : [];
+for(const p of _effPremsForInit){
+  premMag[p.key] = 0;
+  premSign[p.key] = +1;
+  premKontra[p.key] = 0;
+}
+
 
       const db = await openDb();
       sess = await idbGet(db, STORE_CURR_SESSION, CURR_KEY);
