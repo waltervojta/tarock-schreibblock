@@ -23,10 +23,8 @@
       --gapNameToBig:1ch;
       --gapBigToSmall:1ch;
 
-      /* ✅ Vorhand-Markierung: dezent blau statt gelb */
+      /* ✅ Vorhand: dezent blau + Rahmen */
       --markVorhand:#bfe6ff;
-
-      /* ✅ Rahmenfarbe für Vorhand */
       --markVorhandBorder:#1f5fa8;
 
       --markPausedOpacity:0.35;
@@ -50,7 +48,6 @@
       overflow:hidden;
     }
 
-    /* TOPBAR now has status left and round right */
     .topbar{
       height: calc(58px + env(safe-area-inset-top));
       padding: calc(8px + env(safe-area-inset-top)) 12px 8px 12px;
@@ -62,7 +59,26 @@
       gap:10px;
     }
 
-    /* Status pill (Letztes Spiel) – one size smaller */
+    /* ✅ Nav buttons left/right */
+    .navBtn{
+      flex:0 0 auto;
+      width:36px;
+      height:36px;
+      display:grid;
+      place-items:center;
+      background:var(--btnBg);
+      border:1px solid var(--btnBorder);
+      border-radius:var(--btnRadius);
+      color:var(--iconDark);
+      font-size:20px;
+      font-weight:900;
+      line-height:1;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      cursor:pointer;
+    }
+    .navBtn:active{transform:translateY(1px);}
+
     .statusPill{
       display:inline-flex;
       align-items:center;
@@ -75,7 +91,8 @@
       font-size:14px;
       font-weight:800;
       white-space:nowrap;
-      max-width: calc(100% - 120px);
+      flex:1 1 auto;
+      min-width:0;
       overflow:hidden;
       text-overflow:ellipsis;
     }
@@ -84,7 +101,6 @@
     .numRed{color:var(--red)!important;}
     .numBlack{color:var(--black)!important;}
 
-    /* Right pill */
     .roundPill{
       flex:0 0 auto;
       display:inline-flex;
@@ -191,19 +207,16 @@
       white-space:nowrap;
     }
 
-    /* ✅ Player panels with stable border (no layout shift) */
+    /* ✅ Stable border (no layout shift) */
     .playerPanel{
       border-radius:10px;
       padding:6px 8px;
       border:2px solid transparent;
     }
-
-    /* ✅ Vorhand highlight: subtle blue + border */
     .playerPanel.isVorhand{
       background:var(--markVorhand);
       border-color:var(--markVorhandBorder);
     }
-
     .playerPanel.isPaused{opacity:var(--markPausedOpacity);}
 
     .bottombar{
@@ -259,8 +272,10 @@
 <body>
 <div class="phone">
   <div class="topbar">
+    <div class="navBtn" id="navBack" title="Zurück" aria-label="Zurück">&lt;</div>
     <div class="statusPill" id="statusPill"><span class="lbl">Letztes Spiel:</span> —</div>
     <div class="roundPill" id="roundPill">Spiel 0</div>
+    <div class="navBtn" id="navFwd" title="Vor" aria-label="Vor">&gt;</div>
   </div>
 
   <div class="content">
@@ -349,6 +364,16 @@
       window.location.href = 'index.html';
     }
   }, {passive:false});
+})();
+</script>
+
+<!-- History navigation -->
+<script>
+(function(){
+  const b = document.getElementById('navBack');
+  const f = document.getElementById('navFwd');
+  if(b) b.addEventListener('click', (ev)=>{ ev.preventDefault(); ev.stopPropagation(); history.back(); }, {passive:false});
+  if(f) f.addEventListener('click', (ev)=>{ ev.preventDefault(); ev.stopPropagation(); history.forward(); }, {passive:false});
 })();
 </script>
 
@@ -603,6 +628,7 @@
     const lastGabeNr = (state && Number.isFinite(state.lastGabeNr)) ? Number(state.lastGabeNr) : 0;
     const nextGabeNr = lastGabeNr + 1;
 
+    // ✅ Spiel (ohne Doppelpunkt)
     const roundPill = document.getElementById('roundPill');
     if(roundPill){
       roundPill.textContent = 'Spiel ' + String(lastGabeNr);
@@ -657,5 +683,6 @@
   });
 })();
 </script>
+
 </body>
 </html>
